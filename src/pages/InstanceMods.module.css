@@ -1,0 +1,459 @@
+.container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    color: #fff;
+    padding: 32px;
+    box-sizing: border-box;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.2) 100%);
+}
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.titleArea {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pageTitle {
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+.instanceBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    width: fit-content;
+    color: #ccc;
+    font-weight: 500;
+}
+
+.loaderTag {
+    background: #ffaa00;
+    color: #000;
+    font-weight: 700;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.backBtn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #aaa;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.backBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateX(-2px);
+}
+
+.contentTypeTabs {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 6px;
+    border-radius: 14px;
+    width: fit-content;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.contentTypeBtn {
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+    color: #888;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.contentTypeBtn:hover {
+    color: #eee;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.active {
+    /* Base active style for standard tabs */
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.contentTypeBtn.active {
+    background: #ffaa00;
+    color: #000;
+    box-shadow: 0 4px 12px rgba(255, 170, 0, 0.2);
+}
+
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 16px;
+}
+
+.tabBtn {
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+    color: #666;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.tabBtn:hover {
+    color: #ccc;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tabBtn.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.searchArea {
+    margin-bottom: 24px;
+    display: flex;
+    gap: 12px;
+}
+
+.searchInput {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: #fff;
+    font-size: 15px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.addModBtn {
+    background: #ff8800;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0 20px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(255, 136, 0, 0.2);
+}
+
+.addModBtn:hover {
+    background: #ff9d2e;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(255, 136, 0, 0.3);
+}
+
+.addModBtn:active {
+    transform: translateY(0);
+}
+
+.lockedBtn {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #666 !important;
+    box-shadow: none !important;
+    cursor: not-allowed !important;
+}
+
+.lockedBtn:hover {
+    transform: none !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.searchInput:focus {
+    outline: none;
+    border-color: #ffaa00;
+    box-shadow: 0 0 0 2px rgba(255, 170, 0, 0.1);
+}
+
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.modList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 8px;
+    /* Prevent hover cutoff */
+    padding-bottom: 8px;
+}
+
+.listHeader {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    padding-left: 4px;
+}
+
+/* New Mod Card Design */
+.modCard {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 16px 20px;
+    transition: all 0.2s ease;
+}
+
+.modCard:hover {
+    border-color: rgba(255, 170, 0, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.modCard.disabled {
+    opacity: 0.6;
+}
+
+.modCard.disabled:hover {
+    opacity: 0.85;
+}
+
+.modIconWrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255, 170, 0, 0.15), rgba(255, 136, 0, 0.08));
+    border: 1px solid rgba(255, 170, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffaa00;
+    flex-shrink: 0;
+}
+
+.modDetails {
+    flex: 1;
+    min-width: 0;
+}
+
+.modName {
+    font-weight: 700;
+    font-size: 15px;
+    color: #fff;
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.modMeta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: #888;
+}
+
+.statusPill {
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: rgba(255, 255, 255, 0.06);
+    color: #888;
+}
+
+.statusPill.enabled {
+    background: rgba(76, 175, 80, 0.15);
+    color: #4CAF50;
+}
+
+.modSize {
+    color: #666;
+}
+
+.modActions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.actionBtn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    color: #888;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.actionBtn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.actionBtn.enabledAction {
+    background: rgba(76, 175, 80, 0.12);
+    color: #4CAF50;
+    border-color: rgba(76, 175, 80, 0.2);
+}
+
+.actionBtn.enabledAction:hover {
+    background: rgba(76, 175, 80, 0.2);
+}
+
+.dangerBtn:hover {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.toggleBtn {
+    background: transparent;
+    border: 1px solid #333;
+    color: #aaa;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.toggleBtn:hover {
+    border-color: #666;
+    color: #fff;
+}
+
+.loading {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+}
+
+/* Offline Lock Styling */
+.offlineLock {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 60px 40px;
+    text-align: center;
+    min-height: 300px;
+}
+
+.lockIcon {
+    width: 80px;
+    height: 80px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 2px solid rgba(239, 68, 68, 0.2);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ef4444;
+    margin-bottom: 8px;
+}
+
+.offlineLock h3 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.offlineLock p {
+    font-size: 15px;
+    color: #a1a1aa;
+    max-width: 400px;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.lockBadge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 10px;
+    color: #ef4444;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 8px;
+}
+
+.actionButtons {
+    display: flex;
+    gap: 8px;
+}
+
+.secondaryAdd {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #ccc !important;
+    box-shadow: none !important;
+}
+
+.secondaryAdd:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: #fff !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    box-shadow: none !important;
+}

@@ -1,0 +1,763 @@
+.container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    background: #0a0a0a;
+}
+
+.background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.15;
+    z-index: 0;
+}
+
+/* Title Bar */
+.titleBar {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px);
+    -webkit-app-region: drag;
+    z-index: 10;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+}
+
+.titleBarLeft {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.titleBarLogo {
+    width: 20px;
+    height: 20px;
+    opacity: 0.9;
+}
+
+.titleBarText {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.titleBarControls {
+    display: flex;
+    gap: 8px;
+    -webkit-app-region: no-drag;
+}
+
+.controlBtn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.controlBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Main Content Area */
+.content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 40px 20px;
+    z-index: 1;
+    overflow: hidden;
+    position: relative;
+    min-height: 0;
+}
+
+/* Progress Bar - Fixed at top */
+.progressBar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 40px;
+    flex-shrink: 0;
+    padding-top: 20px;
+}
+
+.progressStep {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+}
+
+.stepNumber {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    transition: all 0.3s ease;
+}
+
+.progressStep.active .stepNumber {
+    background: linear-gradient(135deg, #ff8800, #ff4400);
+    border-color: #ff8800;
+    color: white;
+    box-shadow: 0 0 20px rgba(255, 136, 0, 0.4);
+}
+
+.progressStep.completed .stepNumber {
+    background: rgba(74, 222, 128, 0.2);
+    border-color: #4ade80;
+    color: #4ade80;
+}
+
+.stepLabel {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.35);
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.progressStep.active .stepLabel {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+}
+
+.stepLine {
+    width: 60px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 18px 12px 0;
+    flex-shrink: 0;
+}
+
+.progressStep.completed .stepLine {
+    background: linear-gradient(90deg, #4ade80, rgba(74, 222, 128, 0.3));
+}
+
+/* Step Content - Scrollable and centered */
+.stepWrapper {
+    flex: 1;
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow-y: auto;
+    animation: fadeIn 0.4s ease;
+    padding: 20px 0;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stepContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+}
+
+/* Welcome Step */
+.welcomeHeader {
+    margin-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.logoWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 28px;
+    width: 100%;
+    height: 100px;
+}
+
+.logo {
+    width: 80px;
+    height: 80px;
+    position: relative;
+    z-index: 1;
+    display: block;
+    object-fit: contain;
+}
+
+.logoGlow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 140px;
+    height: 140px;
+    background: radial-gradient(circle, rgba(255, 136, 0, 0.3) 0%, transparent 70%);
+    z-index: 0;
+    animation: pulse 3s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+.welcomeTitle {
+    font-size: 36px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 8px;
+    line-height: 1.2;
+}
+
+.highlight {
+    background: linear-gradient(135deg, #ff8800, #ff4400);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.welcomeSubtitle {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 400;
+    margin: 0;
+}
+
+.featuresGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    width: 100%;
+    margin-bottom: 40px;
+}
+
+.featureCard {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: left;
+    transition: all 0.3s ease;
+}
+
+.featureCard:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 136, 0, 0.3);
+    transform: translateY(-2px);
+}
+
+.featureIcon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255, 136, 0, 0.2), rgba(255, 68, 0, 0.1));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ff8800;
+    margin-bottom: 16px;
+}
+
+.featureCard h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 8px;
+    margin-top: 0;
+}
+
+.featureCard p {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Step Header - For all steps */
+.stepHeader {
+    margin-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.stepIcon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(255, 136, 0, 0.2), rgba(255, 68, 0, 0.1));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ff8800;
+    margin: 0 auto 20px;
+}
+
+.successIcon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.2), rgba(34, 197, 94, 0.1));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4ade80;
+    margin: 0 auto 24px;
+    animation: scaleIn 0.5s ease;
+    border: 2px solid rgba(74, 222, 128, 0.3);
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.stepHeader h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 8px;
+    margin-top: 0;
+    line-height: 1.2;
+}
+
+.stepHeader p {
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.5);
+    max-width: 400px;
+    margin: 0 auto;
+    line-height: 1.4;
+}
+
+/* Storage Step */
+.storageContainer {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.currentPathCard {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: left;
+}
+
+.pathHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pathDisplay {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.pathDisplay code {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    word-break: break-all;
+}
+
+.pathActions {
+    display: flex;
+    gap: 12px;
+}
+
+.folderStructure {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: left;
+}
+
+.folderStructure h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 16px;
+    margin-top: 0;
+}
+
+.folderTree {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 13px;
+}
+
+.folderItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.folderItem svg {
+    color: #ff8800;
+    opacity: 0.8;
+    flex-shrink: 0;
+}
+
+.folderChildren {
+    margin-left: 20px;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    padding-left: 16px;
+}
+
+.folderDesc {
+    margin-left: auto;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+.infoBox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: rgba(255, 136, 0, 0.1);
+    border: 1px solid rgba(255, 136, 0, 0.2);
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+}
+
+.infoBox svg {
+    color: #ff8800;
+    flex-shrink: 0;
+}
+
+/* Summary Card */
+.summaryCard {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.summaryCard h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 16px;
+    margin-top: 0;
+}
+
+.summaryItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.summaryItem:last-child {
+    border-bottom: none;
+}
+
+.summaryItem span:first-child {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 13px;
+}
+
+.summaryItem span:last-child,
+.summaryItem code {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.summaryItem code {
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.tipsCard {
+    width: 100%;
+    background: rgba(74, 222, 128, 0.05);
+    border: 1px solid rgba(74, 222, 128, 0.15);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: left;
+    margin-bottom: 32px;
+}
+
+.tipsCard h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #4ade80;
+    margin-bottom: 12px;
+    margin-top: 0;
+}
+
+.tipsCard ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.tipsCard li {
+    padding: 6px 0;
+    padding-left: 20px;
+    position: relative;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 13px;
+}
+
+.tipsCard li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: #4ade80;
+    font-weight: bold;
+}
+
+/* Buttons */
+.primaryButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 32px;
+    background: linear-gradient(135deg, #ff8800, #ff4400);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(255, 136, 0, 0.3);
+}
+
+.primaryButton:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 30px rgba(255, 136, 0, 0.4);
+}
+
+.primaryButton:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.primaryButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.secondaryButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.secondaryButton:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.textButton {
+    padding: 10px 14px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 13px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.textButton:hover {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.ghostButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 20px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ghostButton:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.stepActions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+/* Error Message */
+.errorMessage {
+    padding: 12px 16px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 10px;
+    color: #ef4444;
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+
+/* Spinner */
+.spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Footer */
+.footer {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px);
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 12px;
+    z-index: 10;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+}
+
+.footerDivider {
+    opacity: 0.5;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .content {
+        padding: 20px 24px;
+    }
+
+    .featuresGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .welcomeTitle {
+        font-size: 28px;
+    }
+
+    .stepLine {
+        width: 40px;
+    }
+
+    .pathActions {
+        flex-direction: column;
+    }
+
+    .stepActions {
+        flex-direction: column-reverse;
+        width: 100%;
+    }
+
+    .stepActions button {
+        width: 100%;
+    }
+    
+    .logoWrapper {
+        height: 90px;
+    }
+    
+    .logo {
+        width: 70px;
+        height: 70px;
+    }
+}

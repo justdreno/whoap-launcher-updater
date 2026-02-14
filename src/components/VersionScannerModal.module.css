@@ -1,0 +1,306 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.modal {
+    background: #1a1a1a;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #333;
+    overflow: hidden;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 24px;
+    border-bottom: 1px solid #333;
+    color: #ffaa00;
+}
+
+.header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    flex: 1;
+}
+
+.closeBtn {
+    background: transparent;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.closeBtn:hover {
+    background: #333;
+    color: white;
+}
+
+/* Scanning State */
+.scanningContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 40px;
+    gap: 20px;
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+    color: #ffaa00;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.scanStatus {
+    font-size: 1rem;
+    color: #ccc;
+}
+
+.progressBar {
+    width: 100%;
+    height: 6px;
+    background: #333;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffaa00, #ff8800);
+    border-radius: 3px;
+    transition: width 0.2s ease;
+}
+
+.progressText {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+/* Error State */
+.errorContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 40px;
+    gap: 20px;
+}
+
+.errorText {
+    color: #ff6666;
+    text-align: center;
+}
+
+/* Empty State */
+.emptyContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 40px;
+    gap: 16px;
+    text-align: center;
+}
+
+.emptyText {
+    font-size: 1rem;
+    color: #ccc;
+}
+
+.emptyHint {
+    font-size: 0.85rem;
+    color: #888;
+    max-width: 300px;
+}
+
+/* Controls */
+.controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.selectAllBtn {
+    background: transparent;
+    border: 1px solid #444;
+    color: #ccc;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.selectAllBtn:hover {
+    border-color: #ffaa00;
+    color: #ffaa00;
+}
+
+.countText {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+/* Version List */
+.versionList {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.versionItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #222;
+    border: 1px solid #333;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.versionItem:hover {
+    border-color: #444;
+    background: #282828;
+}
+
+.versionItem.selected {
+    border-color: #ffaa00;
+    background: rgba(255, 170, 0, 0.08);
+}
+
+.checkbox {
+    width: 22px;
+    height: 22px;
+    border: 2px solid #555;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+.versionItem.selected .checkbox {
+    background: #ffaa00;
+    border-color: #ffaa00;
+    color: black;
+}
+
+.versionInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.versionName {
+    font-size: 0.95rem;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.versionMeta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.loaderBadge {
+    padding: 2px 6px;
+    border: 1px solid;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+}
+
+/* Footer */
+.footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid #333;
+}
+
+.actionBtn,
+.cancelBtn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.cancelBtn {
+    background: #333;
+    color: #ccc;
+}
+
+.cancelBtn:hover {
+    background: #444;
+    color: white;
+}
+
+.importBtn {
+    background: linear-gradient(135deg, #ffaa00, #ff8800);
+    color: black;
+    font-weight: 600;
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.importBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 170, 0, 0.3);
+}
+
+.importBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

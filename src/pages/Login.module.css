@@ -1,0 +1,398 @@
+/* Split Panel Layout */
+.container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    background-color: #000;
+    color: #fff;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Left Sidebar Panel */
+.sidebar {
+    width: 380px;
+    min-width: 380px;
+    padding: 48px 40px;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #0f0f0f 0%, #0a0a0a 100%);
+    position: relative;
+    z-index: 10;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    overflow-y: auto;
+}
+
+/* Logo Area */
+.logoArea {
+    margin-bottom: 48px;
+}
+
+.logoTitle {
+    font-size: 36px;
+    font-weight: 900;
+    margin: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.logoBold {
+    background: linear-gradient(135deg, #ff8800 0%, #ff5500 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.logoLight {
+    font-weight: 300;
+    color: #666;
+}
+
+/* Auth Tabs - Pill Style */
+.authTabs {
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px;
+    border-radius: 12px;
+    margin-bottom: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.authTab {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    color: #666;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.authTab:hover {
+    color: #aaa;
+}
+
+.authTab.active {
+    background: #ff8800;
+    color: #000;
+    box-shadow: 0 4px 12px rgba(255, 136, 0, 0.3);
+}
+
+/* Forms */
+.authForm {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex: 1;
+}
+
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.label {
+    font-size: 12px;
+    color: #888;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: #fff;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.input:focus {
+    border-color: #ff8800;
+    background: rgba(255, 136, 0, 0.05);
+    box-shadow: 0 0 0 3px rgba(255, 136, 0, 0.1);
+}
+
+.input::placeholder {
+    color: #555;
+}
+
+/* Primary Button */
+.primaryBtn {
+    background: linear-gradient(135deg, #ff8800, #ff5500);
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(255, 85, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.primaryBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 85, 0, 0.4);
+}
+
+.primaryBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Toggle Link */
+.toggleMeta {
+    text-align: center;
+    font-size: 13px;
+    color: #666;
+    margin-top: 16px;
+}
+
+.linkBtn {
+    background: none;
+    border: none;
+    color: #ff8800;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 6px;
+    font-size: 13px;
+}
+
+.linkBtn:hover {
+    text-decoration: underline;
+}
+
+/* Microsoft Button */
+.microsoftBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #ff8800, #ff5500);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(255, 85, 0, 0.3);
+}
+
+.microsoftBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 85, 0, 0.4);
+}
+
+.microsoftBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Divider */
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #444;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 24px 0 16px;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Saved Accounts Section */
+.accountSection {
+    margin-top: auto;
+    padding-top: 24px;
+}
+
+.accountDropdown {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.accountDropdown:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.miniAvatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.dropdownMenu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: #1a1a1a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+    z-index: 50;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.dropdownItem {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dropdownItem:last-child {
+    border-bottom: none;
+}
+
+.dropdownItem:hover {
+    background: rgba(255, 136, 0, 0.1);
+}
+
+/* Account Actions */
+.accountActions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.actionBtn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.logoutBtn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #aaa;
+}
+
+.logoutBtn:hover {
+    background: rgba(255, 59, 48, 0.1);
+    border-color: rgba(255, 59, 48, 0.3);
+    color: #ff5f56;
+}
+
+.playBtn {
+    background: linear-gradient(135deg, #ff8800, #ff5500);
+    border: none;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(255, 136, 0, 0.3);
+}
+
+.playBtn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(255, 136, 0, 0.4);
+}
+
+.playBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Error Message */
+.error {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: rgba(255, 59, 48, 0.1);
+    border: 1px solid rgba(255, 59, 48, 0.2);
+    color: #ff5f56;
+    border-radius: 12px;
+    font-size: 13px;
+    text-align: center;
+}
+
+/* Right Panel - Background Image */
+.bgPanel {
+    flex: 1;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.bgPanel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100px;
+    height: 100%;
+    background: linear-gradient(90deg, #0a0a0a 0%, transparent 100%);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .sidebar {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    .bgPanel {
+        display: none;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.authForm {
+    animation: fadeIn 0.3s ease-out;
+}

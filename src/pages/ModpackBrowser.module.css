@@ -1,0 +1,643 @@
+/* 
+  Whoap Modpack Browser - "W" REDESIGN 
+  Total Overhaul for Premium Storefront Look
+*/
+
+.container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #000;
+    overflow: hidden;
+    color: #fff;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.header {
+    padding: 20px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    background: #000;
+    flex-shrink: 0;
+    z-index: 100;
+}
+
+.importBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    color: #888;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.importBtn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.content {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+/* ==================== SIDEBAR LIBRARY ==================== */
+.leftPanel {
+    width: 340px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid rgba(255, 255, 255, 0.03);
+    background: #000;
+    flex-shrink: 0;
+}
+
+.searchWrapper {
+    padding: 24px 20px;
+    position: relative;
+    background: #000;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 32px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #444;
+    pointer-events: none;
+    transition: color 0.2s;
+}
+
+.searchInput {
+    width: 100%;
+    background: #0a0a0a;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 10px 12px 10px 36px;
+    color: #fff;
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+    transition: all 0.2s;
+}
+
+.searchInput:focus {
+    border-color: rgba(255, 136, 0, 0.3);
+    background: #0d0d0d;
+}
+
+.searchInput:focus+.searchIcon {
+    color: #ff8800;
+}
+
+.packList {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.packCard {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.packCard:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.packCard.selected {
+    background: rgba(255, 136, 0, 0.05);
+}
+
+.packCard.selected::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 15%;
+    bottom: 15%;
+    width: 3px;
+    background: #ff8800;
+    border-radius: 0 4px 4px 0;
+    box-shadow: 0 0 10px rgba(255, 136, 0, 0.4);
+}
+
+.packIcon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: #111;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #444;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.packIcon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.packInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.packTitle {
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 3px;
+    letter-spacing: -0.01em;
+}
+
+.packMeta {
+    color: #888;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+}
+
+.selectedArrow {
+    color: #ff8800;
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+/* ==================== STOREFRONT DETAIL ==================== */
+.rightPanel {
+    flex: 1;
+    overflow-y: auto;
+    background: #000;
+    position: relative;
+    border-left: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+/* Details Skeleton */
+.detailsSkeleton {
+    padding: 40px 80px;
+    max-width: 900px;
+    margin: 0 auto;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.detailContainer {
+    padding: 40px 80px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.detailHeader {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 48px;
+    align-items: center;
+}
+
+.detailIcon {
+    width: 100px;
+    height: 100px;
+    border-radius: 20px;
+    background: #111;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+}
+
+.detailIcon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.detailTitleArea {
+    flex: 1;
+}
+
+.detailTitleArea h1 {
+    margin: 0 0 6px 0;
+    font-size: 32px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+}
+
+.detailAuthor {
+    margin: 0;
+    color: #ff8800;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+/* Stats Grid */
+.statsRow {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 48px;
+}
+
+.statItem {
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: border-color 0.2s;
+}
+
+.statItem:hover {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.statItem svg {
+    color: #ff8800;
+    opacity: 0.8;
+}
+
+.statValue {
+    color: #fff;
+    font-weight: 800;
+    font-size: 18px;
+}
+
+.statLabel {
+    color: #444;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.headerControls {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Actions */
+.installSection {
+    /* Deprecated, now headerControls */
+    display: none;
+}
+
+.versionSelector {
+    position: relative;
+    min-width: 200px;
+    padding: 10px 14px;
+    background: #000;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.versionSelector:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.versionDropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: #0a0a0a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    overflow: hidden;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.versionSearchContainer {
+    padding: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
+}
+
+.versionSearchIcon {
+    position: absolute;
+    left: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+}
+
+.versionSearchInput {
+    width: 100%;
+    background: #111;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 8px 12px 8px 32px;
+    color: #fff;
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+    transition: all 0.2s;
+}
+
+.versionSearchInput:focus {
+    border-color: #ff8800;
+    background: #161616;
+}
+
+.versionScrollArea {
+    max-height: 240px;
+    overflow-y: auto;
+    padding: 6px;
+}
+
+.versionOption {
+    padding: 10px 12px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.versionOption:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.activeOption {
+    background: rgba(255, 136, 0, 0.1) !important;
+}
+
+.installButton {
+    background: #ff8800;
+    color: #000;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    box-shadow: 0 4px 15px rgba(255, 136, 0, 0.2);
+}
+
+.installButton:hover:not(:disabled) {
+    transform: scale(1.03) translateY(-2px);
+    background: #ffaa00;
+    box-shadow: 0 8px 25px rgba(255, 136, 0, 0.4);
+}
+
+.installButton:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.installButton:disabled {
+    background: #222;
+    color: #444;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Description */
+.descriptionSection {
+    border-top: 1px solid rgba(255, 255, 255, 0.02);
+    padding-top: 32px;
+}
+
+.descriptionSection h3 {
+    font-size: 11px;
+    font-weight: 900;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.markdownContent {
+    color: #999;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.markdownContent h1,
+.markdownContent h2 {
+    color: #fff;
+    margin: 24px 0 12px 0;
+}
+
+.markdownContent img {
+    max-width: 100%;
+    border-radius: 12px;
+    margin: 16px 0;
+}
+
+/* Redesigned Skeletons */
+.skeletonCard {
+    display: flex;
+    gap: 12px;
+    padding: 10px 12px;
+}
+
+/* Web View Dock - Slim */
+.webDock {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111;
+    border: 1px solid #222;
+    padding: 10px 20px;
+    border-radius: 40px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    animation: slideUp 0.4s ease-out;
+}
+
+.dockUrl {
+    color: #555;
+    font-size: 12px;
+    max-width: 300px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dockCloseBtn {
+    background: #ff8800;
+    color: #000;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translate(-50%, 20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+
+/* Custom Scrollbar */
+.rightPanel::-webkit-scrollbar,
+.packList::-webkit-scrollbar {
+    width: 4px;
+}
+
+.rightPanel::-webkit-scrollbar-thumb,
+.packList::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.skeletonTitleBlock {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.skeletonLine {
+    height: 32px;
+    width: 60%;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.skeletonLineShort {
+    height: 16px;
+    width: 30%;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.skeletonContentBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1200px) {
+
+    .detailContainer,
+    .detailsSkeleton {
+        padding: 30px 40px;
+    }
+
+    .detailHeader {
+        gap: 24px;
+    }
+}
+
+@media (max-width: 950px) {
+
+    .detailContainer,
+    .detailsSkeleton {
+        padding: 24px 20px;
+    }
+
+    .detailHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .detailIcon {
+        width: 80px;
+        height: 80px;
+    }
+
+    .headerControls {
+        width: 100%;
+    }
+
+    .versionSelector {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .statsRow {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

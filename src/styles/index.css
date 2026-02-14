@@ -1,0 +1,101 @@
+:root {
+    /* Colors - Dark Theme (iOS/Glassmorphism) */
+    --bg-app: #000000;
+    --bg-sidebar: rgba(28, 28, 30, 0.75);
+    --bg-card: rgba(44, 44, 46, 0.6);
+    --accent-color: #ffaa00;
+    --accent-glow: rgba(255, 170, 0, 0.3);
+    --text-primary: #ffffff;
+    --text-secondary: #ebebf599;
+    --text-muted: rgba(255, 255, 255, 0.4);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --success-color: #22c55e;
+    --error-color: #ef4444;
+
+    /* Metrics */
+    --titlebar-height: 38px;
+    --sidebar-width: 260px;
+    --sidebar-collapsed-width: 72px;
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+
+    /* Effects */
+    --blur-md: blur(20px);
+    --blur-lg: blur(24px);
+
+    /* Transitions */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    /* Transparent background for window to allow border-radius clipping */
+    background: transparent !important;
+}
+
+#root {
+    height: 100%;
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+    /* Prevent child elements from bleeding out */
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    border-radius: var(--radius-lg);
+    /* 16px rounded corners */
+    /* Optional: Add a subtle border to define the window edges against dark backgrounds */
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    /* Ensure position: fixed elements are clipped by this container */
+    transform: translateZ(0);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 170, 0, 0.2);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 170, 0, 0.4);
+}
+
+.draggable {
+    -webkit-app-region: drag;
+}
+
+.no-drag {
+    -webkit-app-region: no-drag;
+}
+
+/* Focus styles */
+:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+/* Selection color */
+::selection {
+    background: rgba(255, 170, 0, 0.3);
+    color: #fff;
+}

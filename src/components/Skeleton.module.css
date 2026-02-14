@@ -1,0 +1,33 @@
+.skeleton {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+
+    100% {
+        opacity: 0.6;
+    }
+}
+
+.circle {
+    border-radius: 50%;
+}
+
+.text {
+    height: 14px;
+    border-radius: 4px;
+}
+
+.title {
+    height: 24px;
+    border-radius: 6px;
+}

@@ -1,0 +1,257 @@
+.container {
+    height: 100%;
+    overflow-y: auto;
+    background: transparent;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+}
+
+.content {
+    padding: 0;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 32px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 4px;
+    border-radius: 12px;
+    width: fit-content;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tab {
+    padding: 8px 20px;
+    border-radius: 8px;
+    background: transparent;
+    border: none;
+    color: #a1a1aa;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.tab:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tab.active {
+    background: #27272a;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.activeIcon {
+    color: #ff8800;
+}
+
+/* News Grid */
+.newsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+}
+
+.empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px;
+    color: #52525b;
+    font-size: 1.1rem;
+    border: 2px dashed rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+}
+
+/* Timeline Layout for Changelogs */
+.timeline {
+    position: relative;
+    padding-left: 20px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 8px;
+    width: 2px;
+    background: linear-gradient(to bottom, #ff8800, rgba(255, 255, 255, 0.1));
+}
+
+.timelineItem {
+    position: relative;
+    padding-left: 32px;
+    margin-bottom: 40px;
+    animation: slideIn 0.3s ease-out;
+}
+
+.timelineDot {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 18px;
+    height: 18px;
+    background: #09090b;
+    border: 2px solid #ff8800;
+    border-radius: 50%;
+    z-index: 2;
+    box-shadow: 0 0 0 4px #09090b;
+    /* Creates gap */
+}
+
+.timelineDate {
+    display: inline-block;
+    font-size: 12px;
+    color: #71717a;
+    margin-bottom: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.timelineContent {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.timelineHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.versionBadge {
+    background: rgba(255, 136, 0, 0.1);
+    color: #ff8800;
+    border: 1px solid rgba(255, 136, 0, 0.3);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.typeBadge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.release {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+}
+
+.beta {
+    background: rgba(168, 85, 247, 0.1);
+    color: #a855f7;
+}
+
+.hotfix {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+/* Cache Banner */
+.cacheBanner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+    font-size: 13px;
+    margin-bottom: 20px;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Minecraft Banner */
+.minecraftBanner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(82, 165, 53, 0.15), rgba(82, 165, 53, 0.05));
+    border: 1px solid rgba(82, 165, 53, 0.3);
+    border-radius: 16px;
+    padding: 24px 32px;
+    margin-bottom: 32px;
+    backdrop-filter: blur(10px);
+}
+
+.bannerContent {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    color: #52A535;
+}
+
+.bannerContent h3 {
+    margin: 0 0 4px 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.bannerContent p {
+    margin: 0;
+    color: #a1a1aa;
+    font-size: 0.95rem;
+}
+
+.bannerLink {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: #52A535;
+    color: white;
+    text-decoration: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(82, 165, 53, 0.3);
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.bannerLink:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(82, 165, 53, 0.4);
+    filter: brightness(1.1);
+}

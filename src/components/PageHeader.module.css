@@ -1,0 +1,25 @@
+.header {
+    margin-bottom: 24px;
+}
+
+.title {
+    font-size: 28px;
+    font-weight: 800;
+    margin: 0;
+    color: #fff;
+    letter-spacing: -0.02em;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.description {
+    font-size: 14px;
+    color: #888;
+    margin: 4px 0 16px 0;
+}
+
+.divider {
+    border: none;
+    height: 1px;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02), transparent);
+    margin: 0;
+}

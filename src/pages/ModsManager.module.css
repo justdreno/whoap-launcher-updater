@@ -1,0 +1,258 @@
+.container {
+    padding: 32px 40px;
+    height: 100%;
+    box-sizing: border-box;
+    overflow-y: auto;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.2) 100%);
+}
+
+.topSection {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 40px;
+    gap: 20px;
+}
+
+.searchWrapper {
+    position: relative;
+    width: 320px;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+}
+
+.searchInput {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 12px 16px 12px 42px;
+    color: #fff;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.searchInput:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 170, 0, 0.4);
+    box-shadow: 0 0 0 4px rgba(255, 170, 0, 0.1);
+}
+
+.searchInput::placeholder {
+    color: #666;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    padding-bottom: 40px;
+}
+
+/* Card Design */
+.card {
+    position: relative;
+    height: 180px;
+    border-radius: 20px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    background: rgba(26, 26, 26, 0.4);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.cardBg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 50%, rgba(255, 255, 255, 0.02) 100%);
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.cardContent {
+    position: relative;
+    height: 100%;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.loaderBadge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
+}
+
+.version {
+    font-weight: 700;
+    color: #666;
+    font-size: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.instanceInfo {
+    margin-top: auto;
+}
+
+.instanceName {
+    margin: 0 0 16px 0;
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.5px;
+}
+
+.actionRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.manageLabel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #ccc;
+    font-weight: 500;
+}
+
+.arrowBtn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover States */
+.card:hover {
+    transform: translateY(-8px) scale(1.02);
+    border-color: rgba(255, 136, 0, 0.3);
+    background: rgba(30, 30, 30, 0.6);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 136, 0, 0.1);
+}
+
+.card:hover .actionRow {
+    opacity: 1;
+}
+
+.card:hover .arrowBtn {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Empty State */
+.emptyState {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    color: #666;
+    text-align: center;
+}
+
+.emptyIcon {
+    width: 80px;
+    height: 80px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.03);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    color: #444;
+}
+
+.emptyState h3 {
+    color: #fff;
+    margin: 0 0 8px 0;
+    font-size: 20px;
+}
+
+.emptyState p {
+    margin: 0;
+    font-size: 15px;
+    max-width: 300px;
+    line-height: 1.5;
+}
+
+/* Loader specific colors - aligned with Instances.module.css */
+.loaderVanilla {
+    background: rgba(128, 128, 128, 0.15);
+    color: #aaa;
+    border: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+.loaderFabric {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.loaderForge {
+    background: rgba(251, 146, 60, 0.15);
+    color: #fb923c;
+    border: 1px solid rgba(251, 146, 60, 0.2);
+}
+
+.loaderQuilt {
+    background: rgba(167, 139, 250, 0.15);
+    color: #a78bfa;
+    border: 1px solid rgba(167, 139, 250, 0.2);
+}
+
+.loaderNeoforge {
+    background: rgba(248, 113, 113, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.2);
+}
+
+/* Skeleton */
+.cardSkeleton {
+    height: 160px;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #18181b;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}

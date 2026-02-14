@@ -1,0 +1,146 @@
+.container {
+    position: relative;
+    user-select: none;
+}
+
+.trigger {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 42px;
+}
+
+.trigger:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.container.open .trigger {
+    border-color: #ff8800;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.selectedValue {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #e4e4e7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.placeholder {
+    color: #71717a;
+}
+
+.icon {
+    display: flex;
+    align-items: center;
+    color: #a1a1aa;
+}
+
+.chevron {
+    color: #71717a;
+    transition: transform 0.2s;
+    min-width: 16px;
+}
+
+.chevronOpen {
+    transform: rotate(180deg);
+    color: #ff8800;
+}
+
+.dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 6px;
+    background: #18181b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    z-index: 50;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    max-height: 240px;
+    overflow-y: auto;
+    animation: slideIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.option {
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 14px;
+    color: #e4e4e7;
+}
+
+.option:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.option.selected {
+    background: rgba(255, 136, 0, 0.15);
+    color: #ff8800;
+}
+
+.optionContent {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.optionIcon {
+    display: flex;
+    align-items: center;
+    color: #a1a1aa;
+}
+
+.option.selected .optionIcon {
+    color: #ff8800;
+}
+
+.check {
+    color: #ff8800;
+}
+
+/* Scrollbar */
+.dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dropdown::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dropdown::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.dropdown::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}

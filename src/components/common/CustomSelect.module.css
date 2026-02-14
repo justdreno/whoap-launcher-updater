@@ -1,0 +1,138 @@
+.container {
+    position: relative;
+    width: 100%;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.trigger {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.trigger:hover:not(.disabled) {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.trigger.open {
+    border-color: #646cff;
+    box-shadow: 0 0 0 1px #646cff;
+}
+
+.trigger.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.icon {
+    display: flex;
+    align-items: center;
+    color: #888;
+}
+
+.dropdown {
+    /* Position, top, left, width are handled inline via Portal */
+    background: #1e1e1e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    max-height: 250px;
+}
+
+.optionsList {
+    overflow-y: auto;
+    flex: 1;
+    margin-top: 4px;
+}
+
+/* Custom Scrollbar for dropdown */
+.optionsList::-webkit-scrollbar {
+    width: 6px;
+}
+
+.optionsList::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.optionsList::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 3px;
+}
+
+.option {
+    padding: 10px 12px;
+    cursor: pointer;
+    color: #ccc;
+    font-size: 0.95em;
+    border-radius: 4px;
+    transition: background 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.option:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.option.selected {
+    background: rgba(100, 108, 255, 0.2);
+    color: #646cff;
+    font-weight: 500;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: white;
+    margin-bottom: 2px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.searchInput:focus {
+    outline: none;
+    border-color: #646cff;
+}
+.option.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.option.disabled:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.optionLabel {
+    flex: 1;
+}
+
+.optionBadge {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(255, 136, 0, 0.2);
+    color: #ff8800;
+    border: 1px solid rgba(255, 136, 0, 0.3);
+}

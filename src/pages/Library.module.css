@@ -1,0 +1,185 @@
+.container {
+    padding: 0;
+    height: 100%;
+    overflow-y: hidden;
+    /* Let content scroll */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    padding: 40px 40px 0 40px;
+    position: relative;
+    /* To contain dropdown if needed, though fixed is better for z-index */
+}
+
+.tabBar {
+    display: flex;
+    gap: 4px;
+    margin-top: 24px;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tabBtn {
+    background: transparent;
+    border: none;
+    color: #71717a;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    border-radius: 8px;
+    flex: 1;
+    justify-content: center;
+}
+
+.tabBtn:hover {
+    color: #a1a1aa;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.tabBtn.active {
+    color: #fff;
+    background: rgba(255, 170, 0, 0.15);
+    box-shadow: 
+        0 2px 8px rgba(255, 170, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.tabBtn.active svg {
+    color: #ffaa00;
+}
+
+.indicator {
+    display: none;
+}
+
+.content {
+    flex: 1;
+    overflow-y: auto;
+    position: relative;
+}
+
+/* Instance Selector */
+.instanceSelectorWrapper {
+    position: relative;
+    z-index: 50;
+    margin-top: 4px;
+}
+
+.instanceSelector {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    cursor: pointer;
+}
+
+.selectorLabel {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #71717a;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.selectorValue {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s;
+    min-width: 160px;
+    justify-content: space-between;
+}
+
+.selectorValue:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dropdownBackdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 99;
+}
+
+.instanceDropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    width: 240px;
+    background: #111;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    padding: 4px;
+    z-index: 100;
+    max-height: 300px;
+    overflow-y: auto;
+    animation: fadeIn 0.15s ease-out;
+}
+
+.dropdownItem {
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #a1a1aa;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.15s;
+}
+
+.dropdownItem:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+
+.selectedItem {
+    color: #fff;
+    background: rgba(255, 170, 0, 0.1);
+    font-weight: 500;
+}
+
+.selectedItem:hover {
+    background: rgba(255, 170, 0, 0.15);
+}
+
+.dropdownEmpty {
+    padding: 16px;
+    text-align: center;
+    font-size: 13px;
+    color: #555;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

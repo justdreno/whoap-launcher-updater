@@ -1,0 +1,95 @@
+appId: com.whoap.launcher
+productName: Whoap Launcher
+directories:
+  output: release
+  buildResources: resources
+
+# ASAR is crucial for performance and smaller size
+asar: true
+compression: maximum
+
+# Unpack specific node_modules that don't work well inside asar
+# These modules need direct filesystem access or have native bindings
+asarUnpack:
+  - "node_modules/msmc/**/*"
+  - "node_modules/node-rsa/**/*"
+  - "node_modules/adm-zip/**/*"
+  - "node_modules/electron-store/**/*"
+  - "node_modules/express/**/*"
+  - "node_modules/minecraft-server-util/**/*"
+  - "node_modules/@supabase/**/*"
+  - "node_modules/axios/**/*"
+  - "node_modules/uuid/**/*"
+  - "node_modules/electron-updater/**/*"
+
+files:
+  - from: "."
+    filter:
+      - "dist-react/**/*"    # Frontend Build
+      - "dist-electron/**/*" # Backend Build
+      - "package.json"
+      - "node_modules/**/*"  # Include all node_modules (filtered by dependencies)
+      # Exclude source files & dev junk
+      - "!src"
+      - "!scripts"
+      - "!tsconfig*.json"
+      - "!vite.config.ts"
+      - "!.gitignore"
+      - "!.env"
+      - "!node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}"
+      - "!node_modules/*/{test,__tests__,tests,powered-test,example,examples}"
+      - "!node_modules/*.d.ts"
+      - "!node_modules/.bin"
+      - "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}"
+      - "!.editorconfig"
+      - "!**/._*"
+      - "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}"
+      - "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}"
+      - "!**/{appveyor.yml,.travis.yml,circle.yml}"
+      - "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+
+extraResources:
+  - from: src/assets/logo.png
+    to: icon.png
+  # If you have other external resources like java agent jar, add them here
+  # - from: resources/authlib-injector.jar
+  #   to: authlib-injector.jar
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: src/assets/logo.png
+  artifactName: "${productName}-Setup-${version}.${ext}"
+
+nsis:
+  oneClick: false
+  perMachine: false # Install to AppData (no admin needed)
+  allowToChangeInstallationDirectory: true
+  deleteAppDataOnUninstall: false
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+
+mac:
+  target:
+    - dmg
+  icon: src/assets/logo.png
+  category: public.app-category.games
+
+linux:
+  target:
+    - AppImage
+  icon: src/assets/logo.png
+  category: Game
+
+publish:
+  provider: github
+  owner: whoap
+  repo: whoap-launcher
+  releaseType: release
+  # Optional: Use a GitHub token for private repos
+  # token: ${GH_TOKEN}
+
+# Auto-updater configuration
+electronUpdaterCompatibility: '>=6.0.0'

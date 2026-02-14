@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "target": "esnext",
+        "module": "commonjs",
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "outDir": "dist-electron",
+        "rootDir": "electron",
+        "strict": true,
+        "skipLibCheck": true
+    },
+    "include": [
+        "electron/**/*"
+    ]
+}

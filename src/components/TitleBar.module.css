@@ -1,0 +1,335 @@
+.container {
+    height: var(--titlebar-height);
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+    background: linear-gradient(180deg, rgba(30, 30, 32, 0.98) 0%, rgba(20, 20, 22, 0.95) 100%);
+    border-bottom: 1px solid rgba(255, 170, 0, 0.08);
+    padding: 0 16px;
+    box-sizing: border-box;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    overflow: hidden;
+}
+
+/* Animated glow effect */
+.glowEffect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255, 170, 0, 0.3) 20%,
+            rgba(255, 170, 0, 0.6) 50%,
+            rgba(255, 170, 0, 0.3) 80%,
+            transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.glowActive {
+    opacity: 1;
+}
+
+.left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logoContainer {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logoGlow {
+    position: absolute;
+    inset: -2px;
+    background: radial-gradient(circle, rgba(255, 170, 0, 0.3) 0%, transparent 70%);
+    border-radius: 6px;
+    animation: pulseGlow 3s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+
+    0%,
+    100% {
+        opacity: 0.5;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+}
+
+.logoIcon {
+    position: relative;
+    font-size: 12px;
+    font-weight: 800;
+    color: #ffaa00;
+    z-index: 1;
+    text-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+}
+
+.titleGroup {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    background: linear-gradient(135deg, #ffffff 0%, #cccccc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.version {
+    font-size: 10px;
+    font-weight: 500;
+    color: rgba(255, 170, 0, 0.6);
+    padding: 2px 6px;
+    background: rgba(255, 170, 0, 0.1);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 170, 0, 0.15);
+}
+
+/* Update Notification */
+.updateIndicator {
+    position: absolute;
+    top: 8px;
+    left: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.updatePulse {
+    width: 8px;
+    height: 8px;
+    background: #ff8800;
+    border-radius: 50%;
+    animation: pulseUpdate 2s ease-in-out infinite;
+}
+
+@keyframes pulseUpdate {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(255, 136, 0, 0.6);
+    }
+    50% {
+        opacity: 0.7;
+        box-shadow: 0 0 0 6px rgba(255, 136, 0, 0);
+    }
+}
+
+.updateBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, #ff8800, #ff6600);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    animation: slideInUpdate 0.3s ease-out;
+}
+
+@keyframes slideInUpdate {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.updateBtn:hover {
+    background: linear-gradient(135deg, #ff9900, #ff7700);
+    transform: scale(1.05);
+    box-shadow: 0 2px 10px rgba(255, 136, 0, 0.4);
+}
+
+.updateBtn:active {
+    transform: scale(0.98);
+}
+
+.center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+}
+
+.statusIndicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    border-radius: 20px;
+}
+
+.statusDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+    animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+}
+
+.statusText {
+    font-size: 10px;
+    font-weight: 600;
+    color: #22c55e;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.socialButtons {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    -webkit-app-region: no-drag;
+}
+
+.socialBtn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 6px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.socialBtn:hover {
+    color: #ffaa00;
+    background: rgba(255, 170, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.socialBtn:active {
+    transform: translateY(0);
+}
+
+.separator {
+    width: 1px;
+    height: 18px;
+    background: linear-gradient(180deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.15) 50%,
+            transparent 100%);
+    margin: 0 4px;
+}
+
+.windowControls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    -webkit-app-region: no-drag;
+}
+
+.controlBtn {
+    width: 34px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-radius: 6px;
+}
+
+.controlBtn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.minimizeBtn:hover {
+    background: rgba(255, 170, 0, 0.15);
+    color: #ffaa00;
+    border-color: rgba(255, 170, 0, 0.2);
+}
+
+.maximizeBtn:hover {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    border-color: rgba(34, 197, 94, 0.2);
+}
+
+.closeBtn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.closeBtn:active {
+    background: #dc2626;
+    color: white;
+}
+
+/* Responsive adjustments */
+@media (max-width: 800px) {
+    .center {
+        display: none;
+    }
+
+    .socialButtons {
+        display: none;
+    }
+
+    .separator {
+        display: none;
+    }
+}

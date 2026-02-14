@@ -1,0 +1,723 @@
+/* ==============================
+   Mod Browser - Premium UI Design
+   ============================== */
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.modal {
+    background: linear-gradient(180deg, #1a1a1d 0%, #141416 100%);
+    width: 1100px;
+    max-width: 95vw;
+    height: 85vh;
+    max-height: 800px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        0 24px 80px rgba(0, 0, 0, 0.6),
+        0 0 100px rgba(255, 170, 0, 0.03);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Header */
+.header {
+    padding: 20px 28px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.titleArea {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.titleWithIcon {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.headerIcon {
+    color: #ffaa00;
+}
+
+.titleArea h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.tags {
+    display: flex;
+    gap: 8px;
+}
+
+.loaderTag,
+.versionTag {
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.05em;
+}
+
+.loaderTag {
+    background: linear-gradient(135deg, rgba(255, 170, 0, 0.15), rgba(255, 136, 0, 0.1));
+    color: #ffaa00;
+    border: 1px solid rgba(255, 170, 0, 0.2);
+}
+
+.versionTag {
+    background: rgba(255, 255, 255, 0.06);
+    color: #888;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.closeBtn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #666;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.closeBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+/* Body Layout */
+.body {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+/* Left Panel - Search & List */
+.leftPanel {
+    width: 340px;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.searchWrapper {
+    padding: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.searchIcon {
+    color: #555;
+    flex-shrink: 0;
+}
+
+.searchInput {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 14px;
+    width: 100%;
+    outline: none;
+}
+
+.searchInput::placeholder {
+    color: #555;
+}
+
+.modList {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+/* Mod Cards */
+.modCard {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+    margin-bottom: 4px;
+}
+
+.modCard:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.modCard.selected {
+    background: linear-gradient(135deg, rgba(255, 170, 0, 0.12), rgba(255, 136, 0, 0.06));
+    border-color: rgba(255, 170, 0, 0.25);
+}
+
+.modIcon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: #222;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.modInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.modName {
+    color: #fff;
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.modAuthor {
+    color: #666;
+    font-size: 11px;
+}
+
+.modDownloads {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #555;
+    flex-shrink: 0;
+}
+
+.installedBadge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #4CAF50;
+    background: rgba(76, 175, 80, 0.12);
+    padding: 4px 10px;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.modCard.installed {
+    opacity: 0.7;
+}
+
+.modCard.installed:hover {
+    opacity: 1;
+}
+
+/* Skeleton Loading */
+.skeletonCard {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 4px;
+}
+
+.skeletonIcon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #222 25%, #2a2a2a 50%, #222 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+.skeletonText {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.skeletonLine {
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #222 25%, #2a2a2a 50%, #222 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Empty State */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: #444;
+    gap: 12px;
+}
+
+.emptyState p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Right Panel - Details */
+.rightPanel {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px;
+}
+
+/* Detail View */
+.detailView {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.detailHeader {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.detailIcon {
+    width: 72px;
+    height: 72px;
+    border-radius: 16px;
+    background: #222;
+    object-fit: cover;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.detailMeta {
+    flex: 1;
+}
+
+.detailMeta h1 {
+    margin: 0 0 8px 0;
+    color: #fff;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.stats {
+    display: flex;
+    gap: 16px;
+    color: #666;
+    font-size: 13px;
+}
+
+.stats span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Version Status */
+.versionStatus {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.versionStatus.compatible {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.12), rgba(56, 142, 60, 0.08));
+    border: 1px solid rgba(76, 175, 80, 0.2);
+    color: #66bb6a;
+}
+
+.versionStatus.incompatible {
+    background: linear-gradient(135deg, rgba(244, 67, 54, 0.12), rgba(211, 47, 47, 0.08));
+    border: 1px solid rgba(244, 67, 54, 0.2);
+    color: #ef5350;
+}
+
+.versionStatus.installedStatus {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(56, 142, 60, 0.1));
+    border: 1px solid rgba(76, 175, 80, 0.25);
+    color: #66bb6a;
+}
+
+.versionStatus.loadingStatus {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #888;
+}
+
+.smallSpinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #888;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.versionStatus strong {
+    color: #fff;
+}
+
+/* Description */
+.descSection h3 {
+    margin: 0 0 12px 0;
+    color: #888;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+}
+
+.descContent {
+    color: #aaa;
+    font-size: 14px;
+    line-height: 1.7;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.descContent p {
+    margin: 0 0 12px 0;
+}
+
+.descContent p:last-child {
+    margin-bottom: 0;
+}
+
+/* Dependencies Section */
+.depsSection {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.depsSection h3 {
+    margin: 0 0 16px 0;
+    color: #888;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.depsList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.depItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+}
+
+.depItem.required {
+    background: linear-gradient(135deg, rgba(255, 170, 0, 0.08), rgba(255, 136, 0, 0.04));
+    border: 1px solid rgba(255, 170, 0, 0.15);
+}
+
+.depItem.optional {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.depType {
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.depItem.required .depType {
+    background: rgba(255, 170, 0, 0.15);
+    color: #ffaa00;
+}
+
+.depItem.optional .depType {
+    background: rgba(255, 255, 255, 0.08);
+    color: #888;
+}
+
+.depId {
+    flex: 1;
+    color: #888;
+    font-family: monospace;
+}
+
+.depAuto {
+    color: #4CAF50;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* Install Button */
+.installArea {
+    padding-top: 8px;
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(180deg, transparent 0%, #141416 20%);
+    padding-top: 24px;
+    margin-top: auto;
+}
+
+.installBtn {
+    width: 100%;
+    background: linear-gradient(135deg, #ffaa00, #ff8800);
+    border: none;
+    border-radius: 14px;
+    padding: 18px 24px;
+    color: #000;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 20px rgba(255, 170, 0, 0.25);
+}
+
+.installBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(255, 170, 0, 0.35);
+}
+
+.installBtn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.installBtn:disabled {
+    background: #333;
+    color: #666;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.installBtn.installedBtn {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(56, 142, 60, 0.15));
+    color: #4CAF50;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+/* Spinner */
+.spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Placeholder */
+.placeholder {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #444;
+    gap: 16px;
+    text-align: center;
+}
+
+.placeholderIcon {
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+}
+
+.placeholder p {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: #666;
+}
+
+.placeholder span {
+    font-size: 13px;
+    color: #444;
+}
+/* Update Badge and Button Styles */
+.updateBadge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #ff8800;
+    background: rgba(255, 136, 0, 0.15);
+    padding: 4px 10px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    animation: pulse-update 2s infinite;
+}
+
+@keyframes pulse-update {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.modCard.hasUpdate {
+    border: 1px solid rgba(255, 136, 0, 0.3);
+    background: rgba(255, 136, 0, 0.05);
+}
+
+.modCard.hasUpdate:hover {
+    border-color: rgba(255, 136, 0, 0.5);
+    background: rgba(255, 136, 0, 0.1);
+}
+
+.updateBtn {
+    background: linear-gradient(135deg, #ff8800, #ff6600);
+    color: white;
+    animation: pulse-btn 2s infinite;
+}
+
+.updateBtn:hover {
+    background: linear-gradient(135deg, #ff9900, #ff7700);
+    transform: translateY(-1px);
+}
+
+@keyframes pulse-btn {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 136, 0, 0.4); }
+    50% { box-shadow: 0 0 0 4px rgba(255, 136, 0, 0); }
+}
+
+/* Installing Button with Progress */
+.installingBtn {
+    flex-direction: column;
+    gap: 0;
+    padding: 12px 20px;
+    height: auto;
+    background: rgba(255, 136, 0, 0.1);
+    border: 1px solid rgba(255, 136, 0, 0.3);
+}
+
+.installProgress {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.installStatus {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.progressBar {
+    height: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff8800, #ff6600);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.percentText {
+    font-size: 11px;
+    font-weight: 600;
+    color: #ff8800;
+    text-align: right;
+}

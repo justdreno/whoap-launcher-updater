@@ -1,0 +1,587 @@
+/* ================= PROFILE PAGE ================= */
+.profilePage {
+    display: flex;
+    gap: 0;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+}
+
+/* ================= LEFT PANEL ================= */
+.leftPanel {
+    flex: 1;
+    padding: 40px 36px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    position: relative;
+    z-index: 1;
+}
+
+.leftPanel::-webkit-scrollbar {
+    width: 4px;
+}
+
+.leftPanel::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.leftPanel::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+}
+
+/* ================= PROFILE HEADER ================= */
+.profileHeader {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.avatarLarge {
+    width: 72px;
+    height: 72px;
+    border-radius: 16px;
+    border: 2px solid rgba(255, 136, 0, 0.3);
+    object-fit: contain;
+    image-rendering: pixelated;
+    background: rgba(255, 255, 255, 0.03);
+    box-shadow: 0 0 20px rgba(255, 136, 0, 0.1);
+}
+
+.headerInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.displayName {
+    font-size: 24px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+}
+
+.roleBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    width: fit-content;
+}
+
+.activeBadge {
+    font-size: 8px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #ff9500;
+    background: rgba(255, 136, 0, 0.12);
+    padding: 2px 8px;
+    border-radius: 4px;
+    position: relative;
+    z-index: 2;
+}
+
+.uuidText {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.25);
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.uuidText:hover {
+    color: rgba(255, 255, 255, 0.45);
+}
+
+/* ================= SECTION ================= */
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.sectionTitle {
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* ================= INFO GRID ================= */
+.infoGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.infoCard {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.infoLabel {
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.infoValue {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+}
+
+/* ================= BADGES ================= */
+.badgeGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    transition: all 0.2s;
+}
+
+.badge:hover {
+    background: rgba(255, 255, 255, 0.06);
+    transform: translateY(-1px);
+}
+
+.badgeIcon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.noBadges {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.2);
+    font-style: italic;
+}
+
+/* ================= SKIN PRESETS ================= */
+.presetsGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.presetCard {
+    background: rgba(255, 255, 255, 0.02);
+    border: 2px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.presetCard::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(255, 136, 0, 0.06) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.25s;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.presetCard:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    transform: translateY(-2px);
+}
+
+.presetCard:hover::before {
+    opacity: 1;
+}
+
+.presetCard.active {
+    border-color: rgba(255, 136, 0, 0.5);
+    background: rgba(255, 136, 0, 0.06);
+    box-shadow: 0 0 24px rgba(255, 136, 0, 0.12), inset 0 0 20px rgba(255, 136, 0, 0.03);
+}
+
+.presetCard.active::before {
+    opacity: 1;
+}
+
+.presetNumber {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    font-size: 9px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.15);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 2;
+}
+
+.presetAvatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    image-rendering: pixelated;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    object-fit: contain;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+    z-index: 2;
+}
+
+.presetCard.active .presetAvatar {
+    border-color: rgba(255, 136, 0, 0.4);
+    box-shadow: 0 0 12px rgba(255, 136, 0, 0.15);
+}
+
+.presetName {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    white-space: nowrap;
+    transition: color 0.2s;
+    position: relative;
+    z-index: 2;
+}
+
+.presetCard.active .presetName {
+    color: #ff9500;
+}
+
+
+
+.presetActions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transform: translateY(-5px);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10;
+}
+
+.presetCard:hover .presetActions {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.presetBtn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    outline: none;
+    padding: 0;
+}
+
+.presetBtn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    transform: scale(1.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.presetBtn.remove:hover {
+    background: rgba(255, 71, 87, 0.2);
+    color: #ff4757;
+    border-color: rgba(255, 71, 87, 0.4);
+}
+
+/* ... */
+
+/* ================= PRESET EDIT MODAL ================= */
+.editOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.15s ease;
+}
+
+.editModal {
+    background: rgba(20, 20, 20, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 28px;
+    width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.2s ease;
+}
+
+.editTitle {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.editDesc {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.4);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.editInput {
+    width: 100%;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.editInput:focus {
+    border-color: rgba(255, 136, 0, 0.5);
+}
+
+.editInput::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.editActions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.cancelBtn {
+    padding: 9px 18px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.cancelBtn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.saveBtn {
+    padding: 9px 20px;
+    background: linear-gradient(135deg, #ff9500, #ff7b00);
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.saveBtn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+/* ================= IMPORT BUTTON & DIVIDER ================= */
+.editDivider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: rgba(255, 255, 255, 0.15);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.editDivider::before,
+.editDivider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.importBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 18px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.importBtn:hover {
+    background: rgba(255, 136, 0, 0.08);
+    border-color: rgba(255, 136, 0, 0.3);
+    color: #ff9500;
+}
+
+.noPresetHint {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.2);
+    font-style: italic;
+    text-align: center;
+    padding-top: 4px;
+}
+
+/* ================= RIGHT PANEL (3D VIEWER) ================= */
+.rightPanel {
+    width: 340px;
+    min-width: 340px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border-left: 1px solid rgba(255, 255, 255, 0.04);
+    overflow: hidden;
+}
+
+.viewerGlow {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(255, 136, 0, 0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.viewerContainer {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.viewerCanvas {
+    border-radius: 12px;
+    cursor: grab;
+}
+
+.viewerCanvas:active {
+    cursor: grabbing;
+}
+
+.viewerLabel {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.2);
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+.viewerSkinName {
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: -8px;
+}
+
+/* ================= ANIMATIONS ================= */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 900px) {
+    .profilePage {
+        flex-direction: column;
+    }
+
+    .rightPanel {
+        width: 100%;
+        min-width: 0;
+        height: 300px;
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+}

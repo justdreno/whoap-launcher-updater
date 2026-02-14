@@ -1,0 +1,249 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.modal {
+    background: #1a1a1a;
+    width: 600px;
+    max-width: 90vw;
+    height: auto;
+    max-height: 85vh;
+    border-radius: 16px;
+    border: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #1f1f1f;
+}
+
+.title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 250px;
+    flex-shrink: 0;
+}
+
+.titleText {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.closeBtn {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.closeBtn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2px 0;
+}
+
+.modList {
+    display: flex;
+    flex-direction: column;
+}
+
+.modItem {
+    display: flex;
+    align-items: center;
+    padding: 12px 24px;
+    border-bottom: 1px solid #2a2a2a;
+    transition: background 0.1s;
+}
+
+.modItem:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.modIcon {
+    margin-right: 16px;
+    color: #ff8800;
+}
+
+.modInfo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.modName {
+    font-size: 0.95rem;
+    color: #eee;
+    font-weight: 500;
+}
+
+.modName.disabled {
+    color: #888;
+    text-decoration: line-through;
+}
+
+.modSize {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.toggleSwitch {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.toggleInput {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggleSlider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #444;
+    transition: .4s;
+    border-radius: 20px;
+}
+
+.toggleSlider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+.toggleInput:checked+.toggleSlider {
+    background-color: #ff8800;
+}
+
+.toggleInput:checked+.toggleSlider:before {
+    transform: translateX(16px);
+}
+
+.deleteBtn {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.deleteBtn:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.footer {
+    padding: 20px 24px;
+    border-top: 1px solid #333;
+    background: #1f1f1f;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.addBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #ff8800;
+    color: #000;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.addBtn:hover {
+    background: #ff9900;
+    transform: translateY(-1px);
+}
+
+.refreshBtn {
+    background: transparent;
+    border: 1px solid #444;
+    color: #ccc;
+    padding: 10px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.refreshBtn:hover {
+    border-color: #666;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: #666;
+    gap: 16px;
+}
