@@ -334,12 +334,22 @@ export class LaunchProcess {
                         if (lib.natives) {
                             const platform = getPlatformName();
                             const arch = getPlatformArch();
-                            const classifierKey = lib.natives[platform];
                             
-                            if (classifierKey && lib.classifies) {
-                                // Handle arch-specific classifiers like windows-${arch}
-                                const resolvedClassifier = classifierKey.replace('${arch}', arch);
-                                const classifierData = lib.classifies[resolvedClassifier];
+                            // natives[platform] gives us the classifier pattern (e.g., "natives-windows" or "natives-windows-${arch}")
+                            // We need to look up the actual URL in classifies using the resolved classifier name
+                            const classifierPattern = lib.natives[platform];
+                            
+                            if (classifierPattern && lib.classifies) {
+                                // The pattern might be just "natives-windows" or have arch placeholder like "natives-windows-${arch}"
+                                // First try without arch suffix
+                                let classifierKey = classifierPattern.replace('natives-', '');
+                                let classifierData = lib.classifies[classifierKey];
+                                
+                                // If not found and pattern has ${arch}, try with arch
+                                if (!classifierData && classifierPattern.includes('${arch}')) {
+                                    classifierKey = classifierPattern.replace('natives-', '').replace('-${arch}', `-${arch}`);
+                                    classifierData = lib.classifies[classifierKey];
+                                }
                                 
                                 if (classifierData) {
                                     isNative = true;
