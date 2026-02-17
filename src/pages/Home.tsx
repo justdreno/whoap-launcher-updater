@@ -54,6 +54,12 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
     const [isLaunching, setIsLaunching] = useState(false);
     const [launchStatus, setLaunchStatus] = useState('');
     const [launchProgress, setLaunchProgress] = useState(0);
+    const [downloadStats, setDownloadStats] = useState<{
+        currentBytes: number;
+        totalBytes: number;
+        speed: number; // bytes per second
+        eta: number; // seconds
+    } | null>(null);
 
     // Server Status
     const [serverIp, setServerIp] = useState('');
@@ -72,6 +78,39 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
             setLaunchStatus(data.status);
             if (data.total > 0) {
                 setLaunchProgress((data.progress / data.total) * 100);
+            }
+            
+            // Track download stats for display
+            if (data.totalBytes > 0) {
+                setDownloadStats(prev => {
+                    const currentBytes = data.currentBytes || data.progress;
+                    const totalBytes = data.totalBytes || data.total;
+                    
+                    // Calculate speed
+                    let speed = 0;
+                    if (prev && data.timestamp) {
+                        const timeDelta = (data.timestamp - (prev as any).lastTimestamp) / 1000;
+                        const bytesDelta = currentBytes - prev.currentBytes;
+                        if (timeDelta > 0) {
+                            speed = bytesDelta / timeDelta;
+                        }
+                    }
+                    
+                    // Calculate ETA
+                    let eta = 0;
+                    if (speed > 0) {
+                        const remainingBytes = totalBytes - currentBytes;
+                        eta = Math.max(0, Math.round(remainingBytes / speed));
+                    }
+                    
+                    return {
+                        currentBytes,
+                        totalBytes,
+                        speed,
+                        eta,
+                        lastTimestamp: data.timestamp || Date.now()
+                    } as any;
+                });
             }
         };
         window.ipcRenderer.on('launch:progress', handleProgress);
@@ -161,6 +200,12 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
         setCopiedId(id);
         showToast('IP copied!', 'success');
         setTimeout(() => setCopiedId(null), 2000);
+    };
+
+    const formatEta = (seconds: number): string => {
+        if (seconds < 60) return `${seconds}s`;
+        if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+        return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
     };
 
     const handleToggleFavorite = async (e: React.MouseEvent, inst: Instance) => {
@@ -343,6 +388,12 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
                                     <span>{launchStatus}</span>
                                     <span>{Math.round(launchProgress)}%</span>
                                 </div>
+                                {downloadStats && downloadStats.totalBytes > 0 && (
+                                    <div className={styles.downloadInfo}>
+                                        <span>{(downloadStats.currentBytes / 1024 / 1024).toFixed(1)} MB / {(downloadStats.totalBytes / 1024 / 1024).toFixed(1)} MB</span>
+                                        {downloadStats.eta > 0 && <span>ETA: {formatEta(downloadStats.eta)}</span>}
+                                    </div>
+                                )}
                                 <div className={styles.progressBarBg}>
                                     <div 
                                         className={styles.progressBarFill} 

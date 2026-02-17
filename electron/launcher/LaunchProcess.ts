@@ -445,9 +445,12 @@ export class LaunchProcess {
                                 const now = Date.now();
                                 if (now - lastProgress > 200) {
                                     event.sender.send('launch:progress', {
-                                        status: `Downloading... ${(p.current / 1024 / 1024).toFixed(1)}MB`,
+                                        status: `Downloading...`,
                                         progress: p.current,
-                                        total: p.total
+                                        total: p.total,
+                                        currentBytes: p.current,
+                                        totalBytes: p.total,
+                                        timestamp: now
                                     });
                                     lastProgress = now;
                                 }
