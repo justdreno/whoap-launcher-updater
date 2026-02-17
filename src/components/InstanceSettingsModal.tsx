@@ -260,8 +260,8 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
                 {/* Header */}
                 <div className={styles.header}>
                     <div className={styles.headerIcon}>
-                        {instance.icon ? (
-                            <img src={instance.icon} alt="" className={styles.headerIconImg} />
+                        {(instance.iconLocal || instance.icon) ? (
+                            <img src={instance.iconLocal || instance.icon} alt="" className={styles.headerIconImg} />
                         ) : (
                             <Box size={18} />
                         )}
@@ -364,8 +364,8 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
                             <div className={styles.sectionTitle}>Custom Icon</div>
                             <div className={styles.iconSection}>
                                 <div className={styles.iconPreview}>
-                                    {instance.icon ? (
-                                        <img src={instance.icon} alt="Current icon" />
+                                    {(instance.iconLocal || instance.icon) ? (
+                                        <img src={instance.iconLocal || instance.icon} alt="Current icon" />
                                     ) : (
                                         <div className={styles.iconPlaceholder}>
                                             {instance.name.charAt(0).toUpperCase()}

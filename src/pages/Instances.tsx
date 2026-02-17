@@ -200,13 +200,13 @@ export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNaviga
                         return (
                             <div key={instance.id} className={styles.instanceCard} onClick={() => onSelectInstance?.(instance)}>
                                 <div className={styles.instanceIcon} style={{
-                                    background: instance.icon ? 'transparent' : instance.isFavorite
+                                    background: (instance.iconLocal || instance.icon) ? 'transparent' : instance.isFavorite
                                         ? 'linear-gradient(135deg, #ff8800, #ff4400)'
                                         : undefined
                                 }}>
-                                    {instance.icon ? (
+                                    {(instance.iconLocal || instance.icon) ? (
                                         <img 
-                                            src={instance.icon} 
+                                            src={instance.iconLocal || instance.icon} 
                                             alt={instance.name}
                                             style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }}
                                             onError={(e) => {

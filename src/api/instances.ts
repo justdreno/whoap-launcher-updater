@@ -5,7 +5,8 @@ export interface Instance {
     loader: 'vanilla' | 'fabric' | 'forge' | 'neoforge' | 'quilt' | 'custom';
     created: number;
     lastPlayed: number;
-    icon?: string;
+    icon?: string; // URL to custom icon (for Discord)
+    iconLocal?: string; // Local file path to cached icon (for UI)
     isFavorite?: boolean;
     isImported?: boolean;
     launchVersionId?: string;

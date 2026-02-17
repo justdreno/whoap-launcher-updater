@@ -20,7 +20,8 @@ export interface Instance {
     isImported?: boolean;
     launchVersionId?: string; // The actual ID to launch (e.g. fabric-loader-x.x.x-1.20.1)
     useExternalPath?: boolean; // If true, launch using the original version folder as gameDir
-    icon?: string; // URL or path to custom icon
+    icon?: string; // URL to custom icon (for Discord)
+    iconLocal?: string; // Local file path to cached icon (for UI)
     playTime?: number; // Total playtime in seconds
     // Custom version support
     customVersionJson?: string; // Path to custom version JSON
@@ -562,15 +563,72 @@ export class InstanceManager {
         if (existsSync(configPath)) {
             const content = await fs.readFile(configPath, 'utf-8');
             const data = JSON.parse(content);
+            
+            // Remove old cached icon if exists
+            if (data.icon && data.icon.startsWith('file://')) {
+                try {
+                    const oldIconPath = data.icon.replace('file://', '');
+                    if (existsSync(oldIconPath)) {
+                        await fs.unlink(oldIconPath);
+                    }
+                } catch (e) {
+                    console.warn("Failed to remove old icon:", e);
+                }
+            }
+            
             if (iconUrl) {
-                data.icon = iconUrl;
+                // Download and cache the icon locally
+                try {
+                    if (iconUrl.startsWith('http')) {
+                        const iconPath = path.join(instancePath, 'icon.png');
+                        await this.downloadFile(iconUrl, iconPath);
+                        // Store both URL (for Discord) and local path (for UI)
+                        data.icon = iconUrl;
+                        data.iconLocal = `file://${iconPath}`;
+                    } else {
+                        // Local file or data URL
+                        data.icon = iconUrl;
+                    }
+                } catch (e) {
+                    console.error("Failed to download icon:", e);
+                    // Still save the URL even if download failed
+                    data.icon = iconUrl;
+                }
             } else {
                 delete data.icon;
+                delete data.iconLocal;
             }
             await fs.writeFile(configPath, JSON.stringify(data, null, 4));
             return { success: true };
         }
         return { success: false, error: "Instance config not found" };
+    }
+
+    private async downloadFile(url: string, dest: string): Promise<void> {
+        const https = await import('https');
+        const http = await import('http');
+        const fs = await import('fs');
+        const path = await import('path');
+
+        return new Promise((resolve, reject) => {
+            const mod = url.startsWith('https') ? https : http;
+            const file = fs.createWriteStream(dest);
+            
+            mod.get(url, (response: any) => {
+                if (response.statusCode !== 200) {
+                    reject(new Error(`Failed to download: ${response.statusCode}`));
+                    return;
+                }
+                response.pipe(file);
+                file.on('finish', () => {
+                    file.close();
+                    resolve();
+                });
+            }).on('error', (err: any) => {
+                fs.unlink(dest, () => {});
+                reject(err);
+            });
+        });
     }
 
     async getInstances(): Promise<Instance[]> {
