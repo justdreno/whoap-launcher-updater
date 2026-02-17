@@ -279,16 +279,21 @@ export class DiscordManager {
     public setPlayingPresence(instanceId: string, versionId: string, loader?: string, isMultiplayer?: boolean, serverName?: string, playerCount?: number, maxPlayers?: number) {
         const loaderKey = this.getLoaderImageKey(loader);
         
-        let stateText = `Playing ${versionId}`;
+        // Only show version in state if it's different from instance name
+        let stateText = '';
+        const instanceName = this.formatInstanceName(instanceId);
+        
         if (isMultiplayer && serverName) {
             stateText = `Playing on ${serverName}`;
         } else if (isMultiplayer) {
             stateText = 'Playing Multiplayer';
+        } else if (versionId !== instanceId && versionId !== instanceName) {
+            stateText = `Minecraft ${versionId}`;
         }
 
         this.updatePresence({
             presenceState: PresenceState.PLAYING,
-            details: `Playing ${this.formatInstanceName(instanceId)}`,
+            details: `Playing ${instanceName}`,
             state: stateText,
             largeImageKey: this.getVersionImageKey(versionId),
             largeImageText: `Minecraft ${versionId}`,
