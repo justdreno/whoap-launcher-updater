@@ -1,7 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from './Login.module.css';
 import { AccountManager, StoredAccount } from '../utils/AccountManager';
-import { LogOut, ChevronDown, Play, ChevronUp, CheckCircle } from 'lucide-react';
+import { 
+    LogOut, 
+    ChevronDown, 
+    Play, 
+    ChevronUp, 
+    CheckCircle, 
+    User,
+    Mail,
+    Lock,
+    Eye,
+    EyeOff,
+    AlertCircle,
+    Gamepad2,
+    Sparkles,
+    ArrowRight
+} from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import loginBg from '../assets/login_bg.png';
 import { UserAvatar } from '../components/UserAvatar';
@@ -13,20 +28,32 @@ interface LoginProps {
 
 type AuthMode = 'whoap' | 'microsoft' | 'offline';
 
+interface FormErrors {
+    email?: string;
+    password?: string;
+    username?: string;
+    general?: string;
+}
+
 export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) => {
     const [authMode, setAuthMode] = useState<AuthMode>('microsoft');
     const [isLoggingIn, setIsLoggingIn] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [errors, setErrors] = useState<FormErrors>({});
     const [accounts, setAccounts] = useState<StoredAccount[]>([]);
     const [selectedAccount, setSelectedAccount] = useState<StoredAccount | null>(null);
     const [showAccountDropdown, setShowAccountDropdown] = useState(false);
+    const [animationState, setAnimationState] = useState<'idle' | 'loading' | 'success'>('idle');
 
-    // Whoap Auth State
     const [isRegistering, setIsRegistering] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');
+    const [rememberMe, setRememberMe] = useState(true);
     const [verificationSent, setVerificationSent] = useState(false);
+    const [passwordStrength, setPasswordStrength] = useState(0);
+
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const stored = AccountManager.getAccounts();
@@ -35,6 +62,58 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
         if (active) setSelectedAccount(active);
         else if (stored.length > 0) setSelectedAccount(stored[0]);
     }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowAccountDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        if (!password) {
+            setPasswordStrength(0);
+            return;
+        }
+        let strength = 0;
+        if (password.length >= 8) strength += 1;
+        if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength += 1;
+        if (password.match(/[0-9]/)) strength += 1;
+        if (password.match(/[^a-zA-Z0-9]/)) strength += 1;
+        setPasswordStrength(strength);
+    }, [password]);
+
+    const validateForm = (): boolean => {
+        const newErrors: FormErrors = {};
+
+        if (authMode === 'whoap') {
+            if (!email) {
+                newErrors.email = 'Email is required';
+            } else if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                newErrors.email = 'Please enter a valid email';
+            }
+
+            if (!password) {
+                newErrors.password = 'Password is required';
+            } else if (isRegistering && password.length < 8) {
+                newErrors.password = 'Password must be at least 8 characters';
+            }
+
+            if (isRegistering && !username.trim()) {
+                newErrors.username = 'Username is required';
+            }
+        }
+
+        if (authMode === 'offline' && !username.trim()) {
+            newErrors.username = 'Username is required';
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     const handleSuccess = (profile: any, type: any) => {
         const account: StoredAccount = {
@@ -46,22 +125,27 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
             preferredSkin: profile.preferredSkin
         };
         AccountManager.addAccount(account);
-        onLoginSuccess({ ...profile, type });
+        setAnimationState('success');
+        setTimeout(() => {
+            onLoginSuccess({ ...profile, type });
+        }, 500);
     };
 
     const handleMicrosoftLogin = async () => {
         setIsLoggingIn(true);
-        setError(null);
+        setAnimationState('loading');
+        setErrors({});
         try {
             const result = await window.ipcRenderer.invoke('auth:login-microsoft');
             if (result.success) {
                 handleSuccess(result.profile, 'microsoft');
             } else {
-                setError("Login failed: " + result.error);
+                setErrors({ general: result.error || 'Login failed' });
+                setAnimationState('idle');
             }
         } catch (err) {
-            setError("An unexpected error occurred.");
-            console.error(err);
+            setErrors({ general: 'An unexpected error occurred' });
+            setAnimationState('idle');
         } finally {
             setIsLoggingIn(false);
         }
@@ -69,9 +153,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
 
     const handleOfflineLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!username.trim()) return;
+        if (!validateForm()) return;
 
         setIsLoggingIn(true);
+        setAnimationState('loading');
         try {
             const result = await window.ipcRenderer.invoke('auth:login-offline', username);
             if (result.success) {
@@ -79,7 +164,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
                 handleSuccess(result.profile, 'offline');
             }
         } catch (err) {
-            setError("Offline login failed.");
+            setErrors({ general: 'Offline login failed' });
+            setAnimationState('idle');
         } finally {
             setIsLoggingIn(false);
         }
@@ -87,20 +173,21 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
 
     const handleWhoapAuth = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!validateForm()) return;
+
         setIsLoggingIn(true);
-        setError(null);
+        setAnimationState('loading');
+        setErrors({});
 
         try {
             if (isRegistering) {
-                if (!username) {
-                    throw new Error("Username is required");
-                }
-
-                // Check availability
                 const { CloudManager } = await import('../utils/CloudManager');
                 const isTaken = await CloudManager.checkUsernameExists(username);
                 if (isTaken) {
-                    throw new Error("Username is already taken. Please choose another.");
+                    setErrors({ username: 'Username is already taken' });
+                    setIsLoggingIn(false);
+                    setAnimationState('idle');
+                    return;
                 }
 
                 const { data, error } = await supabase.auth.signUp({
@@ -116,6 +203,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
                 if (data.user && !data.session) {
                     setVerificationSent(true);
                     setIsLoggingIn(false);
+                    setAnimationState('idle');
                     return;
                 }
 
@@ -143,9 +231,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
 
                 if (error) {
                     if (error.message.includes("Email not confirmed")) {
-                        throw new Error("Please verify your email before logging in.");
+                        setErrors({ general: 'Please verify your email before logging in' });
+                    } else {
+                        setErrors({ general: error.message });
                     }
-                    throw error;
+                    setIsLoggingIn(false);
+                    setAnimationState('idle');
+                    return;
                 }
 
                 if (data.user) {
@@ -164,7 +256,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
                 }
             }
         } catch (err: any) {
-            setError(err.message || "Authentication failed");
+            setErrors({ general: err.message || 'Authentication failed' });
+            setAnimationState('idle');
         } finally {
             setIsLoggingIn(false);
         }
@@ -172,10 +265,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
 
     const handleAccountSelect = async (account: StoredAccount) => {
         setIsLoggingIn(true);
+        setAnimationState('loading');
         try {
             AccountManager.setActive(account.uuid);
 
-            // Save session to electron-store for persistence across app restarts
             await window.ipcRenderer.invoke('auth:set-session', {
                 type: account.type,
                 name: account.name,
@@ -186,13 +279,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
                 preferredSkin: account.preferredSkin
             });
 
-            // Sync Supabase session if it's a whoap account (only when online)
             if (account.type === 'whoap' && account.token && navigator.onLine) {
                 try {
                     const { CloudManager } = await import('../utils/CloudManager');
                     const syncResult = await CloudManager.syncSession(account.token, account.refreshToken);
 
-                    // If session was refreshed, update stored tokens
                     if (syncResult.success && syncResult.session) {
                         const updatedAccount: StoredAccount = {
                             ...account,
@@ -201,13 +292,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
                         };
                         AccountManager.addAccount(updatedAccount);
 
-                        // Update main process session store
                         await window.ipcRenderer.invoke('auth:update-session', {
                             token: syncResult.session.access_token,
                             refreshToken: syncResult.session.refresh_token
                         });
 
-                        // Use refreshed tokens for login success - AFTER session is ready
                         onLoginSuccess({
                             name: account.name,
                             uuid: account.uuid,
@@ -216,19 +305,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
                             preferredSkin: account.preferredSkin
                         });
                         setIsLoggingIn(false);
-                        return; // Exit early since we already called onLoginSuccess
-                    } else if (!syncResult.success) {
-                        console.warn("[Login] Session sync failed, account may have limited functionality");
+                        return;
                     }
                 } catch (e) {
                     console.warn("[Login] Session sync error:", e);
                 }
             }
 
-            // Only reach here if: 
-            // - Not a whoap account
-            // - Offline mode
-            // - Session sync failed but we still want to proceed
             onLoginSuccess({
                 name: account.name,
                 uuid: account.uuid,
@@ -238,7 +321,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
             });
         } catch (err) {
             console.error("Account selection failed", err);
-            setError("Failed to switch account.");
+            setErrors({ general: 'Failed to switch account' });
+            setAnimationState('idle');
         } finally {
             setIsLoggingIn(false);
         }
@@ -258,225 +342,429 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
         }
     };
 
+    const getStrengthColor = () => {
+        switch (passwordStrength) {
+            case 0: return '#333';
+            case 1: return '#ff4444';
+            case 2: return '#ff8800';
+            case 3: return '#ffcc00';
+            case 4: return '#44ff44';
+            default: return '#333';
+        }
+    };
+
+    const getStrengthLabel = () => {
+        switch (passwordStrength) {
+            case 0: return '';
+            case 1: return 'Weak';
+            case 2: return 'Fair';
+            case 3: return 'Good';
+            case 4: return 'Strong';
+            default: return '';
+        }
+    };
+
     return (
         <div className={styles.container}>
-            {/* Left Sidebar */}
-            <div className={styles.sidebar}>
-                <div className={styles.logoArea}>
-                    <h1 className={styles.logoTitle}>
-                        <span className={styles.logoBold}>Whoap</span>
-                        <span className={styles.logoLight}>Launcher</span>
-                    </h1>
-                </div>
+            <div className={styles.bgAnimation}>
+                <div className={styles.bgGradient} />
+                <div className={styles.bgPattern} />
+            </div>
 
-                <div className={styles.authTabs}>
-                    <button
-                        className={`${styles.authTab} ${authMode === 'microsoft' ? styles.active : ''}`}
-                        onClick={() => setAuthMode('microsoft')}
-                    >
-                        Microsoft
-                    </button>
-                    <button
-                        className={`${styles.authTab} ${authMode === 'whoap' ? styles.active : ''}`}
-                        onClick={() => setAuthMode('whoap')}
-                    >
-                        Whoap
-                    </button>
-                    <button
-                        className={`${styles.authTab} ${authMode === 'offline' ? styles.active : ''}`}
-                        onClick={() => setAuthMode('offline')}
-                    >
-                        Offline
-                    </button>
-                </div>
+            <div className={styles.card}>
+                <div className={styles.authPanel}>
+                    <div className={styles.logoSection}>
+                        <div className={styles.logoIcon}>
+                            <Gamepad2 size={32} />
+                        </div>
+                        <h1 className={styles.logoText}>
+                            <span className={styles.logoPrimary}>Whoap</span>
+                            <span className={styles.logoSecondary}>Launcher</span>
+                        </h1>
+                    </div>
 
-                {authMode === 'microsoft' && (
-                    <div className={styles.authForm}>
+                    <div className={styles.tabContainer}>
                         <button
-                            className={styles.microsoftBtn}
-                            onClick={handleMicrosoftLogin}
-                            disabled={isLoggingIn}
+                            className={`${styles.tab} ${authMode === 'microsoft' ? styles.active : ''}`}
+                            onClick={() => { setAuthMode('microsoft'); setErrors({}); }}
                         >
-                            <svg viewBox="0 0 21 21" width="20" height="20">
+                            <svg viewBox="0 0 21 21" width="16" height="16" style={{ marginRight: 8 }}>
                                 <rect x="1" y="1" width="9" height="9" fill="#f25022" />
                                 <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
                                 <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
                                 <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
                             </svg>
-                            {isLoggingIn ? 'Connecting...' : 'Login with Microsoft'}
+                            Microsoft
                         </button>
-                        <p style={{ color: '#666', fontSize: 13, textAlign: 'center', marginTop: 12 }}>
-                            Sign in with your Microsoft account to play Minecraft: Java Edition.
-                        </p>
+                        <button
+                            className={`${styles.tab} ${authMode === 'whoap' ? styles.active : ''}`}
+                            onClick={() => { setAuthMode('whoap'); setErrors({}); }}
+                        >
+                            <Sparkles size={16} style={{ marginRight: 8 }} />
+                            Whoap
+                        </button>
+                        <button
+                            className={`${styles.tab} ${authMode === 'offline' ? styles.active : ''}`}
+                            onClick={() => { setAuthMode('offline'); setErrors({}); }}
+                        >
+                            <User size={16} style={{ marginRight: 8 }} />
+                            Offline
+                        </button>
                     </div>
-                )}
 
-                {authMode === 'whoap' && (
-                    <form onSubmit={handleWhoapAuth} className={styles.authForm}>
-                        {verificationSent ? (
-                            <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                                <div style={{ fontSize: 48, marginBottom: 16 }}>✉️</div>
-                                <h3 style={{ marginBottom: 8 }}>Check your inbox</h3>
-                                <p style={{ color: '#888', fontSize: 14, marginBottom: 24 }}>
-                                    We sent a verification link to <strong style={{ color: '#fff' }}>{email}</strong>
-                                </p>
+                    <div className={styles.formContainer}>
+                        {authMode === 'microsoft' && (
+                            <div className={`${styles.authForm} ${styles.fadeIn}`}>
+                                <div className={styles.welcomeText}>
+                                    <h2>Welcome Back</h2>
+                                    <p>Sign in with your Microsoft account to play Minecraft</p>
+                                </div>
+                                
                                 <button
-                                    type="button"
-                                    className={styles.primaryBtn}
-                                    onClick={() => { setVerificationSent(false); setIsRegistering(false); }}
+                                    className={`${styles.microsoftBtn} ${animationState === 'loading' ? styles.loading : ''}`}
+                                    onClick={handleMicrosoftLogin}
+                                    disabled={isLoggingIn}
                                 >
-                                    Return to Login
+                                    {animationState === 'loading' ? (
+                                        <div className={styles.spinner} />
+                                    ) : (
+                                        <>
+                                            <svg viewBox="0 0 21 21" width="20" height="20">
+                                                <rect x="1" y="1" width="9" height="9" fill="#fff" />
+                                                <rect x="11" y="1" width="9" height="9" fill="#fff" />
+                                                <rect x="1" y="11" width="9" height="9" fill="#fff" />
+                                                <rect x="11" y="11" width="9" height="9" fill="#fff" />
+                                            </svg>
+                                            Continue with Microsoft
+                                        </>
+                                    )}
                                 </button>
+
+                                <div className={styles.helpText}>
+                                    Don't have Minecraft? <a href="#" className={styles.link}>Get it here</a>
+                                </div>
                             </div>
-                        ) : (
-                            <>
-                                {isRegistering && (
-                                    <div className={styles.inputGroup}>
-                                        <label className={styles.label}>Display Name</label>
+                        )}
+
+                        {authMode === 'whoap' && (
+                            <div className={`${styles.authForm} ${styles.fadeIn}`}>
+                                {verificationSent ? (
+                                    <div className={styles.verificationSent}>
+                                        <div className={styles.verificationIcon}>✉️</div>
+                                        <h2>Verify your email</h2>
+                                        <p>We sent a verification link to <strong>{email}</strong></p>
+                                        <button
+                                            className={styles.primaryBtn}
+                                            onClick={() => { setVerificationSent(false); setIsRegistering(false); }}
+                                        >
+                                            Back to Login
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className={styles.welcomeText}>
+                                            <h2>{isRegistering ? 'Create Account' : 'Welcome Back'}</h2>
+                                            <p>{isRegistering ? 'Join the Whoap community today' : 'Sign in to your Whoap account'}</p>
+                                        </div>
+
+                                        <form onSubmit={handleWhoapAuth} className={styles.form}>
+                                            {isRegistering && (
+                                                <div className={styles.inputWrapper}>
+                                                    <User size={18} className={styles.inputIcon} />
+                                                    <input
+                                                        type="text"
+                                                        value={username}
+                                                        onChange={e => { setUsername(e.target.value); setErrors({ ...errors, username: undefined }); }}
+                                                        placeholder="Username"
+                                                        className={`${styles.input} ${errors.username ? styles.error : ''}`}
+                                                    />
+                                                    {errors.username && (
+                                                        <div className={styles.errorTooltip}>
+                                                            <AlertCircle size={14} />
+                                                            {errors.username}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            <div className={styles.inputWrapper}>
+                                                <Mail size={18} className={styles.inputIcon} />
+                                                <input
+                                                    type="email"
+                                                    value={email}
+                                                    onChange={e => { setEmail(e.target.value); setErrors({ ...errors, email: undefined }); }}
+                                                    placeholder="Email address"
+                                                    className={`${styles.input} ${errors.email ? styles.error : ''}`}
+                                                />
+                                                {errors.email && (
+                                                    <div className={styles.errorTooltip}>
+                                                        <AlertCircle size={14} />
+                                                        {errors.email}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className={styles.inputWrapper}>
+                                                <Lock size={18} className={styles.inputIcon} />
+                                                <input
+                                                    type={showPassword ? 'text' : 'password'}
+                                                    value={password}
+                                                    onChange={e => { setPassword(e.target.value); setErrors({ ...errors, password: undefined }); }}
+                                                    placeholder="Password"
+                                                    className={`${styles.input} ${errors.password ? styles.error : ''}`}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className={styles.eyeBtn}
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                >
+                                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                </button>
+                                                {errors.password && (
+                                                    <div className={styles.errorTooltip}>
+                                                        <AlertCircle size={14} />
+                                                        {errors.password}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {isRegistering && password && (
+                                                <div className={styles.passwordStrength}>
+                                                    <div className={styles.strengthBar}>
+                                                        {[1, 2, 3, 4].map((level) => (
+                                                            <div
+                                                                key={level}
+                                                                className={styles.strengthSegment}
+                                                                style={{
+                                                                    backgroundColor: passwordStrength >= level ? getStrengthColor() : '#333'
+                                                                }}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <span style={{ color: getStrengthColor(), fontSize: 12 }}>
+                                                        {getStrengthLabel()}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {!isRegistering && (
+                                                <div className={styles.options}>
+                                                    <label className={styles.checkbox}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={rememberMe}
+                                                            onChange={e => setRememberMe(e.target.checked)}
+                                                        />
+                                                        <span>Remember me</span>
+                                                    </label>
+                                                    <button type="button" className={styles.forgotLink}>
+                                                        Forgot password?
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            <button
+                                                type="submit"
+                                                className={`${styles.primaryBtn} ${animationState === 'loading' ? styles.loading : ''}`}
+                                                disabled={isLoggingIn}
+                                            >
+                                                {animationState === 'loading' ? (
+                                                    <div className={styles.spinner} />
+                                                ) : (
+                                                    <>
+                                                        {isRegistering ? 'Create Account' : 'Sign In'}
+                                                        <ArrowRight size={18} />
+                                                    </>
+                                                )}
+                                            </button>
+                                        </form>
+
+                                        <div className={styles.switchMode}>
+                                            {isRegistering ? 'Already have an account?' : "Don't have an account?"}
+                                            <button
+                                                className={styles.switchBtn}
+                                                onClick={() => {
+                                                    setIsRegistering(!isRegistering);
+                                                    setErrors({});
+                                                    setPassword('');
+                                                }}
+                                            >
+                                                {isRegistering ? 'Sign In' : 'Create Account'}
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
+
+                        {authMode === 'offline' && (
+                            <div className={`${styles.authForm} ${styles.fadeIn}`}>
+                                <div className={styles.welcomeText}>
+                                    <h2>Play Offline</h2>
+                                    <p>Create a local profile without online features</p>
+                                </div>
+
+                                <form onSubmit={handleOfflineLogin} className={styles.form}>
+                                    <div className={styles.inputWrapper}>
+                                        <User size={18} className={styles.inputIcon} />
                                         <input
-                                            className={styles.input}
                                             type="text"
                                             value={username}
-                                            onChange={e => setUsername(e.target.value)}
-                                            placeholder="Username"
-                                            required
+                                            onChange={e => { setUsername(e.target.value); setErrors({ ...errors, username: undefined }); }}
+                                            placeholder="Choose a username"
+                                            className={`${styles.input} ${errors.username ? styles.error : ''}`}
                                         />
+                                        {errors.username && (
+                                            <div className={styles.errorTooltip}>
+                                                <AlertCircle size={14} />
+                                                {errors.username}
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                                <div className={styles.inputGroup}>
-                                    <label className={styles.label}>Email</label>
-                                    <input
-                                        className={styles.input}
-                                        type="email"
-                                        value={email}
-                                        onChange={e => setEmail(e.target.value)}
-                                        placeholder="name@example.com"
-                                        required
-                                    />
-                                </div>
-                                <div className={styles.inputGroup}>
-                                    <label className={styles.label}>Password</label>
-                                    <input
-                                        className={styles.input}
-                                        type="password"
-                                        value={password}
-                                        onChange={e => setPassword(e.target.value)}
-                                        placeholder="••••••••"
-                                        required
-                                    />
-                                </div>
-                                <button type="submit" className={styles.primaryBtn} disabled={isLoggingIn}>
-                                    {isLoggingIn ? 'Processing...' : (isRegistering ? 'Create Account' : 'Sign In')}
-                                </button>
 
-                                <div className={styles.toggleMeta}>
-                                    {isRegistering ? 'Already have an account?' : "Don't have an account?"}
-                                    <button type="button" className={styles.linkBtn} onClick={() => setIsRegistering(!isRegistering)}>
-                                        {isRegistering ? 'Log In' : 'Sign Up'}
+                                    <div className={styles.offlineInfo}>
+                                        <AlertCircle size={16} />
+                                        <span>Offline profiles don't have skins, capes, or multiplayer access</span>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        className={`${styles.primaryBtn} ${animationState === 'loading' ? styles.loading : ''}`}
+                                        disabled={!username || isLoggingIn}
+                                    >
+                                        {animationState === 'loading' ? (
+                                            <div className={styles.spinner} />
+                                        ) : (
+                                            <>
+                                                Start Playing
+                                                <Play size={18} fill="currentColor" />
+                                            </>
+                                        )}
                                     </button>
-                                </div>
-                            </>
-                        )}
-                    </form>
-                )}
-
-                {authMode === 'offline' && (
-                    <form onSubmit={handleOfflineLogin} className={styles.authForm}>
-                        <div className={styles.inputGroup}>
-                            <label className={styles.label}>Username</label>
-                            <input
-                                type="text"
-                                placeholder="Steve"
-                                className={styles.input}
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                disabled={isLoggingIn}
-                                required
-                            />
-                        </div>
-                        <button type="submit" className={styles.primaryBtn} disabled={!username || isLoggingIn}>
-                            {isLoggingIn ? 'Creating...' : 'Play Offline'}
-                        </button>
-                        <p style={{ color: '#666', fontSize: 13, textAlign: 'center' }}>
-                            Offline profiles are local only. Skins and online servers won't work.
-                        </p>
-                    </form>
-                )}
-
-                {error && <div className={styles.error}>{error}</div>}
-
-                {accounts.length > 0 && (
-                    <div className={styles.accountSection}>
-                        <div className={styles.divider}>Logged In Users</div>
-                        <div style={{ position: 'relative' }}>
-                            <div className={styles.accountDropdown} onClick={() => setShowAccountDropdown(!showAccountDropdown)}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                    {selectedAccount && (
-                                        <UserAvatar
-                                            username={selectedAccount.name}
-                                            preferredSkin={selectedAccount.preferredSkin}
-                                            uuid={selectedAccount.uuid}
-                                            className={styles.miniAvatar}
-                                            accountType={selectedAccount.type as any}
-                                        />
-                                    )}
-                                    <div>
-                                        <div style={{ fontWeight: 600, fontSize: 14 }}>{selectedAccount?.name || 'Select Account'}</div>
-                                        <div style={{ fontSize: 11, color: '#666' }}>
-                                            {selectedAccount?.type === 'offline' ? 'Offline' : (selectedAccount?.type === 'whoap' ? 'Whoap Cloud' : 'Microsoft')}
-                                        </div>
-                                    </div>
-                                </div>
-                                {showAccountDropdown ? <ChevronUp size={16} color="#666" /> : <ChevronDown size={16} color="#666" />}
+                                </form>
                             </div>
+                        )}
 
-                            {showAccountDropdown && (
-                                <div className={styles.dropdownMenu}>
-                                    {accounts.map(acc => (
-                                        <div
-                                            key={acc.uuid}
-                                            className={styles.dropdownItem}
-                                            onClick={() => {
-                                                setSelectedAccount(acc);
-                                                setShowAccountDropdown(false);
-                                                // Automatically trigger play with this account
-                                                handleAccountSelect(acc);
-                                            }}
-                                        >
+                        {errors.general && (
+                            <div className={styles.errorMessage}>
+                                <AlertCircle size={18} />
+                                <span>{errors.general}</span>
+                            </div>
+                        )}
+                    </div>
+
+                    {accounts.length > 0 && (
+                        <div className={styles.accountsSection}>
+                            <div className={styles.sectionTitle}>Saved Accounts</div>
+                            
+                            <div className={styles.accountSelector} ref={dropdownRef}>
+                                <div 
+                                    className={styles.accountCard}
+                                    onClick={() => setShowAccountDropdown(!showAccountDropdown)}
+                                >
+                                    {selectedAccount && (
+                                        <>
                                             <UserAvatar
-                                                username={acc.name}
-                                                preferredSkin={acc.preferredSkin}
-                                                uuid={acc.uuid}
-                                                className={styles.miniAvatar}
-                                                accountType={acc.type as any}
+                                                username={selectedAccount.name}
+                                                preferredSkin={selectedAccount.preferredSkin}
+                                                uuid={selectedAccount.uuid}
+                                                className={styles.accountAvatar}
+                                                accountType={selectedAccount.type as any}
                                             />
-                                            <div style={{ flex: 1 }}>
-                                                <div style={{ fontSize: 13, fontWeight: 500 }}>{acc.name}</div>
-                                                <div style={{ fontSize: 11, color: '#666' }}>
-                                                    {acc.type === 'offline' ? 'Offline' : (acc.type === 'whoap' ? 'Whoap Cloud' : 'Microsoft')}
+                                            <div className={styles.accountInfo}>
+                                                <div className={styles.accountName}>{selectedAccount.name}</div>
+                                                <div className={styles.accountType}>
+                                                    {selectedAccount.type === 'offline' ? 'Offline' : 
+                                                     selectedAccount.type === 'whoap' ? 'Whoap Cloud' : 'Microsoft'}
                                                 </div>
                                             </div>
-                                            {selectedAccount?.uuid === acc.uuid && <CheckCircle size={14} color="#ff8800" />}
-                                        </div>
-                                    ))}
+                                            {showAccountDropdown ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                        </>
+                                    )}
                                 </div>
-                            )}
-                        </div>
 
-                        <div className={styles.accountActions}>
-                            <button className={`${styles.actionBtn} ${styles.logoutBtn}`} onClick={() => selectedAccount && removeAccount(selectedAccount.uuid)}>
-                                <LogOut size={16} /> Log Out
-                            </button>
-                            <button className={`${styles.actionBtn} ${styles.playBtn}`} onClick={playWithAccount} disabled={!selectedAccount}>
-                                <Play size={16} fill="#fff" /> Play
-                            </button>
+                                {showAccountDropdown && (
+                                    <div className={styles.accountsDropdown}>
+                                        {accounts.map(acc => (
+                                            <div
+                                                key={acc.uuid}
+                                                className={`${styles.accountOption} ${selectedAccount?.uuid === acc.uuid ? styles.selected : ''}`}
+                                                onClick={() => {
+                                                    setSelectedAccount(acc);
+                                                    setShowAccountDropdown(false);
+                                                }}
+                                            >
+                                                <UserAvatar
+                                                    username={acc.name}
+                                                    preferredSkin={acc.preferredSkin}
+                                                    uuid={acc.uuid}
+                                                    className={styles.accountAvatar}
+                                                    accountType={acc.type as any}
+                                                />
+                                                <div className={styles.accountInfo}>
+                                                    <div className={styles.accountName}>{acc.name}</div>
+                                                    <div className={styles.accountType}>
+                                                        {acc.type === 'offline' ? 'Offline' : 
+                                                         acc.type === 'whoap' ? 'Whoap Cloud' : 'Microsoft'}
+                                                    </div>
+                                                </div>
+                                                {selectedAccount?.uuid === acc.uuid && <CheckCircle size={16} color="#ff8800" />}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className={styles.accountActions}>
+                                <button 
+                                    className={styles.actionBtn} 
+                                    onClick={() => selectedAccount && removeAccount(selectedAccount.uuid)}
+                                >
+                                    <LogOut size={16} />
+                                    Remove
+                                </button>
+                                <button 
+                                    className={styles.playBtn} 
+                                    onClick={playWithAccount} 
+                                    disabled={!selectedAccount || isLoggingIn}
+                                >
+                                    <Play size={16} fill="currentColor" />
+                                    Play
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className={styles.visualPanel}>
+                    <div className={styles.visualContent}>
+                        <div className={styles.featureCard}>
+                            <div className={styles.featureIcon}>
+                                <Sparkles size={32} />
+                            </div>
+                            <h3>Modern Launcher</h3>
+                            <p>Experience Minecraft like never before with our sleek, modern interface</p>
+                        </div>
+                        <div className={styles.featureCard}>
+                            <div className={styles.featureIcon}>
+                                <Gamepad2 size={32} />
+                            </div>
+                            <h3>Cloud Sync</h3>
+                            <p>Your profiles, skins, and settings synced across all devices</p>
                         </div>
                     </div>
-                )}
+                    <div className={styles.bgImage} style={{ backgroundImage: `url(${loginBg})` }} />
+                </div>
             </div>
 
-            {/* Right Panel - Background */}
-            <div className={styles.bgPanel} style={{ backgroundImage: `url(${loginBg})` }} />
-        </div >
+            <div className={styles.footer}>
+                <span>© 2024 Whoap Launcher</span>
+                <div className={styles.footerLinks}>
+                    <a href="#">Privacy</a>
+                    <a href="#">Terms</a>
+                    <a href="#">Support</a>
+                </div>
+            </div>
+        </div>
     );
 };
