@@ -297,13 +297,26 @@ export class LaunchProcess {
 
                 // Libraries match
                 const cpLibraries: string[] = [];
+                const nativesToExtract: { path: string; exclude: string[] }[] = [];
+                
+                // Helper to get current platform name
+                const getPlatformName = () => {
+                    if (process.platform === 'win32') return 'windows';
+                    if (process.platform === 'darwin') return 'osx';
+                    return 'linux';
+                };
+                
+                const getPlatformArch = () => {
+                    return process.arch === 'x64' ? '64' : '32';
+                };
+                
                 if (versionData.libraries) {
                     versionData.libraries.forEach((lib: any) => {
                         // Rules Check
                         if (lib.rules) {
                             let allowed = false;
                             if (lib.rules.some((r: any) => r.action === 'allow' && !r.os)) allowed = true;
-                            const osName = process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'osx' : 'linux';
+                            const osName = getPlatformName();
                             if (lib.rules.some((r: any) => r.action === 'allow' && r.os?.name === osName)) allowed = true;
                             if (lib.rules.some((r: any) => r.action === 'disallow' && r.os?.name === osName)) allowed = false;
                             if (!allowed) return;
@@ -314,39 +327,76 @@ export class LaunchProcess {
                         let libUrl = '';
                         let libSha1 = '';
                         let libSize = 0;
+                        let isNative = false;
+                        let extractExclude: string[] = [];
 
-                        if (lib.downloads && lib.downloads.artifact) {
-                            // Standard Modern Format
+                        // Check for native library first
+                        if (lib.natives) {
+                            const platform = getPlatformName();
+                            const arch = getPlatformArch();
+                            const classifierKey = lib.natives[platform];
+                            
+                            if (classifierKey && lib.classifies) {
+                                // Handle arch-specific classifiers like windows-${arch}
+                                const resolvedClassifier = classifierKey.replace('${arch}', arch);
+                                const classifierData = lib.classifies[resolvedClassifier];
+                                
+                                if (classifierData) {
+                                    isNative = true;
+                                    libPath = path.join(nativesDir, path.basename(classifierData.url));
+                                    libUrl = classifierData.url;
+                                    libSha1 = classifierData.sha1;
+                                    libSize = classifierData.size;
+                                    extractExclude = lib.extract?.exclude || [];
+                                }
+                            }
+                        }
+                        
+                        // Standard artifact
+                        if (!isNative && lib.downloads && lib.downloads.artifact) {
                             libPath = path.join(librariesDir, lib.downloads.artifact.path);
                             libUrl = lib.downloads.artifact.url;
                             libSha1 = lib.downloads.artifact.sha1;
                             libSize = lib.downloads.artifact.size;
-                        } else if (lib.name) {
+                        } else if (!isNative && lib.artifact) {
+                            // Alternative format (some custom JSONs)
+                            const parts = lib.name.split(':');
+                            const group = parts[0].replace(/\./g, path.sep);
+                            const artifactId = parts[1];
+                            const version = parts[2];
+                            const filename = `${artifactId}-${version}.jar`;
+                            const artifactPath = path.join(group, artifactId, version, filename);
+                            libPath = path.join(librariesDir, lib.artifact.path || artifactPath);
+                            libUrl = lib.artifact.url;
+                            libSha1 = lib.artifact.sha1;
+                            libSize = lib.artifact.size;
+                        } else if (!isNative && lib.name) {
                             // Legacy / Maven Format (TLauncher/Forge)
                             // Format: group:name:version
                             const parts = lib.name.split(':');
-                            const group = parts[0].replace(/\./g, path.sep); // com.example -> com/example
+                            const group = parts[0].replace(/\./g, path.sep);
                             const artifactId = parts[1];
                             const version = parts[2];
                             const filename = `${artifactId}-${version}.jar`;
 
                             libPath = path.join(librariesDir, group, artifactId, version, filename);
 
-                            // Try to guess URL if missing? usually libraries.minecraft.net OR maven central
-                            // But usually local versions assume files exist or providing a `url` field in the ID root.
                             if (lib.url) {
                                 libUrl = lib.url + `${group.replace(/\\/g, '/')}/${artifactId}/${version}/${filename}`;
                             } else {
-                                // Default repo fallback?
                                 libUrl = `https://libraries.minecraft.net/${group.replace(/\\/g, '/')}/${artifactId}/${version}/${filename}`;
                             }
                         }
 
                         if (libPath) {
-                            cpLibraries.push(libPath);
+                            if (isNative) {
+                                // Native libraries need to be extracted, not added to classpath
+                                nativesToExtract.push({ path: libPath, exclude: extractExclude });
+                            } else {
+                                cpLibraries.push(libPath);
+                            }
 
                             // Download if missing or check validity
-                            // For local/imported versions, we act robust: if it exists, use it.
                             const exists = fs.existsSync(libPath);
                             if (!exists) {
                                 if (libUrl) {
@@ -359,10 +409,6 @@ export class LaunchProcess {
                                 } else {
                                     console.warn(`[Launch] Missing library ${lib.name} and no URL found.`);
                                 }
-                            } else if (authData.type !== 'offline') {
-                                // Online: We can optionally verify SHA1 if strict.
-                                // But for now we trust existing files to speed up launch, 
-                                // unless user forces "repair".
                             }
                         }
                     });
@@ -403,6 +449,39 @@ export class LaunchProcess {
                         // But wait, the queue only contains missing files. So we are missing files.
                         console.error("[Launch] Download failed:", e);
                         throw new Error(`Failed to download required files: ${e.message}. Please check your connection.`);
+                    }
+                    
+                    // 3.1 Extract native libraries
+                    if (nativesToExtract.length > 0) {
+                        event.sender.send('launch:progress', { status: 'Extracting natives...', progress: 95, total: 100 });
+                        console.log(`[Launch] Extracting ${nativesToExtract.length} native libraries...`);
+                        
+                        for (const native of nativesToExtract) {
+                            if (fs.existsSync(native.path)) {
+                                try {
+                                    const AdmZip = require('adm-zip');
+                                    const zip = new AdmZip(native.path);
+                                    const entries = zip.getEntries();
+                                    
+                                    for (const entry of entries) {
+                                        // Check if entry should be excluded
+                                        const shouldExclude = native.exclude.some((pattern: string) => {
+                                            if (pattern.endsWith('/')) {
+                                                return entry.entryName.startsWith(pattern);
+                                            }
+                                            return entry.entryName === pattern;
+                                        });
+                                        
+                                        if (!shouldExclude && !entry.isDirectory) {
+                                            zip.extractEntryTo(entry, nativesDir, false, true);
+                                        }
+                                    }
+                                    console.log(`[Launch] Extracted native: ${path.basename(native.path)}`);
+                                } catch (extractError) {
+                                    console.error(`[Launch] Failed to extract native ${native.path}:`, extractError);
+                                }
+                            }
+                        }
                     }
                 }
 
