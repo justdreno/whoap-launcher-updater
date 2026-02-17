@@ -278,11 +278,8 @@ export class DiscordManager {
         });
     }
 
-    public setPlayingPresence(instanceId: string, versionId: string, loader?: string, isMultiplayer?: boolean, serverName?: string, playerCount?: number, maxPlayers?: number, username?: string) {
+    public setPlayingPresence(instanceId: string, versionId: string, loader?: string, isMultiplayer?: boolean, serverName?: string, playerCount?: number, maxPlayers?: number, username?: string, customIconUrl?: string) {
         const instanceName = this.formatInstanceName(instanceId);
-        
-        // Use loader for small image (fabric, vanilla, forge, etc.)
-        const smallImageKey = this.getLoaderImageKey(loader) || 'logo';
         
         // Details: Playing as Username
         const detailsText = username ? `Playing as ${username}` : 'Playing Minecraft';
@@ -293,14 +290,16 @@ export class DiscordManager {
             stateText = `On ${serverName}`;
         }
 
+        // Large icon: use custom icon if set, otherwise use logo
+        const largeImageKey = customIconUrl || 'logo';
+        const largeImageText = instanceName;
+
         this.updatePresence({
             presenceState: PresenceState.PLAYING,
             details: detailsText,
             state: stateText,
-            largeImageKey: this.getVersionImageKey(versionId),
-            largeImageText: `Minecraft ${versionId}`,
-            smallImageKey: smallImageKey,
-            smallImageText: loader ? loader.charAt(0).toUpperCase() + loader.slice(1) : 'Whoap Launcher',
+            largeImageKey: largeImageKey,
+            largeImageText: largeImageText,
             startTimestamp: Date.now(),
             isMultiplayer: isMultiplayer,
             playerCount: playerCount,

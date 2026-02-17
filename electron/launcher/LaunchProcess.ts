@@ -832,10 +832,11 @@ export class LaunchProcess {
                     instanceLoader = instanceConfig.loader;
                 }
 
-                // Get username from auth data
+                // Get username from auth data and instance icon
                 const username = authData?.name || 'Player';
+                const instanceIcon = instanceConfig?.icon;
 
-                DiscordManager.getInstance().setPlayingPresence(instanceId, versionId, instanceLoader, false, undefined, undefined, undefined, username);
+                DiscordManager.getInstance().setPlayingPresence(instanceId, versionId, instanceLoader, false, undefined, undefined, undefined, username, instanceIcon);
 
                 // Track playtime and server info for Discord Rich Presence
                 const startTime = Date.now();
@@ -881,7 +882,8 @@ export class LaunchProcess {
                                 currentServer,
                                 undefined,
                                 undefined,
-                                username
+                                username,
+                                instanceIcon
                             );
                         }
                     }
@@ -912,7 +914,8 @@ export class LaunchProcess {
                             undefined,
                             undefined,
                             undefined,
-                            username
+                            username,
+                            instanceIcon
                         );
                     }
                 };
