@@ -96,16 +96,41 @@ export class LaunchProcess {
                 : (useExternalPath || versionHasCustomContent ? versionFolder : gamePath);
 
             try {
-                // 1. Fetch Version Data
-                // Try remote first
-                let versionData: any = null;
-                try {
-                    versionData = await VersionManager.getVersionDetails(versionId);
-                } catch (e) {
-                    console.warn("[Launch] Failed to fetch remote version details, falling back to local:", e);
+                // Load instance config for custom settings
+                let instanceConfig: any = null;
+                const instanceConfigPath = path.join(instanceRootPath, 'instance.json');
+                if (isNativeInstance && fs.existsSync(instanceConfigPath)) {
+                    try {
+                        instanceConfig = JSON.parse(fs.readFileSync(instanceConfigPath, 'utf8'));
+                        console.log("[Launch] Loaded instance config:", instanceConfig.id);
+                    } catch (e) {
+                        console.warn("[Launch] Failed to read instance config", e);
+                    }
                 }
 
-                // Fallback: Local JSON (TLauncher/Custom)
+                // 1. Fetch Version Data
+                let versionData: any = null;
+
+                // Check for custom version JSON first (custom clients)
+                if (instanceConfig?.customVersionJson && fs.existsSync(instanceConfig.customVersionJson)) {
+                    console.log("[Launch] Loading custom version JSON:", instanceConfig.customVersionJson);
+                    try {
+                        versionData = JSON.parse(fs.readFileSync(instanceConfig.customVersionJson, 'utf-8'));
+                    } catch (e) {
+                        console.error("[Launch] Failed to parse custom version JSON", e);
+                    }
+                }
+
+                // Try remote if no custom JSON
+                if (!versionData) {
+                    try {
+                        versionData = await VersionManager.getVersionDetails(versionId);
+                    } catch (e) {
+                        console.warn("[Launch] Failed to fetch remote version details, falling back to local:", e);
+                    }
+                }
+
+                // Fallback: Local JSON in versions folder
                 if (!versionData) {
                     const localJsonPath = path.join(gamePath, 'versions', versionId, `${versionId}.json`);
                     if (fs.existsSync(localJsonPath)) {
@@ -197,21 +222,32 @@ export class LaunchProcess {
                     : path.join(gamePath, 'versions', versionId, 'natives');
 
                 // Client JAR
-                const sharedJarPath = path.join(gamePath, 'versions', versionId, `${versionId}.jar`);
-                const instanceJarPath = path.join(instancesRoot, instanceId, 'client.jar');
-
-                let clientJarPath = isNativeInstance ? instanceJarPath : sharedJarPath;
-
+                let clientJarPath: string;
                 let clientJarUrl = versionData.downloads?.client?.url;
                 let clientJarSha1 = versionData.downloads?.client?.sha1;
                 let clientJarSize = versionData.downloads?.client?.size;
 
-                // If utilizing shared JAR and it exists, prefer it
-                if (!isNativeInstance && fs.existsSync(sharedJarPath)) {
-                    clientJarPath = sharedJarPath;
-                } else if (!clientJarUrl && fs.existsSync(sharedJarPath)) {
-                    // Fallback if no URL but file exists (custom versions)
-                    clientJarPath = sharedJarPath;
+                // Check for custom client jar first
+                if (instanceConfig?.customClientJar && fs.existsSync(instanceConfig.customClientJar)) {
+                    console.log(`[Launch] Using custom client JAR: ${instanceConfig.customClientJar}`);
+                    clientJarPath = instanceConfig.customClientJar;
+                    // Clear download info since we have the jar locally
+                    clientJarUrl = undefined;
+                    clientJarSha1 = undefined;
+                    clientJarSize = undefined;
+                } else {
+                    const sharedJarPath = path.join(gamePath, 'versions', versionId, `${versionId}.jar`);
+                    const instanceJarPath = path.join(instancesRoot, instanceId, 'client.jar');
+                    
+                    clientJarPath = isNativeInstance ? instanceJarPath : sharedJarPath;
+
+                    // If utilizing shared JAR and it exists, prefer it
+                    if (!isNativeInstance && fs.existsSync(sharedJarPath)) {
+                        clientJarPath = sharedJarPath;
+                    } else if (!clientJarUrl && fs.existsSync(sharedJarPath)) {
+                        // Fallback if no URL but file exists (custom versions)
+                        clientJarPath = sharedJarPath;
+                    }
                 }
 
                 // Ensure directories
@@ -504,36 +540,43 @@ export class LaunchProcess {
                     console.log(`[Launch] Heuristic determined Java version ${requiredJavaVersion} for ${versionId}`);
                 }
 
-                // Check for custom Java path in config for this specific version
-                const configJavaPath = ConfigManager.getJavaPath(requiredJavaVersion);
+                // Check for custom Java path (instance-specific first, then global config)
                 let javaPath: string;
-
-                if (configJavaPath && configJavaPath !== 'auto') {
-                    javaPath = configJavaPath;
+                
+                if (instanceConfig?.javaPath && fs.existsSync(instanceConfig.javaPath)) {
+                    // Use instance-specific Java path
+                    console.log(`[Launch] Using instance-specific Java: ${instanceConfig.javaPath}`);
+                    javaPath = instanceConfig.javaPath;
                 } else {
-                    javaPath = await this.javaManager.ensureJava(requiredJavaVersion, (status, progress) => {
-                        event.sender.send('launch:progress', {
-                            status: status,
-                            progress: progress,
-                            total: 100
-                        });
-                        // Forward specific java progress to the modal too, if it's open
-                        event.sender.send('java-install-progress', { status, progress });
-                    }, async (ver, size) => {
-                        console.log(`[Launch] Asking user consent for Java ${ver} (${size} bytes)`);
-                        event.sender.send('java-install-request', { version: ver, sizeInBytes: size });
+                    const configJavaPath = ConfigManager.getJavaPath(requiredJavaVersion);
+                    
+                    if (configJavaPath && configJavaPath !== 'auto') {
+                        javaPath = configJavaPath;
+                    } else {
+                        javaPath = await this.javaManager.ensureJava(requiredJavaVersion, (status, progress) => {
+                            event.sender.send('launch:progress', {
+                                status: status,
+                                progress: progress,
+                                total: 100
+                            });
+                            // Forward specific java progress to the modal too, if it's open
+                            event.sender.send('java-install-progress', { status, progress });
+                        }, async (ver, size) => {
+                            console.log(`[Launch] Asking user consent for Java ${ver} (${size} bytes)`);
+                            event.sender.send('java-install-request', { version: ver, sizeInBytes: size });
 
-                        return new Promise<'install' | 'skip' | 'cancel'>((resolve) => {
-                            // Listen for one-time consent response
-                            ipcMain.once('java-install-consent', (_, action: 'install' | 'skip' | 'cancel') => {
-                                resolve(action);
-                                // Also notify frontend that we are done/start (handled by progress events mostly)
-                                if (action !== 'install') event.sender.send('java-install-done');
+                            return new Promise<'install' | 'skip' | 'cancel'>((resolve) => {
+                                // Listen for one-time consent response
+                                ipcMain.once('java-install-consent', (_, action: 'install' | 'skip' | 'cancel') => {
+                                    resolve(action);
+                                    // Also notify frontend that we are done/start (handled by progress events mostly)
+                                    if (action !== 'install') event.sender.send('java-install-done');
+                                });
                             });
                         });
-                    });
 
-                    event.sender.send('java-install-done');
+                        event.sender.send('java-install-done');
+                    }
                 }
 
                 // Get RAM settings and JVM Preset

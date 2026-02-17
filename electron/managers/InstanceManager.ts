@@ -12,7 +12,7 @@ export interface Instance {
     id: string;
     name: string;
     version: string;
-    loader: 'vanilla' | 'fabric' | 'forge' | 'neoforge' | 'quilt';
+    loader: 'vanilla' | 'fabric' | 'forge' | 'neoforge' | 'quilt' | 'custom';
     created: number;
     lastPlayed: number;
     type?: 'created' | 'imported';
@@ -22,6 +22,11 @@ export interface Instance {
     useExternalPath?: boolean; // If true, launch using the original version folder as gameDir
     icon?: string; // URL or path to custom icon
     playTime?: number; // Total playtime in seconds
+    // Custom version support
+    customVersionJson?: string; // Path to custom version JSON
+    customClientJar?: string; // Path to custom client JAR
+    javaPath?: string; // Custom Java executable path
+    javaVersion?: string; // Required Java version (e.g., "8", "17", "21")
 }
 
 export class InstanceManager {
@@ -278,6 +283,35 @@ export class InstanceManager {
                 return allWorlds;
             } catch (error) {
                 console.error("Failed to list all worlds:", error);
+                return [];
+            }
+        });
+
+        // Custom Client Import
+        ipcMain.handle('instance:import-custom-client', async (event) => {
+            try {
+                return await this.importCustomClient(event);
+            } catch (error) {
+                console.error("Failed to import custom client:", error);
+                return { success: false, error: String(error) };
+            }
+        });
+
+        // Java Path Management
+        ipcMain.handle('instance:update-java-path', async (_, instanceId: string, javaPath: string | null) => {
+            try {
+                return await this.updateJavaPath(instanceId, javaPath);
+            } catch (error) {
+                console.error("Failed to update Java path:", error);
+                return { success: false, error: String(error) };
+            }
+        });
+
+        ipcMain.handle('java:scan-system', async () => {
+            try {
+                return await this.scanSystemJava();
+            } catch (error) {
+                console.error("Failed to scan system Java:", error);
                 return [];
             }
         });
@@ -1218,5 +1252,204 @@ export class InstanceManager {
         }
         
         return size;
+    }
+
+    // ==================== CUSTOM CLIENT IMPORT ====================
+
+    async importCustomClient(event?: any): Promise<{ success: boolean; instanceId?: string; error?: string; canceled?: boolean }> {
+        const { filePaths } = await dialog.showOpenDialog({
+            title: 'Import Custom Client',
+            properties: ['openFile'],
+            filters: [{ name: 'ZIP Archive', extensions: ['zip'] }]
+        });
+
+        if (!filePaths || filePaths.length === 0) return { success: false, canceled: true };
+
+        event?.sender.send('instance:import-progress', { status: 'Reading archive...', progress: 10 });
+
+        const zipPath = filePaths[0];
+        const zip = new AdmZip(zipPath);
+        const zipEntries = zip.getEntries();
+
+        // Look for JSON and JAR files
+        const jsonEntry = zipEntries.find(e => e.entryName.endsWith('.json') && !e.entryName.includes('/'));
+        const jarEntry = zipEntries.find(e => e.entryName.endsWith('.jar') && !e.entryName.includes('/'));
+
+        if (!jsonEntry) {
+            throw new Error('No version JSON file found in archive. The ZIP must contain a .json file.');
+        }
+
+        event?.sender.send('instance:import-progress', { status: 'Parsing version info...', progress: 25 });
+
+        // Parse the JSON
+        const versionJson = JSON.parse(jsonEntry.getData().toString('utf8'));
+        const versionId = versionJson.id || path.basename(zipPath, '.zip');
+        
+        // Determine Java version requirement
+        let javaVersion = '17'; // default
+        if (versionJson.javaVersion?.majorVersion) {
+            javaVersion = String(versionJson.javaVersion.majorVersion);
+        } else {
+            // Infer from Minecraft version
+            const mcVersion = versionId.match(/(\d+)\.(\d+)/);
+            if (mcVersion) {
+                const major = parseInt(mcVersion[1]);
+                const minor = parseInt(mcVersion[2]);
+                if (major === 1 && minor <= 16) javaVersion = '8';
+                else if (major === 1 && minor <= 20) javaVersion = '17';
+                else javaVersion = '21';
+            }
+        }
+
+        event?.sender.send('instance:import-progress', { status: 'Creating instance...', progress: 40 });
+
+        // Create instance
+        let instanceId = versionId.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+        let counter = 1;
+        while (existsSync(path.join(this.instancesPath, instanceId))) {
+            instanceId = `${versionId.toLowerCase().replace(/[^a-z0-9_-]/g, '_')}_${counter}`;
+            counter++;
+        }
+
+        const destPath = path.join(this.instancesPath, instanceId);
+        await fs.mkdir(destPath, { recursive: true });
+
+        event?.sender.send('instance:import-progress', { status: 'Extracting files...', progress: 60 });
+
+        // Extract all files
+        zip.extractAllTo(destPath, true);
+
+        // Create instance config
+        const instanceConfig: Instance = {
+            id: instanceId,
+            name: versionId,
+            version: versionId,
+            loader: 'custom',
+            type: 'imported',
+            isImported: true,
+            created: Date.now(),
+            lastPlayed: 0,
+            customVersionJson: path.join(destPath, jsonEntry.entryName),
+            customClientJar: jarEntry ? path.join(destPath, jarEntry.entryName) : undefined,
+            javaVersion: javaVersion
+        };
+
+        await fs.writeFile(
+            path.join(destPath, 'instance.json'),
+            JSON.stringify(instanceConfig, null, 4)
+        );
+
+        event?.sender.send('instance:import-progress', { status: 'Complete!', progress: 100 });
+
+        return { success: true, instanceId };
+    }
+
+    // ==================== JAVA MANAGEMENT ====================
+
+    async updateJavaPath(instanceId: string, javaPath: string | null): Promise<{ success: boolean; error?: string }> {
+        try {
+            const instancePath = path.join(this.instancesPath, instanceId);
+            const configPath = path.join(instancePath, 'instance.json');
+
+            if (!existsSync(configPath)) {
+                return { success: false, error: 'Instance not found' };
+            }
+
+            const config: Instance = JSON.parse(await fs.readFile(configPath, 'utf8'));
+            config.javaPath = javaPath || undefined;
+
+            await fs.writeFile(configPath, JSON.stringify(config, null, 4));
+            return { success: true };
+        } catch (error) {
+            console.error('Failed to update Java path:', error);
+            return { success: false, error: String(error) };
+        }
+    }
+
+    async scanSystemJava(): Promise<{ version: string; path: string }[]> {
+        const javaInstallations: { version: string; path: string }[] = [];
+        const foundPaths = new Set<string>();
+
+        const scanRoots = [
+            process.env.JAVA_HOME,
+            process.env.JDK_HOME,
+            'C:\\Program Files\\Java',
+            'C:\\Program Files\\Eclipse Adoptium',
+            'C:\\Program Files\\Microsoft\\jdk*',
+            'C:\\Program Files\\Amazon Corretto',
+            path.join(ConfigManager.getDataPath(), '../.minecraft/runtime'),
+            path.join(ConfigManager.getDataPath(), '../.tlauncher/jvms'),
+            path.join(ConfigManager.getDataPath(), '../.curseforge/minecraft/Install/runtime'),
+            '/usr/lib/jvm',
+            '/Library/Java/JavaVirtualMachines',
+            path.join(require('os').homedir(), '.sdkman/candidates/java'),
+        ].filter(Boolean) as string[];
+
+        for (const root of scanRoots) {
+            try {
+                if (!existsSync(root)) continue;
+
+                const entries = await fs.readdir(root, { withFileTypes: true });
+                for (const entry of entries) {
+                    const fullPath = path.join(root, entry.name);
+                    
+                    // Check various possible Java binary locations
+                    const possibleBins = [
+                        path.join(fullPath, 'bin', 'java.exe'),
+                        path.join(fullPath, 'bin', 'java'),
+                        path.join(fullPath, 'java-runtime-gamma', 'bin', 'java.exe'),
+                        path.join(fullPath, 'windows-x64', 'java-runtime-gamma', 'bin', 'java.exe'),
+                        path.join(fullPath, 'Contents', 'Home', 'bin', 'java'), // macOS
+                    ];
+
+                    for (const binPath of possibleBins) {
+                        if (existsSync(binPath) && !foundPaths.has(binPath)) {
+                            const version = await this.getJavaVersion(binPath);
+                            if (version) {
+                                foundPaths.add(binPath);
+                                javaInstallations.push({ version, path: binPath });
+                            }
+                        }
+                    }
+                }
+            } catch (e) { }
+        }
+
+        // Also check system PATH
+        try {
+            const { execSync } = require('child_process');
+            const output = execSync('java -version 2>&1', { encoding: 'utf8' });
+            const versionMatch = output.match(/version "?(\d+)(?:\.(\d+))?/);
+            if (versionMatch) {
+                const major = versionMatch[1] === '1' ? versionMatch[2] : versionMatch[1];
+                const javaPath = process.platform === 'win32' ? 'java.exe' : 'java';
+                if (!foundPaths.has(javaPath)) {
+                    javaInstallations.unshift({ version: major, path: 'java' });
+                }
+            }
+        } catch (e) { }
+
+        return javaInstallations.sort((a, b) => parseInt(b.version) - parseInt(a.version));
+    }
+
+    private async getJavaVersion(javaPath: string): Promise<string | null> {
+        return new Promise((resolve) => {
+            const { spawn } = require('child_process');
+            const proc = spawn(javaPath, ['-version']);
+            let output = '';
+            proc.stderr.on('data', (d: Buffer) => output += d.toString());
+            proc.stdout.on('data', (d: Buffer) => output += d.toString());
+
+            proc.on('error', () => resolve(null));
+            proc.on('close', () => {
+                const match = output.match(/version "?(\d+)(?:\.(\d+))?/);
+                if (match) {
+                    const major = match[1] === '1' ? match[2] : match[1];
+                    resolve(major);
+                } else {
+                    resolve(null);
+                }
+            });
+        });
     }
 }

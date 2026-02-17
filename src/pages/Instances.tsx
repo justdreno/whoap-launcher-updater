@@ -135,6 +135,21 @@ export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNaviga
                     }}>
                         Import Profile
                     </button>
+                    <button className={styles.importBtn} onClick={async () => {
+                        setProcessing({ message: 'Importing Custom Client...', subMessage: 'Reading archive...', progress: 0 });
+                        try {
+                            const res = await InstanceApi.importCustomClient();
+                            if (res.success) {
+                                showToast('Custom client imported successfully!', 'success');
+                                loadInstances();
+                            }
+                            else if (res.error) showToast(res.error, 'error');
+                        } finally {
+                            setProcessing(null);
+                        }
+                    }}>
+                        Import Custom Client
+                    </button>
                     <button className={styles.createBtn} onClick={() => setShowCreateModal(true)}>
                         <Plus size={18} />
                         New Profile

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     X, 
     Edit3, 
@@ -10,7 +10,9 @@ import {
     Star,
     Box,
     AlertTriangle,
-    ChevronRight
+    ChevronRight,
+    Coffee,
+    Check
 } from 'lucide-react';
 import styles from './InstanceSettingsModal.module.css';
 import { Instance, InstanceApi } from '../api/instances';
@@ -32,13 +34,39 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
     const [deleting, setDeleting] = useState(false);
     const { showToast } = useToast();
 
-    const [activeTab, setActiveTab] = useState<'general' | 'icon' | 'danger'>('general');
+    const [activeTab, setActiveTab] = useState<'general' | 'icon' | 'java' | 'danger'>('general');
     const [isRenaming, setIsRenaming] = useState(false);
     const [isDuplicating, setIsDuplicating] = useState(false);
     const [inputValue, setInputValue] = useState('');
     const [iconUrl, setIconUrl] = useState(instance.icon || '');
+    
+    // Java management state
+    const [systemJava, setSystemJava] = useState<{ version: string; path: string }[]>([]);
+    const [selectedJava, setSelectedJava] = useState<string | null>(instance.javaPath || null);
+
+    // Load system Java installations
+    useEffect(() => {
+        const loadJava = async () => {
+            const javaList = await InstanceApi.scanSystemJava();
+            setSystemJava(javaList);
+        };
+        if (activeTab === 'java') {
+            loadJava();
+        }
+    }, [activeTab]);
 
     const canRename = instance.type === 'created';
+    
+    const handleJavaSelect = async (javaPath: string | null) => {
+        const result = await InstanceApi.updateJavaPath(instance.id, javaPath);
+        if (result.success) {
+            setSelectedJava(javaPath);
+            onUpdate();
+            showToast(javaPath ? 'Custom Java set' : 'Using default Java', 'success');
+        } else {
+            showToast('Failed to update Java path', 'error');
+        }
+    };
 
     const handleToggleFavorite = async () => {
         await InstanceApi.toggleFavorite(instance.id);
@@ -266,6 +294,12 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
                         Icon
                     </button>
                     <button 
+                        className={`${styles.tab} ${activeTab === 'java' ? styles.active : ''}`}
+                        onClick={() => setActiveTab('java')}
+                    >
+                        Java
+                    </button>
+                    <button 
                         className={`${styles.tab} ${activeTab === 'danger' ? styles.danger : ''} ${activeTab === 'danger' ? styles.active : ''}`}
                         onClick={() => setActiveTab('danger')}
                     >
@@ -359,6 +393,59 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
                                         Remove Icon
                                     </button>
                                 )}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'java' && (
+                        <div className={styles.panel}>
+                            <div className={styles.sectionTitle}>Java Runtime</div>
+                            
+                            {/* Current Java Info */}
+                            <div className={styles.javaInfoCard}>
+                                <div className={styles.javaInfoHeader}>
+                                    <Coffee size={20} />
+                                    <span>Current Java</span>
+                                </div>
+                                <div className={styles.javaInfoContent}>
+                                    {selectedJava ? (
+                                        <>
+                                            <div className={styles.javaPath}>{selectedJava}</div>
+                                            <button 
+                                                className={styles.clearJavaBtn}
+                                                onClick={() => handleJavaSelect(null)}
+                                            >
+                                                Use Default
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <div className={styles.javaDefault}>Using automatic Java detection</div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* System Java List */}
+                            <div className={styles.sectionTitle}>Available Java Installations</div>
+                            {systemJava.length === 0 ? (
+                                <div className={styles.javaEmpty}>Scanning for Java installations...</div>
+                            ) : (
+                                <div className={styles.javaList}>
+                                    {systemJava.map((java, idx) => (
+                                        <div 
+                                            key={idx}
+                                            className={`${styles.javaItem} ${selectedJava === java.path ? styles.selected : ''}`}
+                                            onClick={() => handleJavaSelect(java.path)}
+                                        >
+                                            <div className={styles.javaVersion}>Java {java.version}</div>
+                                            <div className={styles.javaPath}>{java.path}</div>
+                                            {selectedJava === java.path && <Check size={16} />}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            
+                            <div className={styles.javaNote}>
+                                Select a specific Java version to use for this profile, or leave as default for automatic detection.
                             </div>
                         </div>
                     )}

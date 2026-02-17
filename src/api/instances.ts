@@ -2,7 +2,7 @@ export interface Instance {
     id: string;
     name: string;
     version: string;
-    loader: 'vanilla' | 'fabric' | 'forge' | 'neoforge' | 'quilt';
+    loader: 'vanilla' | 'fabric' | 'forge' | 'neoforge' | 'quilt' | 'custom';
     created: number;
     lastPlayed: number;
     icon?: string;
@@ -11,6 +11,11 @@ export interface Instance {
     launchVersionId?: string;
     type?: 'created' | 'imported';
     playTime?: number;
+    // Custom version support
+    customVersionJson?: string; // Path to custom version JSON
+    customClientJar?: string; // Path to custom client JAR
+    javaPath?: string; // Custom Java executable path
+    javaVersion?: string; // Required Java version (e.g., "8", "17", "21")
 }
 
 export interface Version {
@@ -71,5 +76,14 @@ export const InstanceApi = {
     },
     updateIcon: async (id: string, iconUrl: string | null): Promise<{ success: boolean; error?: string }> => {
         return window.ipcRenderer.invoke('instance:update-icon', id, iconUrl);
+    },
+    importCustomClient: async (): Promise<{ success: boolean; instanceId?: string; canceled?: boolean; error?: string }> => {
+        return window.ipcRenderer.invoke('instance:import-custom-client');
+    },
+    updateJavaPath: async (id: string, javaPath: string | null): Promise<{ success: boolean; error?: string }> => {
+        return window.ipcRenderer.invoke('instance:update-java-path', id, javaPath);
+    },
+    scanSystemJava: async (): Promise<{ version: string; path: string }[]> => {
+        return window.ipcRenderer.invoke('java:scan-system');
     }
 };
