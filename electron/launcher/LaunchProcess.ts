@@ -816,11 +816,19 @@ export class LaunchProcess {
                 // Auto-configure Skin Loader if present
                 await this.ensureSkinConfig(instancePath, authData);
 
-                DiscordManager.getInstance().setPlayingPresence(instanceId, versionId, undefined, false, undefined);
+                // Get instance config to check loader
+                let instanceLoader: string | undefined;
+                if (instanceConfig?.loader) {
+                    instanceLoader = instanceConfig.loader;
+                }
 
-                // Track playtime
+                DiscordManager.getInstance().setPlayingPresence(instanceId, versionId, instanceLoader, false, undefined);
+
+                // Track playtime and server info for Discord Rich Presence
                 const startTime = Date.now();
                 let sessionPlayTime = 0;
+                let currentServer: string | undefined;
+                let isMultiplayer = false;
 
                 const gameProcess = spawn(javaPath, jvmArgs, {
                     cwd: instancePath,
@@ -839,9 +847,58 @@ export class LaunchProcess {
                     }
                 };
 
+                // Parse logs for Discord Rich Presence updates
+                const parseLogForPresence = (str: string) => {
+                    // Detect server connection
+                    // Patterns: "Connecting to <server>", "Joined server: <name>", etc.
+                    const serverMatch = str.match(/Connecting to\s+([\w\-\.]+)|Joined server[:\s]+([\w\s\-]+)|Server: ([\w\s\-]+)/i);
+                    if (serverMatch) {
+                        const serverName = serverMatch[1] || serverMatch[2] || serverMatch[3];
+                        if (serverName && serverName !== currentServer) {
+                            currentServer = serverName;
+                            isMultiplayer = true;
+                            DiscordManager.getInstance().setPlayingPresence(
+                                instanceId, 
+                                versionId, 
+                                instanceLoader, 
+                                true, 
+                                currentServer
+                            );
+                        }
+                    }
+                    
+                    // Detect player count in multiplayer
+                    // Patterns: "Player count: X/Y", "X/Y players online", etc.
+                    const playerCountMatch = str.match(/(?:Player count|Players|Online)[:\s]+(\d+)\s*[/:]?\s*(\d*)/i);
+                    if (playerCountMatch && isMultiplayer) {
+                        const count = parseInt(playerCountMatch[1]);
+                        const max = playerCountMatch[2] ? parseInt(playerCountMatch[2]) : undefined;
+                        DiscordManager.getInstance().updatePlayingPresence(
+                            instanceId,
+                            count,
+                            max,
+                            currentServer
+                        );
+                    }
+                    
+                    // Detect leaving server
+                    if (str.match(/Disconnected|Left server|Connection lost/i) && currentServer) {
+                        currentServer = undefined;
+                        isMultiplayer = false;
+                        DiscordManager.getInstance().setPlayingPresence(
+                            instanceId,
+                            versionId,
+                            instanceLoader,
+                            false,
+                            undefined
+                        );
+                    }
+                };
+
                 gameProcess.stdout.on('data', (d) => {
                     const str = d.toString();
                     appendLog(str);
+                    parseLogForPresence(str);
                     if (showConsole) {
                         LogWindowManager.send(instanceId, str, 'stdout');
                     }
@@ -850,6 +907,7 @@ export class LaunchProcess {
                 gameProcess.stderr.on('data', (d) => {
                     const str = d.toString();
                     appendLog(str);
+                    parseLogForPresence(str);
                     if (showConsole) {
                         LogWindowManager.send(instanceId, str, 'stderr');
                     }

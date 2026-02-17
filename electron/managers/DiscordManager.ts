@@ -276,12 +276,12 @@ export class DiscordManager {
         });
     }
 
-    public setPlayingPresence(instanceId: string, versionId: string, loader?: string, isMultiplayer?: boolean, serverName?: string) {
+    public setPlayingPresence(instanceId: string, versionId: string, loader?: string, isMultiplayer?: boolean, serverName?: string, playerCount?: number, maxPlayers?: number) {
         const loaderKey = this.getLoaderImageKey(loader);
         
         let stateText = `Playing ${versionId}`;
         if (isMultiplayer && serverName) {
-            stateText = `Multiplayer on ${serverName}`;
+            stateText = `Playing on ${serverName}`;
         } else if (isMultiplayer) {
             stateText = 'Playing Multiplayer';
         }
@@ -295,7 +295,26 @@ export class DiscordManager {
             smallImageKey: loaderKey || 'logo',
             smallImageText: loader ? loader.charAt(0).toUpperCase() + loader.slice(1) : 'Whoap Launcher',
             startTimestamp: Date.now(),
+            isMultiplayer: isMultiplayer,
+            playerCount: playerCount,
+            maxPlayers: maxPlayers,
+            serverName: serverName,
             buttons: this.buttons
+        });
+    }
+
+    public updatePlayingPresence(instanceId: string, playerCount?: number, maxPlayers?: number, serverName?: string) {
+        if (!this.currentPresence || this.currentPresence.presenceState !== PresenceState.PLAYING) {
+            return;
+        }
+        
+        // Update with party information
+        this.updatePresence({
+            ...this.currentPresence,
+            playerCount: playerCount,
+            maxPlayers: maxPlayers,
+            serverName: serverName,
+            isMultiplayer: !!serverName || (playerCount !== undefined && maxPlayers !== undefined && maxPlayers > 1)
         });
     }
 
@@ -334,6 +353,10 @@ export class DiscordManager {
             if (data.presenceState === PresenceState.PLAYING && data.isMultiplayer && data.playerCount && data.maxPlayers) {
                 presence.partySize = data.playerCount;
                 presence.partyMax = data.maxPlayers;
+            } else if (data.presenceState === PresenceState.PLAYING && data.isMultiplayer) {
+                // Show as solo in multiplayer mode if no count available
+                presence.partySize = 1;
+                presence.partyMax = 1;
             }
 
             // Add buttons (Discord allows max 2)
