@@ -27,6 +27,17 @@ function loadEnv() {
 
 loadEnv();
 
+// --- 0.25 Check for internet connectivity ---
+async function isInternetConnected(): Promise<boolean> {
+    try {
+        const { net } = require('electron');
+        const response = await net.fetch('https://api.github.com', { method: 'HEAD', mode: 'no-cors' });
+        return response.ok || response.status === 0; // status 0 is cors-related but means network worked
+    } catch (e) {
+        return false;
+    }
+}
+
 // Managers Import
 import { AuthManager } from './managers/AuthManager';
 import { InstanceManager } from './managers/InstanceManager';
@@ -38,7 +49,6 @@ import { CloudManager } from './managers/CloudManager';
 import { ModpackManager } from './managers/ModpackManager';
 import { ModsManager } from './managers/ModsManager';
 import { NetworkManager } from './managers/NetworkManager';
-import { AutoUpdateManager } from './managers/AutoUpdateManager';
 import { DiscordManager } from './managers/DiscordManager';
 import { ScreenshotManager } from './managers/ScreenshotManager';
 import { ModPlatformManager } from './managers/ModPlatformManager';
@@ -60,7 +70,6 @@ const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL'];
 
 let win: BrowserWindow | null = null;
 let splash: BrowserWindow | null = null;
-let onboardingWin: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let externalLinkWindow: BrowserWindow | null = null;
 
@@ -101,7 +110,8 @@ function createSplashWindow() {
         icon: getIconPath(),
         webPreferences: {
             nodeIntegration: false,
-            contextIsolation: true
+            contextIsolation: true,
+            preload: path.join(__dirname, 'splash-preload.js')
         }
     });
 
@@ -113,108 +123,9 @@ function createSplashWindow() {
     console.log('[Main] Splash screen created');
 }
 
-// --- 2. Create Onboarding Window ---
-function createOnboardingWindow() {
-    onboardingWin = new BrowserWindow({
-        width: 900,
-        height: 650,
-        minWidth: 800,
-        minHeight: 600,
-        show: false,
-        frame: false,
-        resizable: true,
-        transparent: true,
-        backgroundColor: '#00000000',
-        icon: getIconPath(),
-        webPreferences: {
-            preload: path.join(__dirname, 'preload.js'),
-            nodeIntegration: false,
-            contextIsolation: true,
-            webSecurity: true
-        }
-    });
 
-    if (VITE_DEV_SERVER_URL) {
-        onboardingWin.loadURL(VITE_DEV_SERVER_URL + '#/onboarding');
-    } else {
-        onboardingWin.loadFile(path.join(process.env.DIST!, 'index.html'), {
-            hash: 'onboarding'
-        });
-    }
 
-    onboardingWin.once('ready-to-show', () => {
-        splash?.destroy();
-        splash = null;
-        onboardingWin?.show();
-        onboardingWin?.focus();
-    });
-
-    onboardingWin.on('closed', () => {
-        onboardingWin = null;
-    });
-
-    // Window controls for onboarding
-    ipcMain.on('onboarding:minimize', () => onboardingWin?.minimize());
-    ipcMain.on('onboarding:close', () => {
-        onboardingWin?.close();
-        app.quit();
-    });
-
-    // Handle onboarding completion
-    ipcMain.handle('onboarding:complete', async (_, dataPath?: string) => {
-        try {
-            const result = await ConfigManager.completeOnboarding(dataPath);
-            
-            if (result.success) {
-                console.log('[Main] Initializing managers after onboarding...');
-                
-                // Initialize all managers after onboarding - store in module variables
-                authManager = new AuthManager();
-                instanceManager = InstanceManager.getInstance();
-                versionManager = new VersionManager();
-                launchProcess = new LaunchProcess();
-                logWindowManager = new LogWindowManager();
-                modpackManager = new ModpackManager();
-                modsManager = new ModsManager();
-                resourcePackManager = new ResourcePackManager();
-                shaderPackManager = new ShaderPackManager();
-                networkManager = new NetworkManager();
-                screenshotManager = new ScreenshotManager();
-                cloudManager = CloudManager.getInstance();
-                discordManager = DiscordManager.getInstance();
-                modPlatformManager = ModPlatformManager.getInstance();
-                modMetadataManager = new ModMetadataManager();
-                
-                // Register app-level IPC handlers
-                registerIpcHandlers();
-                
-                // Register protocol handlers for skins/capes
-                registerProtocolHandlers();
-
-                console.log('[Main] All managers initialized, creating main window...');
-
-                // Close onboarding and create main window
-                onboardingWin?.close();
-                onboardingWin = null;
-                
-                createMainWindow();
-                createTray();
-                
-                // Initialize auto-updater
-                AutoUpdateManager.getInstance().setMainWindow(win!);
-                AutoUpdateManager.getInstance().checkForUpdatesOnStartup();
-                
-                return { success: true };
-            }
-            return result;
-        } catch (error) {
-            console.error('[Main] Onboarding completion failed:', error);
-            return { success: false, error: String(error) };
-        }
-    });
-}
-
-// --- 3. Create Main Window ---
+// --- 2. Create Main Window ---
 function createMainWindow() {
     win = new BrowserWindow({
         width: 1200,
@@ -247,9 +158,6 @@ function createMainWindow() {
             splash = null;
             win?.show();
             win?.focus();
-
-            AutoUpdateManager.getInstance().setMainWindow(win!);
-            AutoUpdateManager.getInstance().checkForUpdatesOnStartup();
         }, 1500);
     });
 
@@ -368,44 +276,37 @@ if (!app.requestSingleInstanceLock()) {
     app.whenReady().then(async () => {
         console.log("!!! ELECTRON MAIN STARTUP !!!");
 
-        // Initialize ConfigManager first (handles first-launch detection)
+        // Initialize ConfigManager first
         new ConfigManager();
 
-        // Check if this is first launch
-        const isFirstLaunch = !ConfigManager.isOnboardingCompleted();
-        console.log(`[Main] First launch: ${isFirstLaunch}`);
+        // Normal startup flow
+        createSplashWindow();
 
-        if (isFirstLaunch) {
-            // Show onboarding flow
-            createSplashWindow();
-            createOnboardingWindow();
-        } else {
-            // Normal startup flow
-            createSplashWindow();
+        // Wait a moment for splash to render
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
-            // Initialize all managers - store in module variables
-            authManager = new AuthManager();
-            instanceManager = InstanceManager.getInstance();
-            versionManager = new VersionManager();
-            launchProcess = new LaunchProcess();
-            logWindowManager = new LogWindowManager();
-            modpackManager = new ModpackManager();
-            modsManager = new ModsManager();
-            resourcePackManager = new ResourcePackManager();
-            shaderPackManager = new ShaderPackManager();
-            networkManager = new NetworkManager();
-            screenshotManager = new ScreenshotManager();
-            cloudManager = CloudManager.getInstance();
-            discordManager = DiscordManager.getInstance();
-            modPlatformManager = ModPlatformManager.getInstance();
-            modMetadataManager = new ModMetadataManager();
+        // Initialize all managers - store in module variables
+        authManager = new AuthManager();
+        instanceManager = InstanceManager.getInstance();
+        versionManager = new VersionManager();
+        launchProcess = new LaunchProcess();
+        logWindowManager = new LogWindowManager();
+        modpackManager = new ModpackManager();
+        modsManager = new ModsManager();
+        resourcePackManager = new ResourcePackManager();
+        shaderPackManager = new ShaderPackManager();
+        networkManager = new NetworkManager();
+        screenshotManager = new ScreenshotManager();
+        cloudManager = CloudManager.getInstance();
+        discordManager = DiscordManager.getInstance();
+        modPlatformManager = ModPlatformManager.getInstance();
+        modMetadataManager = new ModMetadataManager();
 
-            registerIpcHandlers();
-            registerProtocolHandlers();
+        registerIpcHandlers();
+        registerProtocolHandlers();
 
-            createMainWindow();
-            createTray();
-        }
+        createMainWindow();
+        createTray();
     });
 }
 

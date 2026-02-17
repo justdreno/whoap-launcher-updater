@@ -15,7 +15,6 @@ import {
     AlertTriangle,
     FolderSearch,
     X,
-    Download,
     CheckCircle,
     Box,
     Globe,
@@ -91,20 +90,7 @@ export const Settings = () => {
     const { animationsEnabled, setAnimationsEnabled } = useAnimation();
     const [discordEnabled, setDiscordEnabled] = useState(true);
     const [discordStatus, setDiscordStatus] = useState<{ connected: boolean; currentState: string }>({ connected: false, currentState: 'none' });
-
-    // Update states
-    const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'error'>('idle');
-    const [updateInfo, setUpdateInfo] = useState<{ version?: string; error?: string } | null>(null);
     const [processing, setProcessing] = useState<{ message: string; subMessage?: string; progress?: number } | null>(null);
-    
-    // Auto-update settings
-    const [updateSettings, setUpdateSettings] = useState({
-        autoCheck: true,
-        autoDownload: false,
-        checkInterval: 24,
-        lastCheckTime: 0
-    });
-    const [updateProgress, setUpdateProgress] = useState<{ percent: number; transferred?: number; total?: number } | null>(null);
 
     useEffect(() => {
         const handleProgress = (_: any, data: any) => {
@@ -113,51 +99,6 @@ export const Settings = () => {
         window.ipcRenderer.on('instance:import-progress', handleProgress);
         return () => {
             window.ipcRenderer.off('instance:import-progress', handleProgress);
-        };
-    }, []);
-
-    // Listen for update events from main process
-    useEffect(() => {
-        const handleChecking = () => setUpdateStatus('checking');
-        const handleAvailable = (_: any, data: any) => {
-            setUpdateStatus('available');
-            setUpdateInfo({ version: data.version });
-        };
-        const handleNotAvailable = () => {
-            setUpdateStatus('idle');
-            setUpdateInfo({ version: 'latest' });
-        };
-        const handleProgress = (_: any, data: any) => {
-            setUpdateProgress({
-                percent: data.percent,
-                transferred: data.transferred,
-                total: data.total
-            });
-        };
-        const handleDownloaded = (_: any, data: any) => {
-            setUpdateStatus('ready');
-            setUpdateInfo({ version: data.version });
-            showToast(`Update ${data.version} ready to install!`, 'success');
-        };
-        const handleError = (_: any, data: any) => {
-            setUpdateStatus('error');
-            setUpdateInfo({ error: data.message });
-        };
-
-        window.ipcRenderer.on('update:checking', handleChecking);
-        window.ipcRenderer.on('update:available', handleAvailable);
-        window.ipcRenderer.on('update:not-available', handleNotAvailable);
-        window.ipcRenderer.on('update:progress', handleProgress);
-        window.ipcRenderer.on('update:downloaded', handleDownloaded);
-        window.ipcRenderer.on('update:error', handleError);
-
-        return () => {
-            window.ipcRenderer.off('update:checking', handleChecking);
-            window.ipcRenderer.off('update:available', handleAvailable);
-            window.ipcRenderer.off('update:not-available', handleNotAvailable);
-            window.ipcRenderer.off('update:progress', handleProgress);
-            window.ipcRenderer.off('update:downloaded', handleDownloaded);
-            window.ipcRenderer.off('update:error', handleError);
         };
     }, []);
 
@@ -184,21 +125,6 @@ export const Settings = () => {
                     setDiscordStatus({ connected: discordResult.connected, currentState: discordResult.currentState });
                 } catch (err) {
                     console.error("Failed to load Discord status:", err);
-                }
-
-                // Load update settings
-                try {
-                    const updateSettingsResult = await window.ipcRenderer.invoke('update:get-settings');
-                    if (updateSettingsResult.success) {
-                        setUpdateSettings({
-                            autoCheck: updateSettingsResult.settings.autoCheck,
-                            autoDownload: updateSettingsResult.settings.autoDownload,
-                            checkInterval: updateSettingsResult.settings.checkInterval,
-                            lastCheckTime: updateSettingsResult.lastCheckTime
-                        });
-                    }
-                } catch (err) {
-                    console.error("Failed to load update settings:", err);
                 }
             } catch (error) {
                 console.error("Failed to load config", error);
@@ -234,13 +160,11 @@ export const Settings = () => {
 
                 const newConfig = { ...config, jvmPreset: value, minRam: min, maxRam: max };
                 setConfig(newConfig);
-                // Cloud sync removed - settings are now local only
             } else {
                 // Standard single-key update
                 await window.ipcRenderer.invoke('config:set', key, value);
                 const newConfig = { ...config, [key]: value };
                 setConfig(newConfig);
-                // Cloud sync removed - settings are now local only
             }
         } catch (e) {
             console.error("Failed to save setting", e);
@@ -326,53 +250,7 @@ export const Settings = () => {
         }
     };
 
-    const checkForUpdates = async () => {
-        setUpdateStatus('checking');
-        setUpdateInfo(null);
-        try {
-            const result = await window.ipcRenderer.invoke('update:check');
-            if (result.success && result.updateInfo) {
-                setUpdateStatus('available');
-                setUpdateInfo({ version: result.updateInfo.version });
-            } else if (result.success) {
-                setUpdateStatus('idle');
-                setUpdateInfo({ version: 'latest' });
-            } else {
-                setUpdateStatus('error');
-                setUpdateInfo({ error: result.error || 'Check failed' });
-            }
-        } catch (e: any) {
-            setUpdateStatus('error');
-            setUpdateInfo({ error: e.message });
-        }
-    };
 
-    const downloadUpdate = async () => {
-        setUpdateStatus('downloading');
-        try {
-            await window.ipcRenderer.invoke('update:download');
-            setUpdateStatus('ready');
-        } catch (e: any) {
-            setUpdateStatus('error');
-            setUpdateInfo({ error: e.message });
-        }
-    };
-
-    const installUpdate = () => {
-        window.ipcRenderer.invoke('update:install');
-    };
-
-    const handleUpdateSettingsChange = async (key: keyof typeof updateSettings, value: any) => {
-        const newSettings = { ...updateSettings, [key]: value };
-        setUpdateSettings(newSettings);
-        try {
-            await window.ipcRenderer.invoke('update:set-settings', { [key]: value });
-            showToast('Update settings saved', 'success');
-        } catch (err) {
-            console.error('Failed to save update settings:', err);
-            showToast('Failed to save update settings', 'error');
-        }
-    };
 
     if (loading) {
         return (
@@ -780,102 +658,6 @@ export const Settings = () => {
                         <div className={styles.hintText}>
                             <AlertTriangle size={12} />
                             Game traffic will be routed through this proxy using JVM system properties.
-                        </div>
-                    </div>
-                </section>
-
-                {/* Updates Section */}
-                <section className={styles.section}>
-                    <h3><Download size={18} /> Software Updates</h3>
-                    
-                    {/* Auto-update settings */}
-                    <div className={styles.settingRow}>
-                        <div className={styles.labelCol}>
-                            <span className={styles.label}>Auto-check for Updates</span>
-                            <span className={styles.hint}>Automatically check for updates periodically.</span>
-                        </div>
-                        <label className={styles.toggle}>
-                            <input 
-                                type="checkbox" 
-                                checked={updateSettings.autoCheck} 
-                                onChange={(e) => handleUpdateSettingsChange('autoCheck', e.target.checked)} 
-                            />
-                            <span className={styles.toggleSlider}></span>
-                        </label>
-                    </div>
-
-                    {updateSettings.autoCheck && (
-                        <>
-                            <div className={styles.settingRow}>
-                                <div className={styles.labelCol}>
-                                    <span className={styles.label}>Auto-download Updates</span>
-                                    <span className={styles.hint}>Automatically download updates when available.</span>
-                                </div>
-                                <label className={styles.toggle}>
-                                    <input 
-                                        type="checkbox" 
-                                        checked={updateSettings.autoDownload} 
-                                        onChange={(e) => handleUpdateSettingsChange('autoDownload', e.target.checked)} 
-                                    />
-                                    <span className={styles.toggleSlider}></span>
-                                </label>
-                            </div>
-
-                            <div className={styles.settingRow}>
-                                <div className={styles.labelCol}>
-                                    <span className={styles.label}>Check Interval</span>
-                                    <span className={styles.hint}>How often to check for updates.</span>
-                                </div>
-                                <select 
-                                    className={styles.select}
-                                    value={updateSettings.checkInterval}
-                                    onChange={(e) => handleUpdateSettingsChange('checkInterval', parseInt(e.target.value))}
-                                >
-                                    <option value={1}>Every hour</option>
-                                    <option value={6}>Every 6 hours</option>
-                                    <option value={12}>Every 12 hours</option>
-                                    <option value={24}>Every day</option>
-                                    <option value={168}>Every week</option>
-                                </select>
-                            </div>
-                        </>
-                    )}
-
-                    <div className={styles.updateRow}>
-                        {updateStatus === 'idle' && updateInfo?.version === 'latest' && (
-                            <div className={styles.updateStatus}><CheckCircle size={18} color="#10b981" /> You're up to date!</div>
-                        )}
-                        {updateStatus === 'available' && (
-                            <div className={styles.updateStatus} style={{ color: '#f59e0b' }}><Download size={18} /> Version {updateInfo?.version} available</div>
-                        )}
-                        {updateStatus === 'downloading' && (
-                            <div className={styles.updateStatus}>
-                                <RefreshCw size={18} className={styles.spin} /> Downloading...
-                                {updateProgress && (
-                                    <div className={styles.progressBarContainer}>
-                                        <div 
-                                            className={styles.progressBar} 
-                                            style={{ width: `${updateProgress.percent}%` }}
-                                        />
-                                        <span className={styles.progressText}>{updateProgress.percent.toFixed(1)}%</span>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                        {updateStatus === 'ready' && (
-                            <div className={styles.updateStatus} style={{ color: '#10b981' }}><CheckCircle size={18} /> Ready to install!</div>
-                        )}
-                        {updateStatus === 'error' && (
-                            <div className={styles.updateStatus} style={{ color: '#ef4444' }}><AlertTriangle size={18} /> {updateInfo?.error}</div>
-                        )}
-
-                        <div className={styles.updateActions}>
-                            {(updateStatus === 'idle' || updateStatus === 'error') && (
-                                <button className={styles.btn} onClick={checkForUpdates}>Check for Updates</button>
-                            )}
-                            {updateStatus === 'checking' && <button className={styles.btn} disabled>Checking...</button>}
-                            {updateStatus === 'available' && <button className={styles.primaryBtn} onClick={downloadUpdate}>Download</button>}
-                            {updateStatus === 'ready' && <button className={styles.primaryBtn} onClick={installUpdate}>Restart & Install</button>}
                         </div>
                     </div>
                 </section>

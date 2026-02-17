@@ -85,11 +85,10 @@ linux:
 
 publish:
   provider: github
-  owner: whoap
-  repo: whoap-launcher
+  owner: justdreno
+  repo: whoap-launcher-updater
   releaseType: release
-  # Optional: Use a GitHub token for private repos
-  # token: ${GH_TOKEN}
+  # Token is set via GH_TOKEN environment variable
 
 # Auto-updater configuration
 electronUpdaterCompatibility: '>=6.0.0'

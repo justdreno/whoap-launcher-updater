@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { Package, Layers, Sparkles, Globe, ChevronDown, Check } from 'lucide-react';
+import { Package, Layers, Sparkles, ChevronDown, Check } from 'lucide-react';
 import { ModsManager } from './ModsManager';
 import { ResourcePacksManager } from './ResourcePacksManager';
 import { ShaderPacksManager } from './ShaderPacksManager';
-import { ModpackBrowser } from './ModpackBrowser';
+
 import { PageHeader } from '../components/PageHeader';
 import { Instance, InstanceApi } from '../api/instances';
 import styles from './Library.module.css';
@@ -62,10 +62,9 @@ export const Library: React.FC<LibraryProps> = ({ preselectedInstanceId: externa
         { id: 'mods', label: 'Mods', icon: Package },
         { id: 'resourcepacks', label: 'Resource Packs', icon: Layers },
         { id: 'shaderpacks', label: 'Shader Packs', icon: Sparkles },
-        { id: 'modpacks', label: 'Modpacks', icon: Globe },
     ] as const;
 
-    const showInstanceSelector = activeTab !== 'modpacks';
+    const showInstanceSelector = true;
 
     return (
         <div className={styles.container}>
@@ -137,7 +136,6 @@ export const Library: React.FC<LibraryProps> = ({ preselectedInstanceId: externa
                 {activeTab === 'mods' && <ModsManager hideHeader={true} instanceId={selectedInstanceId} />}
                 {activeTab === 'resourcepacks' && <ResourcePacksManager hideHeader={true} instanceId={selectedInstanceId} />}
                 {activeTab === 'shaderpacks' && <ShaderPacksManager hideHeader={true} instanceId={selectedInstanceId} />}
-                {activeTab === 'modpacks' && <ModpackBrowser hideHeader={true} />}
             </div>
         </div>
     );

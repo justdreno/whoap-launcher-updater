@@ -13,6 +13,10 @@ interface MainLayoutProps {
         name: string;
         uuid: string;
         token: string;
+        role?: string;
+        type?: string;
+        preferredSkin?: string;
+        preferredCape?: string;
     };
     onLogout?: () => void;
     isNavLocked?: boolean;

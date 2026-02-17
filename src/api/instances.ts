@@ -10,6 +10,7 @@ export interface Instance {
     isImported?: boolean;
     launchVersionId?: string;
     type?: 'created' | 'imported';
+    playTime?: number;
 }
 
 export interface Version {
@@ -67,5 +68,8 @@ export const InstanceApi = {
     },
     openFolder: async (id: string): Promise<{ success: boolean; error?: string }> => {
         return window.ipcRenderer.invoke('instance:open-folder', id);
+    },
+    updateIcon: async (id: string, iconUrl: string | null): Promise<{ success: boolean; error?: string }> => {
+        return window.ipcRenderer.invoke('instance:update-icon', id, iconUrl);
     }
 };

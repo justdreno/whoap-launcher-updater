@@ -20,6 +20,8 @@ export interface Instance {
     isImported?: boolean;
     launchVersionId?: string; // The actual ID to launch (e.g. fabric-loader-x.x.x-1.20.1)
     useExternalPath?: boolean; // If true, launch using the original version folder as gameDir
+    icon?: string; // URL or path to custom icon
+    playTime?: number; // Total playtime in seconds
 }
 
 export class InstanceManager {
@@ -129,6 +131,10 @@ export class InstanceManager {
             await this.updateLastPlayed(id);
         });
 
+        ipcMain.handle('instance:add-playtime', async (_, id: string, seconds: number) => {
+            await this.addPlayTime(id, seconds);
+        });
+
         ipcMain.handle('instance:duplicate', async (_, instanceId: string, newName: string) => {
             console.log(`IPC instance:duplicate called for ${instanceId} -> ${newName}`);
             try {
@@ -174,6 +180,105 @@ export class InstanceManager {
             } catch (error) {
                 console.error("Failed to import external instances:", error);
                 return { success: false, error: String(error) };
+            }
+        });
+
+        ipcMain.handle('instance:update-icon', async (_, instanceId: string, iconUrl: string | null) => {
+            try {
+                return await this.updateInstanceIcon(instanceId, iconUrl);
+            } catch (error) {
+                console.error("Failed to update instance icon:", error);
+                return { success: false, error: String(error) };
+            }
+        });
+
+        // World Management Handlers
+        ipcMain.handle('worlds:list', async (_, instanceId: string) => {
+            try {
+                return await this.listWorlds(instanceId);
+            } catch (error) {
+                console.error("Failed to list worlds:", error);
+                return [];
+            }
+        });
+
+        ipcMain.handle('worlds:backup', async (_, instanceId: string, worldId: string) => {
+            try {
+                return await this.backupWorld(instanceId, worldId);
+            } catch (error) {
+                console.error("Failed to backup world:", error);
+                return { success: false, error: String(error) };
+            }
+        });
+
+        ipcMain.handle('worlds:delete', async (_, instanceId: string, worldId: string) => {
+            try {
+                return await this.deleteWorld(instanceId, worldId);
+            } catch (error) {
+                console.error("Failed to delete world:", error);
+                return { success: false, error: String(error) };
+            }
+        });
+
+        ipcMain.handle('worlds:transfer', async (_, instanceId: string, worldId: string, targetInstanceId: string) => {
+            try {
+                return await this.transferWorld(instanceId, worldId, targetInstanceId);
+            } catch (error) {
+                console.error("Failed to transfer world:", error);
+                return { success: false, error: String(error) };
+            }
+        });
+
+        ipcMain.handle('worlds:open-folder', async (_, instanceId: string, worldId: string) => {
+            try {
+                return await this.openWorldFolder(instanceId, worldId);
+            } catch (error) {
+                console.error("Failed to open world folder:", error);
+                return { success: false, error: String(error) };
+            }
+        });
+
+        ipcMain.handle('worlds:list-backups', async () => {
+            try {
+                return await this.listBackups();
+            } catch (error) {
+                console.error("Failed to list backups:", error);
+                return [];
+            }
+        });
+
+        ipcMain.handle('worlds:restore-backup', async (_, backupId: string) => {
+            try {
+                return await this.restoreBackup(backupId);
+            } catch (error) {
+                console.error("Failed to restore backup:", error);
+                return { success: false, error: String(error) };
+            }
+        });
+
+        ipcMain.handle('worlds:delete-backup', async (_, backupId: string) => {
+            try {
+                return await this.deleteBackup(backupId);
+            } catch (error) {
+                console.error("Failed to delete backup:", error);
+                return { success: false, error: String(error) };
+            }
+        });
+
+        ipcMain.handle('worlds:list-all', async () => {
+            try {
+                const allWorlds: any[] = [];
+                const instances = await this.getInstances();
+                
+                for (const instance of instances) {
+                    const worlds = await this.listWorlds(instance.id);
+                    allWorlds.push(...worlds);
+                }
+                
+                return allWorlds;
+            } catch (error) {
+                console.error("Failed to list all worlds:", error);
+                return [];
             }
         });
     }
@@ -253,6 +358,22 @@ export class InstanceManager {
                 await fs.writeFile(configPath, JSON.stringify(data, null, 4));
             } catch (e) {
                 console.error("Failed to update last played", e);
+            }
+        }
+    }
+
+    async addPlayTime(instanceId: string, seconds: number) {
+        const instancePath = path.join(this.instancesPath, instanceId);
+        if (existsSync(instancePath)) {
+            try {
+                const configPath = path.join(instancePath, 'instance.json');
+                const content = await fs.readFile(configPath, 'utf-8');
+                const data = JSON.parse(content);
+                data.playTime = (data.playTime || 0) + seconds;
+                await fs.writeFile(configPath, JSON.stringify(data, null, 4));
+                console.log(`[InstanceManager] Added ${seconds}s playtime to ${instanceId}. Total: ${data.playTime}s`);
+            } catch (e) {
+                console.error("Failed to update playtime", e);
             }
         }
     }
@@ -395,6 +516,27 @@ export class InstanceManager {
         } else {
             throw new Error("Cannot rename this instance type (no instance.json)");
         }
+    }
+
+    async updateInstanceIcon(instanceId: string, iconUrl: string | null) {
+        const instancePath = path.join(this.instancesPath, instanceId);
+        if (!existsSync(instancePath)) {
+            return { success: false, error: "Instance not found" };
+        }
+
+        const configPath = path.join(instancePath, 'instance.json');
+        if (existsSync(configPath)) {
+            const content = await fs.readFile(configPath, 'utf-8');
+            const data = JSON.parse(content);
+            if (iconUrl) {
+                data.icon = iconUrl;
+            } else {
+                delete data.icon;
+            }
+            await fs.writeFile(configPath, JSON.stringify(data, null, 4));
+            return { success: true };
+        }
+        return { success: false, error: "Instance config not found" };
     }
 
     async getInstances(): Promise<Instance[]> {
@@ -776,5 +918,305 @@ export class InstanceManager {
         }
 
         return { success: true, results };
+    }
+
+    // ==================== WORLD MANAGEMENT ====================
+
+    private getBackupsPath(): string {
+        return path.join(ConfigManager.getDataPath(), 'world-backups');
+    }
+
+    private ensureBackupsDirectory() {
+        const backupsPath = this.getBackupsPath();
+        if (!existsSync(backupsPath)) {
+            mkdirSync(backupsPath, { recursive: true });
+        }
+    }
+
+    async listWorlds(instanceId: string): Promise<any[]> {
+        const instancePath = this.resolveInstancePath(instanceId);
+        if (!instancePath) return [];
+
+        const savesPath = path.join(instancePath, 'saves');
+        if (!existsSync(savesPath)) return [];
+
+        const worlds: any[] = [];
+        const entries = await fs.readdir(savesPath, { withFileTypes: true });
+
+        for (const entry of entries) {
+            if (entry.isDirectory()) {
+                const worldPath = path.join(savesPath, entry.name);
+                const levelDatPath = path.join(worldPath, 'level.dat');
+                
+                if (existsSync(levelDatPath)) {
+                    try {
+                        // Get world info from level.dat if possible
+                        const stats = await fs.stat(worldPath);
+                        const iconPath = path.join(worldPath, 'icon.png');
+                        
+                        let iconDataUrl: string | undefined;
+                        if (existsSync(iconPath)) {
+                            try {
+                                const iconBuffer = await fs.readFile(iconPath);
+                                iconDataUrl = `data:image/png;base64,${iconBuffer.toString('base64')}`;
+                            } catch (e) {
+                                console.warn(`Failed to read icon for world ${entry.name}:`, e);
+                            }
+                        }
+                        
+                        worlds.push({
+                            id: entry.name,
+                            name: entry.name,
+                            size: await this.getFolderSize(worldPath),
+                            lastPlayed: stats.mtime.getTime(),
+                            gameMode: 'Unknown', // Would need to parse level.dat for this
+                            icon: iconDataUrl
+                        });
+                    } catch (e) {
+                        console.warn(`Failed to read world ${entry.name}:`, e);
+                    }
+                }
+            }
+        }
+
+        return worlds.sort((a, b) => b.lastPlayed - a.lastPlayed);
+    }
+
+    async backupWorld(instanceId: string, worldId: string): Promise<{ success: boolean; error?: string }> {
+        try {
+            const instancePath = this.resolveInstancePath(instanceId);
+            if (!instancePath) {
+                return { success: false, error: 'Instance not found' };
+            }
+
+            const worldPath = path.join(instancePath, 'saves', worldId);
+            if (!existsSync(worldPath)) {
+                return { success: false, error: 'World not found' };
+            }
+
+            this.ensureBackupsDirectory();
+            const timestamp = Date.now();
+            const backupId = `${instanceId}_${worldId}_${timestamp}`;
+            const backupPath = path.join(this.getBackupsPath(), `${backupId}.zip`);
+
+            const zip = new AdmZip();
+            zip.addLocalFolder(worldPath);
+            zip.writeZip(backupPath);
+
+            // Save backup metadata
+            const metaPath = path.join(this.getBackupsPath(), `${backupId}.json`);
+            const metadata = {
+                id: backupId,
+                worldName: worldId,
+                instanceId,
+                instanceName: instanceId, // Would need to look this up
+                createdAt: timestamp,
+                size: (await fs.stat(backupPath)).size,
+                path: backupPath
+            };
+            await fs.writeFile(metaPath, JSON.stringify(metadata, null, 4));
+
+            return { success: true };
+        } catch (error) {
+            console.error('Failed to backup world:', error);
+            return { success: false, error: String(error) };
+        }
+    }
+
+    async deleteWorld(instanceId: string, worldId: string): Promise<{ success: boolean; error?: string }> {
+        try {
+            const instancePath = this.resolveInstancePath(instanceId);
+            if (!instancePath) {
+                return { success: false, error: 'Instance not found' };
+            }
+
+            const worldPath = path.join(instancePath, 'saves', worldId);
+            if (!existsSync(worldPath)) {
+                return { success: false, error: 'World not found' };
+            }
+
+            await fs.rm(worldPath, { recursive: true, force: true });
+            return { success: true };
+        } catch (error) {
+            console.error('Failed to delete world:', error);
+            return { success: false, error: String(error) };
+        }
+    }
+
+    async transferWorld(instanceId: string, worldId: string, targetInstanceId: string): Promise<{ success: boolean; error?: string }> {
+        try {
+            const sourcePath = this.resolveInstancePath(instanceId);
+            const targetPath = this.resolveInstancePath(targetInstanceId);
+            
+            if (!sourcePath) {
+                return { success: false, error: 'Source instance not found' };
+            }
+            if (!targetPath) {
+                return { success: false, error: 'Target instance not found' };
+            }
+
+            const sourceWorldPath = path.join(sourcePath, 'saves', worldId);
+            const targetWorldPath = path.join(targetPath, 'saves', worldId);
+
+            if (!existsSync(sourceWorldPath)) {
+                return { success: false, error: 'World not found in source' };
+            }
+
+            // Ensure saves directory exists in target
+            const targetSavesPath = path.join(targetPath, 'saves');
+            if (!existsSync(targetSavesPath)) {
+                await fs.mkdir(targetSavesPath, { recursive: true });
+            }
+
+            // Check if world already exists in target
+            if (existsSync(targetWorldPath)) {
+                // Rename with timestamp
+                const newName = `${worldId}_transferred_${Date.now()}`;
+                const finalTargetPath = path.join(targetSavesPath, newName);
+                await this.copyDirectory(sourceWorldPath, finalTargetPath);
+            } else {
+                await this.copyDirectory(sourceWorldPath, targetWorldPath);
+            }
+
+            return { success: true };
+        } catch (error) {
+            console.error('Failed to transfer world:', error);
+            return { success: false, error: String(error) };
+        }
+    }
+
+    async openWorldFolder(instanceId: string, worldId: string): Promise<{ success: boolean; error?: string }> {
+        try {
+            const { shell } = require('electron');
+            const instancePath = this.resolveInstancePath(instanceId);
+            if (!instancePath) {
+                return { success: false, error: 'Instance not found' };
+            }
+
+            const worldPath = path.join(instancePath, 'saves', worldId);
+            if (!existsSync(worldPath)) {
+                return { success: false, error: 'World not found' };
+            }
+
+            await shell.openPath(worldPath);
+            return { success: true };
+        } catch (error) {
+            console.error('Failed to open world folder:', error);
+            return { success: false, error: String(error) };
+        }
+    }
+
+    async listBackups(): Promise<any[]> {
+        try {
+            this.ensureBackupsDirectory();
+            const backupsPath = this.getBackupsPath();
+            const backups: any[] = [];
+
+            const entries = await fs.readdir(backupsPath, { withFileTypes: true });
+            
+            for (const entry of entries) {
+                if (entry.isFile() && entry.name.endsWith('.json')) {
+                    try {
+                        const metaPath = path.join(backupsPath, entry.name);
+                        const content = await fs.readFile(metaPath, 'utf-8');
+                        const metadata = JSON.parse(content);
+                        
+                        // Get instance name
+                        const instanceConfigPath = path.join(this.instancesPath, metadata.instanceId, 'instance.json');
+                        if (existsSync(instanceConfigPath)) {
+                            const instanceData = JSON.parse(await fs.readFile(instanceConfigPath, 'utf-8'));
+                            metadata.instanceName = instanceData.name || metadata.instanceId;
+                        }
+                        
+                        backups.push(metadata);
+                    } catch (e) {
+                        console.warn('Failed to read backup metadata:', e);
+                    }
+                }
+            }
+
+            return backups.sort((a, b) => b.createdAt - a.createdAt);
+        } catch (error) {
+            console.error('Failed to list backups:', error);
+            return [];
+        }
+    }
+
+    async restoreBackup(backupId: string): Promise<{ success: boolean; error?: string }> {
+        try {
+            const backupsPath = this.getBackupsPath();
+            const metaPath = path.join(backupsPath, `${backupId}.json`);
+            const zipPath = path.join(backupsPath, `${backupId}.zip`);
+
+            if (!existsSync(metaPath) || !existsSync(zipPath)) {
+                return { success: false, error: 'Backup not found' };
+            }
+
+            const metadata = JSON.parse(await fs.readFile(metaPath, 'utf-8'));
+            const instancePath = this.resolveInstancePath(metadata.instanceId);
+            
+            if (!instancePath) {
+                return { success: false, error: 'Instance not found' };
+            }
+
+            const savesPath = path.join(instancePath, 'saves');
+            if (!existsSync(savesPath)) {
+                await fs.mkdir(savesPath, { recursive: true });
+            }
+
+            const worldPath = path.join(savesPath, metadata.worldName);
+            
+            // If world exists, rename it as backup
+            if (existsSync(worldPath)) {
+                const backupName = `${metadata.worldName}_backup_${Date.now()}`;
+                await fs.rename(worldPath, path.join(savesPath, backupName));
+            }
+
+            // Extract backup
+            const zip = new AdmZip(zipPath);
+            zip.extractAllTo(worldPath, true);
+
+            return { success: true };
+        } catch (error) {
+            console.error('Failed to restore backup:', error);
+            return { success: false, error: String(error) };
+        }
+    }
+
+    async deleteBackup(backupId: string): Promise<{ success: boolean; error?: string }> {
+        try {
+            const backupsPath = this.getBackupsPath();
+            const metaPath = path.join(backupsPath, `${backupId}.json`);
+            const zipPath = path.join(backupsPath, `${backupId}.zip`);
+
+            if (existsSync(metaPath)) {
+                await fs.unlink(metaPath);
+            }
+            if (existsSync(zipPath)) {
+                await fs.unlink(zipPath);
+            }
+
+            return { success: true };
+        } catch (error) {
+            console.error('Failed to delete backup:', error);
+            return { success: false, error: String(error) };
+        }
+    }
+
+    private async getFolderSize(folderPath: string): Promise<number> {
+        let size = 0;
+        const entries = await fs.readdir(folderPath, { withFileTypes: true });
+        
+        for (const entry of entries) {
+            const entryPath = path.join(folderPath, entry.name);
+            if (entry.isDirectory()) {
+                size += await this.getFolderSize(entryPath);
+            } else {
+                const stats = await fs.stat(entryPath);
+                size += stats.size;
+            }
+        }
+        
+        return size;
     }
 }

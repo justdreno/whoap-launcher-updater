@@ -1,6 +1,5 @@
 export * from './Home';
 export * from './Login';
-export * from './Onboarding';
 export * from './Instances';
 export * from './Settings';
 export * from './ModpackBrowser';
@@ -14,3 +13,4 @@ export * from './ResourcePacksManager';
 export * from './ShaderPacksManager';
 export * from './InstanceResourcePacks';
 export * from './InstanceShaderPacks';
+export * from './WorldManagement';

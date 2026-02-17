@@ -1,52 +1,47 @@
 .sidebar {
-    width: 260px;
+    width: 240px;
     height: 100vh;
-    background: linear-gradient(180deg, rgba(15, 15, 15, 0.98) 0%, rgba(10, 10, 10, 0.98) 100%);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-right: 1px solid rgba(255, 255, 255, 0.04);
+    background: #000;
+    border-right: 1px solid #1a1a1a;
     display: flex;
     flex-direction: column;
-    padding: calc(var(--titlebar-height) + 20px) 16px 20px 16px;
+    padding: calc(var(--titlebar-height) + 24px) 16px 20px 16px;
     box-sizing: border-box;
     z-index: 100;
 }
 
-/* ================= LOGO AREA ================= */
+/* Logo Area */
 .logoArea {
     display: flex;
     align-items: center;
-    gap: 14px;
-    margin-bottom: 28px;
+    gap: 12px;
+    margin-bottom: 32px;
     padding: 0 8px;
 }
 
 .logoImg {
-    height: 42px;
+    height: 36px;
     width: auto;
     object-fit: contain;
-    filter: drop-shadow(0 2px 8px rgba(255, 136, 0, 0.15));
 }
 
 .logoText {
-    font-family: 'Inter', sans-serif;
-    font-weight: 800;
-    font-size: 18px;
+    font-weight: 700;
+    font-size: 16px;
     color: #fff;
     line-height: 1;
-    letter-spacing: -0.3px;
 }
 
 .logoRank {
     font-size: 9px;
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.8px;
-    margin-top: 3px;
-    opacity: 0.85;
+    margin-top: 2px;
+    color: #444;
 }
 
-/* ================= NAVIGATIONS ================= */
+/* Navigation */
 .nav {
     display: flex;
     flex-direction: column;
@@ -57,12 +52,12 @@
 }
 
 .navCategory {
-    margin: 20px 0 6px 12px;
+    margin: 24px 0 8px 8px;
     font-size: 10px;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.25);
+    font-weight: 600;
+    color: #333;
     text-transform: uppercase;
-    letter-spacing: 1.2px;
+    letter-spacing: 1px;
 }
 
 .navCategory:first-child {
@@ -76,8 +71,8 @@
     padding: 10px 12px;
     background: transparent;
     border: none;
-    border-radius: 10px;
-    color: rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    color: #555;
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
@@ -88,38 +83,22 @@
 }
 
 .navItem:hover {
-    background: rgba(255, 255, 255, 0.04);
-    color: rgba(255, 255, 255, 0.8);
+    background: #0a0a0a;
+    color: #888;
 }
 
 .navItem.active {
-    background: rgba(255, 136, 0, 0.12);
+    background: #0a0a0a;
     color: #fff;
-}
-
-.navItem.active .icon {
-    color: #ff9500;
 }
 
 .icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.03);
+    width: 28px;
+    height: 28px;
     color: inherit;
-    transition: all 0.15s ease;
-}
-
-.navItem:hover .icon {
-    background: rgba(255, 255, 255, 0.06);
-}
-
-.navItem.active .icon {
-    background: rgba(255, 136, 0, 0.15);
-    box-shadow: 0 0 12px rgba(255, 136, 0, 0.2);
 }
 
 .label {
@@ -129,66 +108,50 @@
     gap: 8px;
 }
 
-.activeIndicator {
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 3px;
-    height: 16px;
-    border-radius: 0 3px 3px 0;
-    background: linear-gradient(180deg, #ff9500 0%, #ff6b00 100%);
-    box-shadow: 2px 0 8px rgba(255, 136, 0, 0.4);
-}
-
 .betaBadge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 16px;
     font-size: 8px;
-    font-weight: 800;
+    font-weight: 700;
     color: #000;
-    background: linear-gradient(135deg, #ff9500 0%, #ff7b00 100%);
-    padding: 0 5px;
-    border-radius: 4px;
+    background: #fff;
+    padding: 2px 4px;
+    border-radius: 3px;
     margin-left: auto;
-    letter-spacing: 0.3px;
 }
 
-/* ================= USER PROFILE (BOTTOM) ================= */
+/* User Profile */
 .userProfile {
-    margin-top: 16px;
+    margin-top: auto;
     display: flex;
     align-items: center;
-    padding: 10px 12px;
+    padding: 12px;
     gap: 12px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
+    border-radius: 10px;
     transition: all 0.15s ease;
     cursor: pointer;
 }
 
 .userProfile:hover {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.08);
+    background: #111;
+    border-color: #222;
 }
 
 .activeProfile {
-    border-color: rgba(255, 136, 0, 0.3) !important;
-    background: rgba(255, 136, 0, 0.05) !important;
+    border-color: #333 !important;
+    background: #111 !important;
 }
 
 .avatarHead {
-    width: 38px;
-    height: 38px;
-    background: rgba(255, 255, 255, 0.04);
+    width: 36px;
+    height: 36px;
+    background: #111;
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    flex-shrink: 0;
 }
 
 .sidebarAvatar {
@@ -202,8 +165,9 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 1px;
+    gap: 2px;
     overflow: hidden;
+    min-width: 0;
 }
 
 .userName {
@@ -218,34 +182,35 @@
 .userRole {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.4px;
-    opacity: 0.85;
+    color: #444;
 }
 
 .logoutBtn {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     background: transparent;
     border: none;
-    color: rgba(255, 255, 255, 0.35);
+    color: #333;
     border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.15s ease;
+    flex-shrink: 0;
 }
 
 .logoutBtn:hover {
-    background: rgba(255, 68, 68, 0.1);
+    background: #1a0a0a;
     color: #ff5555;
 }
 
-/* ================= SCROLLBAR ================= */
+/* Scrollbar */
 .nav::-webkit-scrollbar {
     width: 3px;
 }
@@ -255,25 +220,13 @@
 }
 
 .nav::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.08);
+    background: #1a1a1a;
     border-radius: 10px;
 }
 
-.nav::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.15);
-}
-/* Locked Navigation State */
+/* Locked State */
 .navItem.locked {
     opacity: 0.4;
     cursor: not-allowed;
     pointer-events: none;
-}
-
-.navItem.locked:hover {
-    background: transparent;
-}
-
-.navItem.locked .icon,
-.navItem.locked .label {
-    color: rgba(255, 255, 255, 0.3);
 }

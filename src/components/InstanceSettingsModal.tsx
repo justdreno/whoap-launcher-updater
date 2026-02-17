@@ -1,5 +1,17 @@
 import React, { useState } from 'react';
-import { X, Edit2, Copy, Archive, Folder, Trash2 } from 'lucide-react';
+import { 
+    X, 
+    Edit3, 
+    Copy, 
+    Download, 
+    FolderOpen, 
+    Trash2, 
+    Image,
+    Star,
+    Box,
+    AlertTriangle,
+    ChevronRight
+} from 'lucide-react';
 import styles from './InstanceSettingsModal.module.css';
 import { Instance, InstanceApi } from '../api/instances';
 import { useConfirm } from '../context/ConfirmContext';
@@ -20,69 +32,73 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
     const [deleting, setDeleting] = useState(false);
     const { showToast } = useToast();
 
-    const [actionState, setActionState] = useState<'idle' | 'renaming' | 'duplicating'>('idle');
+    const [activeTab, setActiveTab] = useState<'general' | 'icon' | 'danger'>('general');
+    const [isRenaming, setIsRenaming] = useState(false);
+    const [isDuplicating, setIsDuplicating] = useState(false);
     const [inputValue, setInputValue] = useState('');
+    const [iconUrl, setIconUrl] = useState(instance.icon || '');
 
     const canRename = instance.type === 'created';
+
+    const handleToggleFavorite = async () => {
+        await InstanceApi.toggleFavorite(instance.id);
+        onUpdate();
+        showToast(instance.isFavorite ? 'Removed from favorites' : 'Added to favorites', 'success');
+    };
 
     const startRename = () => {
         if (!canRename) return;
         setInputValue(instance.name);
-        setActionState('renaming');
+        setIsRenaming(true);
     };
 
     const startDuplicate = () => {
         setInputValue(`${instance.name} Copy`);
-        setActionState('duplicating');
+        setIsDuplicating(true);
     };
 
-    const handleSubmit = async () => {
+    const handleRenameSubmit = async () => {
         if (!inputValue.trim()) return;
-        const value = inputValue.trim();
-
-        if (actionState === 'renaming') {
-            try {
-                const result = await InstanceApi.rename(instance.id, value);
-                if (result.success) {
-                    onUpdate();
-                    onClose();
-                    showToast('Instance renamed!', 'success');
-                } else {
-                    showToast(`Failed to rename: ${result.error}`, 'error');
-                }
-            } catch (e) {
-                console.error("Rename failed", e);
-                showToast("Failed to rename instance", 'error');
+        try {
+            const result = await InstanceApi.rename(instance.id, inputValue.trim());
+            if (result.success) {
+                onUpdate();
+                setIsRenaming(false);
+                showToast('Profile renamed!', 'success');
+            } else {
+                showToast(`Failed to rename: ${result.error}`, 'error');
             }
-        } else if (actionState === 'duplicating') {
-            onProcessing?.('Duplicating Instance...', 'Copying files and configuring...');
-            try {
-                const result = await InstanceApi.duplicate(instance.id, value);
-                if (result.success) {
-                    onUpdate();
-                    onClose();
-                    showToast('Instance duplicated!', 'success');
-                } else {
-                    showToast(`Failed to duplicate: ${result.error}`, 'error');
-                }
-            } catch (e) {
-                console.error("Duplicate failed", e);
-                showToast("Failed to duplicate instance", 'error');
-            } finally {
-                onProcessingEnd?.();
-            }
+        } catch (e) {
+            showToast("Failed to rename profile", 'error');
         }
-        setActionState('idle');
+    };
+
+    const handleDuplicateSubmit = async () => {
+        if (!inputValue.trim()) return;
+        onProcessing?.('Duplicating Profile...', 'Copying files and configuring...');
+        try {
+            const result = await InstanceApi.duplicate(instance.id, inputValue.trim());
+            if (result.success) {
+                onUpdate();
+                setIsDuplicating(false);
+                showToast('Profile duplicated!', 'success');
+            } else {
+                showToast(`Failed to duplicate: ${result.error}`, 'error');
+            }
+        } catch (e) {
+            showToast("Failed to duplicate profile", 'error');
+        } finally {
+            onProcessingEnd?.();
+        }
     };
 
     const handleExport = async () => {
-        onProcessing?.('Exporting Instance...', 'Creating .zip archive...');
+        onProcessing?.('Exporting Profile...', 'Creating .zip archive...');
         try {
             const res = await InstanceApi.export(instance.id);
             if (res.error) showToast(res.error, 'error');
             else if (res.success) showToast(`Exported to: ${res.filePath}`, 'success');
         } catch (e) {
-            console.error("Export failed", e);
             showToast("Export failed", 'error');
         } finally {
             onProcessingEnd?.();
@@ -95,8 +111,8 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
 
     const handleDelete = async () => {
         const shouldDelete = await confirm(
-            'Delete Instance?',
-            `Are you sure you want to delete "${instance.name}"? This cannot be undone.`,
+            'Delete Profile?',
+            `Are you sure you want to delete "${instance.name}"? This action cannot be undone.`,
             { confirmLabel: 'Delete', isDanger: true }
         );
 
@@ -104,98 +120,272 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
             setDeleting(true);
             try {
                 await InstanceApi.delete(instance.id);
-                showToast('Instance deleted.', 'success');
+                showToast('Profile deleted.', 'success');
                 onUpdate();
                 onClose();
             } catch (e) {
-                console.error("Delete failed", e);
-                showToast("Failed to delete instance", 'error');
+                showToast("Failed to delete profile", 'error');
             } finally {
                 setDeleting(false);
             }
         }
     };
 
-    return (
-        <div className={styles.modalOverlay} onClick={onClose}>
-            <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-                <div className={styles.header}>
-                    <div className={styles.instanceIcon}>
-                        {instance.name.charAt(0).toUpperCase()}
+    const handleUpdateIcon = async () => {
+        try {
+            const result = await InstanceApi.updateIcon(instance.id, iconUrl || null);
+            if (result.success) {
+                showToast('Icon updated!', 'success');
+                onUpdate();
+            } else {
+                showToast(result.error || 'Failed to update icon', 'error');
+            }
+        } catch (e) {
+            showToast('Failed to update icon', 'error');
+        }
+    };
+
+    const formatPlayTime = (seconds?: number) => {
+        if (!seconds || seconds === 0) return '0h 0m';
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        return `${hours}h ${minutes}m`;
+    };
+
+    const getLoaderColor = (loader: string) => {
+        switch (loader?.toLowerCase()) {
+            case 'fabric': return '#38bdf8';
+            case 'forge': return '#fb923c';
+            case 'quilt': return '#a78bfa';
+            case 'neoforge': return '#f87171';
+            default: return '#888';
+        }
+    };
+
+    if (isRenaming) {
+        return (
+            <div className={styles.overlay} onClick={onClose}>
+                <div className={styles.modal} onClick={e => e.stopPropagation()}>
+                    <div className={styles.header}>
+                        <div className={styles.headerIcon}><Edit3 size={18} /></div>
+                        <h2>Rename Profile</h2>
+                        <button className={styles.closeBtn} onClick={() => setIsRenaming(false)}><X size={18} /></button>
                     </div>
-                    <div className={styles.headerInfo}>
-                        <h2 className={styles.title}>{instance.name}</h2>
-                        <div className={styles.meta}>
-                            <span className={styles.badge}>{instance.version}</span>
-                            <span className={styles.badge}>{instance.loader}</span>
+                    <div className={styles.content}>
+                        <div className={styles.formGroup}>
+                            <label>Profile Name</label>
+                            <input
+                                type="text"
+                                className={styles.input}
+                                value={inputValue}
+                                onChange={e => setInputValue(e.target.value)}
+                                autoFocus
+                                onKeyDown={e => e.key === 'Enter' && handleRenameSubmit()}
+                                placeholder="Enter new name..."
+                            />
                         </div>
                     </div>
-                    <button className={styles.closeBtn} onClick={onClose}>
-                        <X size={18} />
+                    <div className={styles.footer}>
+                        <button className={styles.cancelBtn} onClick={() => setIsRenaming(false)}>Cancel</button>
+                        <button className={styles.saveBtn} onClick={handleRenameSubmit}>Save</button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (isDuplicating) {
+        return (
+            <div className={styles.overlay} onClick={onClose}>
+                <div className={styles.modal} onClick={e => e.stopPropagation()}>
+                    <div className={styles.header}>
+                        <div className={styles.headerIcon}><Copy size={18} /></div>
+                        <h2>Duplicate Profile</h2>
+                        <button className={styles.closeBtn} onClick={() => setIsDuplicating(false)}><X size={18} /></button>
+                    </div>
+                    <div className={styles.content}>
+                        <div className={styles.formGroup}>
+                            <label>New Profile Name</label>
+                            <input
+                                type="text"
+                                className={styles.input}
+                                value={inputValue}
+                                onChange={e => setInputValue(e.target.value)}
+                                autoFocus
+                                onKeyDown={e => e.key === 'Enter' && handleDuplicateSubmit()}
+                                placeholder="Enter name for copy..."
+                            />
+                        </div>
+                    </div>
+                    <div className={styles.footer}>
+                        <button className={styles.cancelBtn} onClick={() => setIsDuplicating(false)}>Cancel</button>
+                        <button className={styles.saveBtn} onClick={handleDuplicateSubmit}>Duplicate</button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className={styles.overlay} onClick={onClose}>
+            <div className={styles.modal} onClick={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className={styles.header}>
+                    <div className={styles.headerIcon}>
+                        {instance.icon ? (
+                            <img src={instance.icon} alt="" className={styles.headerIconImg} />
+                        ) : (
+                            <Box size={18} />
+                        )}
+                    </div>
+                    <div className={styles.headerInfo}>
+                        <h2>{instance.name}</h2>
+                        <div className={styles.headerMeta}>
+                            <span className={styles.badge}>{instance.version}</span>
+                            <span className={styles.badge} style={{ color: getLoaderColor(instance.loader) }}>
+                                {instance.loader}
+                            </span>
+                            <span className={styles.playTime}>{formatPlayTime(instance.playTime)} played</span>
+                        </div>
+                    </div>
+                    <button className={styles.closeBtn} onClick={onClose}><X size={18} /></button>
+                </div>
+
+                {/* Tabs */}
+                <div className={styles.tabs}>
+                    <button 
+                        className={`${styles.tab} ${activeTab === 'general' ? styles.active : ''}`}
+                        onClick={() => setActiveTab('general')}
+                    >
+                        General
+                    </button>
+                    <button 
+                        className={`${styles.tab} ${activeTab === 'icon' ? styles.active : ''}`}
+                        onClick={() => setActiveTab('icon')}
+                    >
+                        Icon
+                    </button>
+                    <button 
+                        className={`${styles.tab} ${activeTab === 'danger' ? styles.danger : ''} ${activeTab === 'danger' ? styles.active : ''}`}
+                        onClick={() => setActiveTab('danger')}
+                    >
+                        Danger
                     </button>
                 </div>
 
-                <div className={styles.sectionDivider} />
-
-                <div className={styles.body}>
-                    {actionState !== 'idle' ? (
-                        <div className={styles.inputForm}>
-                            <label>{actionState === 'renaming' ? 'Rename Instance' : 'Duplicate Instance'}</label>
-                            <div className={styles.inputWrapper}>
-                                <input
-                                    type="text"
-                                    value={inputValue}
-                                    onChange={e => setInputValue(e.target.value)}
-                                    autoFocus
-                                    onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-                                    placeholder={actionState === 'renaming' ? 'Enter new name...' : 'Enter copy name...'}
-                                />
+                {/* Content */}
+                <div className={styles.content}>
+                    {activeTab === 'general' && (
+                        <div className={styles.panel}>
+                            {/* Favorite Action */}
+                            <div className={styles.actionCard} onClick={handleToggleFavorite}>
+                                <div className={styles.actionIcon} style={{ 
+                                    background: instance.isFavorite ? 'rgba(255, 170, 0, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                                    color: instance.isFavorite ? '#ffaa00' : '#666'
+                                }}>
+                                    <Star size={20} fill={instance.isFavorite ? '#ffaa00' : 'none'} />
+                                </div>
+                                <div className={styles.actionInfo}>
+                                    <div className={styles.actionTitle}>
+                                        {instance.isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                                    </div>
+                                    <div className={styles.actionDesc}>
+                                        {instance.isFavorite 
+                                            ? 'This profile is in your favorites' 
+                                            : 'Add this profile to your favorites list'}
+                                    </div>
+                                </div>
+                                <ChevronRight size={18} className={styles.actionArrow} />
                             </div>
-                            <div className={styles.formActions}>
-                                <button className={styles.cancelBtn} onClick={() => setActionState('idle')}>
-                                    Cancel
+
+                            {/* Actions Grid */}
+                            <div className={styles.sectionTitle}>Actions</div>
+                            <div className={styles.actionsGrid}>
+                                <button 
+                                    className={`${styles.actionBtn} ${!canRename ? styles.disabled : ''}`}
+                                    onClick={startRename}
+                                    title={canRename ? "Rename Profile" : "Cannot rename external profile"}
+                                >
+                                    <div className={styles.actionBtnIcon}><Edit3 size={18} /></div>
+                                    <span>Rename</span>
                                 </button>
-                                <button className={styles.confirmBtn} onClick={handleSubmit}>
-                                    {actionState === 'renaming' ? 'Save' : 'Duplicate'}
+                                <button className={styles.actionBtn} onClick={startDuplicate}>
+                                    <div className={styles.actionBtnIcon}><Copy size={18} /></div>
+                                    <span>Duplicate</span>
+                                </button>
+                                <button className={styles.actionBtn} onClick={handleExport}>
+                                    <div className={styles.actionBtnIcon}><Download size={18} /></div>
+                                    <span>Export</span>
+                                </button>
+                                <button className={styles.actionBtn} onClick={handleOpenFolder}>
+                                    <div className={styles.actionBtnIcon}><FolderOpen size={18} /></div>
+                                    <span>Open Folder</span>
                                 </button>
                             </div>
                         </div>
-                    ) : (
-                        <>
-                            <div className={styles.actionsSection}>
-                                <div className={styles.sectionLabel}>Actions</div>
-                                <div className={styles.actionsGrid}>
-                                    <button
-                                        className={`${styles.actionBtn} ${!canRename ? styles.disabled : ''}`}
-                                        onClick={startRename}
-                                        title={canRename ? "Rename Instance" : "Cannot rename external instance"}
-                                    >
-                                        <Edit2 size={18} />
-                                        <span>Rename</span>
-                                    </button>
-                                    <button className={styles.actionBtn} onClick={startDuplicate}>
-                                        <Copy size={18} />
-                                        <span>Duplicate</span>
-                                    </button>
-                                    <button className={styles.actionBtn} onClick={handleExport}>
-                                        <Archive size={18} />
-                                        <span>Export (.zip)</span>
-                                    </button>
-                                    <button className={styles.actionBtn} onClick={handleOpenFolder}>
-                                        <Folder size={18} />
-                                        <span>Open Folder</span>
+                    )}
+
+                    {activeTab === 'icon' && (
+                        <div className={styles.panel}>
+                            <div className={styles.sectionTitle}>Custom Icon</div>
+                            <div className={styles.iconSection}>
+                                <div className={styles.iconPreview}>
+                                    {instance.icon ? (
+                                        <img src={instance.icon} alt="Current icon" />
+                                    ) : (
+                                        <div className={styles.iconPlaceholder}>
+                                            {instance.name.charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className={styles.iconInputGroup}>
+                                    <input
+                                        type="text"
+                                        className={styles.input}
+                                        value={iconUrl}
+                                        onChange={e => setIconUrl(e.target.value)}
+                                        placeholder="Enter image URL..."
+                                    />
+                                    <button className={styles.iconBtn} onClick={handleUpdateIcon}>
+                                        <Image size={16} />
+                                        Set Icon
                                     </button>
                                 </div>
+                                {instance.icon && (
+                                    <button 
+                                        className={styles.removeIconBtn}
+                                        onClick={() => { setIconUrl(''); handleUpdateIcon(); }}
+                                    >
+                                        Remove Icon
+                                    </button>
+                                )}
                             </div>
+                        </div>
+                    )}
 
-                            <div className={styles.dangerSection}>
-                                <div className={styles.dangerLabel}>Danger Zone</div>
-                                <button className={styles.deleteBtn} onClick={handleDelete} disabled={deleting}>
-                                    <Trash2 size={18} />
-                                    {deleting ? 'Deleting...' : 'Delete Instance'}
+                    {activeTab === 'danger' && (
+                        <div className={styles.panel}>
+                            <div className={styles.dangerHeader}>
+                                <AlertTriangle size={20} />
+                                <span>Danger Zone</span>
+                            </div>
+                            <div className={styles.dangerCard}>
+                                <div className={styles.dangerInfo}>
+                                    <div className={styles.dangerTitle}>Delete Profile</div>
+                                    <div className={styles.dangerDesc}>
+                                        Permanently delete "{instance.name}" and all its data. This action cannot be undone.
+                                    </div>
+                                </div>
+                                <button 
+                                    className={styles.deleteBtn} 
+                                    onClick={handleDelete} 
+                                    disabled={deleting}
+                                >
+                                    <Trash2 size={16} />
+                                    {deleting ? 'Deleting...' : 'Delete'}
                                 </button>
                             </div>
-                        </>
+                        </div>
                     )}
                 </div>
             </div>

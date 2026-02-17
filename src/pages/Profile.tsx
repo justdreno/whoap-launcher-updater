@@ -5,7 +5,31 @@ import { UserAvatar } from '../components/UserAvatar';
 import { ProfileService, Badge } from '../services/ProfileService';
 import { useToast } from '../context/ToastContext';
 import { SkinUtils } from '../utils/SkinUtils';
-import { Edit3, Upload, Trash2, Shield, Type } from 'lucide-react';
+import { Edit3, Upload, Trash2, Shield, Type, Clock, Gamepad2, Trophy, Calendar, Globe, Award, Star, Heart, Code, Bug, Gift, Crown, LucideIcon } from 'lucide-react';
+
+// Icon mapping for badges
+const iconMap: Record<string, LucideIcon> = {
+  Shield,
+  Award,
+  Star,
+  Heart,
+  Code,
+  Bug,
+  Gift,
+  Crown,
+  Trophy,
+  Globe,
+  Clock,
+  Gamepad2,
+  Edit3,
+  Type
+};
+
+// Helper component to render badge icon
+const BadgeIcon: React.FC<{ iconName: string; size?: number; color?: string }> = ({ iconName, size = 14, color }) => {
+  const IconComponent = iconMap[iconName] || Shield;
+  return <IconComponent size={size} color={color} />;
+};
 
 interface ProfileProps {
     user: {
@@ -62,6 +86,15 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
     const [badges, setBadges] = React.useState<Badge[]>([]);
     const [copied, setCopied] = React.useState(false);
     const [profile, setProfile] = React.useState<any>(null);
+
+    // --- STATISTICS STATE ---
+    const [statistics, setStatistics] = React.useState({
+        totalPlayTime: 0,
+        instancesCreated: 0,
+        worldsExplored: 0,
+        lastPlayed: null as string | null,
+        favoriteInstance: ''
+    });
 
     const [presetNames, setPresetNames] = React.useState<string[]>(() => {
         try {
@@ -159,6 +192,50 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
         };
         load();
     }, [user.uuid, user.type]);
+
+    // Load statistics
+    React.useEffect(() => {
+        const loadStats = async () => {
+            try {
+                const instances = await window.ipcRenderer.invoke('instance:list');
+                const worlds = await window.ipcRenderer.invoke('worlds:list-all');
+                
+                // Calculate total play time from instances
+                let totalPlayTime = 0;
+                let lastPlayedDate: string | null = null;
+                let favoriteInstance = '';
+                let maxPlayTime = 0;
+
+                instances.forEach((inst: any) => {
+                    const playTime = inst.playTime || 0;
+                    totalPlayTime += playTime;
+                    
+                    if (playTime > maxPlayTime) {
+                        maxPlayTime = playTime;
+                        favoriteInstance = inst.name;
+                    }
+                    
+                    if (inst.lastPlayed) {
+                        const lastDate = new Date(inst.lastPlayed);
+                        if (!lastPlayedDate || lastDate > new Date(lastPlayedDate)) {
+                            lastPlayedDate = inst.lastPlayed;
+                        }
+                    }
+                });
+
+                setStatistics({
+                    totalPlayTime,
+                    instancesCreated: instances.length,
+                    worldsExplored: worlds?.length || 0,
+                    lastPlayed: lastPlayedDate,
+                    favoriteInstance
+                });
+            } catch (e) {
+                console.warn('[Profile] Failed to load statistics', e);
+            }
+        };
+        loadStats();
+    }, []);
 
     // Persist presets
     React.useEffect(() => { savePresets(presets); }, [presets]);
@@ -446,13 +523,65 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
                                     style={{ borderColor: `${badge.color}30` }}
                                     title={badge.description}
                                 >
-                                    <span className={styles.badgeIcon}>{badge.icon}</span>
+                                    <span className={styles.badgeIcon}>
+                                        <BadgeIcon iconName={badge.icon} size={14} color={badge.color} />
+                                    </span>
                                     <span style={{ color: badge.color }}>{badge.name}</span>
                                 </div>
                             ))}
                         </div>
                     ) : (
                         <span className={styles.noBadges}>No badges yet</span>
+                    )}
+                </div>
+
+                {/* Statistics */}
+                <div className={styles.section}>
+                    <div className={styles.sectionTitle}>
+                        <Trophy size={16} style={{ marginRight: 8 }} />
+                        Statistics
+                    </div>
+                    <div className={styles.statsGrid}>
+                        <div className={styles.statCard}>
+                            <Clock size={20} className={styles.statIcon} />
+                            <div className={styles.statInfo}>
+                                <span className={styles.statValue}>
+                                    {Math.floor(statistics.totalPlayTime / 3600)}h {Math.floor((statistics.totalPlayTime % 3600) / 60)}m
+                                </span>
+                                <span className={styles.statLabel}>Total Playtime</span>
+                            </div>
+                        </div>
+                        <div className={styles.statCard}>
+                            <Gamepad2 size={20} className={styles.statIcon} />
+                            <div className={styles.statInfo}>
+                                <span className={styles.statValue}>{statistics.instancesCreated}</span>
+                                <span className={styles.statLabel}>Instances</span>
+                            </div>
+                        </div>
+                        <div className={styles.statCard}>
+                            <Globe size={20} className={styles.statIcon} />
+                            <div className={styles.statInfo}>
+                                <span className={styles.statValue}>{statistics.worldsExplored}</span>
+                                <span className={styles.statLabel}>Worlds</span>
+                            </div>
+                        </div>
+                        <div className={styles.statCard}>
+                            <Calendar size={20} className={styles.statIcon} />
+                            <div className={styles.statInfo}>
+                                <span className={styles.statValue}>
+                                    {statistics.lastPlayed 
+                                        ? new Date(statistics.lastPlayed).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                                        : 'Never'}
+                                </span>
+                                <span className={styles.statLabel}>Last Played</span>
+                            </div>
+                        </div>
+                    </div>
+                    {statistics.favoriteInstance && (
+                        <div className={styles.favoriteInstance}>
+                            <span className={styles.favLabel}>Most Played:</span>
+                            <span className={styles.favValue}>{statistics.favoriteInstance}</span>
+                        </div>
                     )}
                 </div>
 

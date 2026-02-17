@@ -1,410 +1,294 @@
-/* ========== Overlay ========== */
 .overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.85);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(16px);
     z-index: 1000;
-    backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
 }
 
-/* ========== Modal ========== */
 .modal {
-    background: #0a0a0a;
-    border-radius: 20px;
-    width: 680px;
-    max-height: 85vh;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
-    color: white;
-    animation: modalIn 0.25s ease-out;
+    background: #000;
+    width: 700px;
+    max-width: 95vw;
+    max-height: 90vh;
+    border-radius: 16px;
+    border: 1px solid #1a1a1a;
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
-@keyframes modalIn {
-    from {
-        opacity: 0;
-        transform: scale(0.96) translateY(8px);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
-}
-
-/* ========== Header ========== */
 .header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 24px 28px 0;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #1a1a1a;
 }
 
 .headerLeft {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
-.headerLogo {
-    color: #ff8800;
-}
-
-.header h2 {
+.headerLeft h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
     margin: 0;
-    font-weight: 700;
-    font-size: 1.2rem;
-    letter-spacing: -0.02em;
 }
 
-.closeIcon {
-    background: transparent;
-    border: none;
-    color: #52525b;
-    cursor: pointer;
-    padding: 6px;
-    border-radius: 8px;
-    transition: all 0.2s;
+.headerIcon {
+    width: 36px;
+    height: 36px;
+    background: #0a0a0a;
+    border-radius: 10px;
     display: flex;
     align-items: center;
+    justify-content: center;
+    color: #555;
 }
 
-.closeIcon:hover {
-    background: rgba(255, 255, 255, 0.06);
-    color: white;
+.closeBtn {
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    color: #555;
+    cursor: pointer;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
 }
 
-/* ========== Stepper ========== */
+.closeBtn:hover {
+    background: #0a0a0a;
+    color: #888;
+}
+
+.closeBtn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Stepper */
 .stepper {
     display: flex;
     align-items: center;
-    padding: 20px 28px 0;
-    gap: 0;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px 24px;
+    border-bottom: 1px solid #1a1a1a;
 }
 
 .stepItem {
     display: flex;
     align-items: center;
     gap: 8px;
-    flex-shrink: 0;
+    font-size: 13px;
+    color: #444;
 }
 
 .stepDot {
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
+    background: #1a1a1a;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.06);
-    border: 2px solid rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 11px;
-    font-weight: 700;
-    color: #52525b;
-    transition: all 0.3s;
-    flex-shrink: 0;
-}
-
-.stepLabel {
-    font-size: 12px;
     font-weight: 600;
-    color: #52525b;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    transition: color 0.3s;
 }
 
-.stepLine {
-    height: 2px;
-    flex: 1;
-    min-width: 20px;
-    background: rgba(255, 255, 255, 0.06);
-    margin: 0 10px;
-    transition: background 0.3s;
+.stepActive {
+    color: #fff;
 }
 
 .stepActive .stepDot {
-    background: rgba(255, 136, 0, 0.15);
-    border-color: #ff8800;
-    color: #ff8800;
-}
-
-.stepActive .stepLabel {
-    color: #e4e4e7;
-}
-
-.stepCompleted .stepDot {
-    background: #ff8800;
-    border-color: #ff8800;
+    background: #fff;
     color: #000;
 }
 
-.stepCompleted+.stepItem .stepLine,
-.stepCompleted .stepLine {
-    background: #ff8800;
+.stepCompleted .stepDot {
+    background: #1a3a1a;
+    color: #4ade80;
 }
 
-/* ========== Step Content ========== */
-.stepContent {
+.stepLine {
+    width: 40px;
+    height: 1px;
+    background: #1a1a1a;
+}
+
+/* Content */
+.content {
     flex: 1;
     overflow-y: auto;
-    padding: 24px 28px;
-    min-height: 300px;
+    padding: 24px;
 }
 
-.stepPanel {
-    animation: panelIn 0.2s ease-out;
-}
-
-@keyframes panelIn {
-    from {
-        opacity: 0;
-        transform: translateX(8px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-/* ========== Form Controls ========== */
-.formGroup {
-    margin-bottom: 20px;
-    flex: 1;
-}
-
-.formRow {
+.panel {
     display: flex;
-    gap: 16px;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .formGroup label {
-    display: block;
-    margin-bottom: 8px;
-    color: #a1a1aa;
-    font-size: 0.8em;
-    font-weight: 600;
+    font-size: 12px;
+    color: #555;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.5px;
+    font-weight: 500;
 }
 
 .input {
-    width: 100%;
-    padding: 12px 14px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 14px 16px;
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
     border-radius: 10px;
-    color: white;
-    font-size: 0.95em;
-    box-sizing: border-box;
-    transition: all 0.2s;
+    color: #fff;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
 }
 
 .input:focus {
-    outline: none;
-    border-color: #ff8800;
-    background: rgba(255, 136, 0, 0.04);
-    box-shadow: 0 0 0 3px rgba(255, 136, 0, 0.08);
+    border-color: #333;
 }
 
-.loadingVersions {
-    color: #52525b;
-    font-style: italic;
-    font-size: 0.85em;
-    padding: 12px;
+.input::placeholder {
+    color: #444;
 }
 
-/* ========== Mod Presets (Step 2) ========== */
-.offlineBanner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 48px 20px;
-    gap: 8px;
-    color: #71717a;
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
 }
 
-.offlineBanner h3 {
-    color: #e4e4e7;
-    margin: 8px 0 0;
-    font-weight: 600;
-}
-
-.offlineBanner p {
-    font-size: 14px;
-    margin: 0;
-}
-
-.skipBtn {
-    margin-top: 16px;
-    padding: 8px 20px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #e4e4e7;
-    cursor: pointer;
-    font-size: 13px;
-    transition: all 0.2s;
-}
-
-.skipBtn:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.presetLayout {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.presetSearch {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.searchWrapper {
-    flex: 1;
-    position: relative;
-}
-
-.searchIcon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #52525b;
-    pointer-events: none;
-}
-
-.searchInput {
-    width: 100%;
-    padding: 10px 12px 10px 36px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+/* Select Styles */
+.select {
+    padding: 14px 16px;
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
     border-radius: 10px;
-    color: white;
-    font-size: 0.9em;
-    box-sizing: border-box;
-    transition: all 0.2s;
+    color: #fff;
+    font-size: 14px;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
 }
 
-.searchInput:focus {
+.select:focus {
+    border-color: #333;
+}
+
+.select option {
+    background: #0a0a0a;
+    color: #fff;
+}
+
+.loadingText {
+    padding: 14px 16px;
+    color: #444;
+    font-size: 14px;
+}
+
+/* Mod Selection */
+.modSearch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
+    border-radius: 10px;
+    margin-bottom: 16px;
+}
+
+.modSearch svg {
+    color: #444;
+}
+
+.modSearch input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 14px;
     outline: none;
-    border-color: #ff8800;
-    box-shadow: 0 0 0 3px rgba(255, 136, 0, 0.08);
+}
+
+.modSearch input::placeholder {
+    color: #444;
 }
 
 .selectedCount {
+    font-size: 12px;
+    color: #4ade80;
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border-radius: 20px;
-    background: rgba(255, 136, 0, 0.12);
-    color: #ff8800;
-    font-size: 12px;
-    font-weight: 600;
+    gap: 4px;
     white-space: nowrap;
-    flex-shrink: 0;
 }
 
 .modGrid {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 10px;
     max-height: 320px;
     overflow-y: auto;
-    padding-right: 4px;
-}
-
-.modGrid::-webkit-scrollbar {
-    width: 4px;
-}
-
-.modGrid::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-}
-
-.modCardSkeleton {
-    height: 60px;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.03);
-    animation: skeletonPulse 1.2s ease infinite;
-}
-
-@keyframes skeletonPulse {
-
-    0%,
-    100% {
-        opacity: 0.4;
-    }
-
-    50% {
-        opacity: 0.8;
-    }
-}
-
-.emptyMods {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 48px;
-    gap: 8px;
-    color: #3f3f46;
-}
-
-.emptyMods p {
-    margin: 0;
-    font-size: 14px;
 }
 
 .modCard {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 14px;
+    padding: 12px;
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
     border-radius: 10px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.2s;
 }
 
 .modCard:hover {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.1);
+    border-color: #333;
 }
 
-.modCardSelected {
-    background: rgba(255, 136, 0, 0.06) !important;
-    border-color: rgba(255, 136, 0, 0.3) !important;
+.modCard.selected {
+    border-color: #4ade80;
+    background: #0a1a0a;
 }
 
 .modIcon {
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
+    background: #111;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
     display: flex;
     align-items: center;
     justify-content: center;
+    color: #555;
     overflow: hidden;
     flex-shrink: 0;
-    color: #52525b;
 }
 
 .modIcon img {
@@ -416,15 +300,13 @@
 .modInfo {
     flex: 1;
     min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
 }
 
-.modTitle {
+.modName {
     font-size: 13px;
     font-weight: 600;
-    color: #e4e4e7;
+    color: #fff;
+    margin-bottom: 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -432,305 +314,269 @@
 
 .modDesc {
     font-size: 11px;
-    color: #71717a;
+    color: #444;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .modMeta {
-    display: flex;
-    gap: 10px;
     font-size: 10px;
-    color: #52525b;
-    margin-top: 2px;
-}
-
-.modMeta span {
+    color: #555;
     display: flex;
     align-items: center;
-    gap: 3px;
-}
-
-.compatBadge {
-    color: #22c55e !important;
+    gap: 8px;
+    margin-top: 4px;
 }
 
 .modCheck {
     width: 20px;
-    color: #ff8800;
-    flex-shrink: 0;
+    height: 20px;
+    color: #4ade80;
 }
 
-/* ========== Review (Step 3) ========== */
+.modEmpty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px;
+    color: #444;
+}
+
+/* Review */
 .reviewSection {
-    margin-bottom: 24px;
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
 }
 
 .reviewTitle {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
-    color: #71717a;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin: 0 0 12px;
+    color: #fff;
+    margin: 0 0 16px 0;
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: space-between;
 }
 
-.modCount {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 20px;
-    height: 20px;
-    padding: 0 6px;
-    border-radius: 10px;
-    background: rgba(255, 136, 0, 0.15);
-    color: #ff8800;
+.badge {
     font-size: 11px;
-    font-weight: 700;
+    color: #000;
+    background: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
 }
 
 .reviewGrid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    gap: 16px;
 }
 
 .reviewItem {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-    padding: 14px;
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
 
 .reviewLabel {
-    font-size: 10px;
-    color: #52525b;
+    font-size: 11px;
+    color: #444;
     text-transform: uppercase;
-    font-weight: 700;
-    letter-spacing: 0.05em;
 }
 
 .reviewValue {
     font-size: 14px;
-    font-weight: 600;
-    color: #e4e4e7;
-}
-
-.reviewModList {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-
-.reviewModItem {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    font-size: 12px;
+    color: #fff;
     font-weight: 500;
-    color: #d4d4d8;
 }
 
-.reviewModIcon {
-    width: 20px;
-    height: 20px;
-    border-radius: 4px;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    color: #52525b;
-}
-
-.reviewModIcon img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.removeModBtn {
-    background: transparent;
-    border: none;
-    color: #52525b;
-    cursor: pointer;
-    padding: 2px;
-    display: flex;
-    border-radius: 4px;
-    transition: all 0.15s;
-}
-
-.removeModBtn:hover {
-    color: #ef4444;
-    background: rgba(239, 68, 68, 0.1);
-}
-
-.creatingProgress {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px;
-    border-radius: 12px;
-    background: rgba(255, 136, 0, 0.08);
-    border: 1px solid rgba(255, 136, 0, 0.2);
-    margin-top: 16px;
-}
-
-.progressInfo {
-    flex: 1;
+.modList {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
+.modItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: #111;
+    border-radius: 8px;
+}
+
+.modItemIcon {
+    width: 24px;
+    height: 24px;
+    background: #1a1a1a;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.modItemIcon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.modItem span {
+    flex: 1;
+    font-size: 13px;
+    color: #fff;
+}
+
+.modItem button {
+    background: none;
+    border: none;
+    color: #555;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.modItem button:hover {
+    color: #ff5555;
+}
+
+/* Progress */
+.progress {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
+    border-radius: 12px;
+    margin-top: 16px;
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.progressInfo {
+    flex: 1;
+}
+
 .statusText {
     font-size: 13px;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.9);
+    color: #fff;
+    margin-bottom: 8px;
 }
 
 .progressBar {
     height: 4px;
-    background: rgba(255, 255, 255, 0.1);
+    background: #1a1a1a;
     border-radius: 2px;
     overflow: hidden;
 }
 
 .progressFill {
     height: 100%;
-    background: linear-gradient(90deg, #ff8800, #ff6600);
-    border-radius: 2px;
-    transition: width 0.3s ease;
+    background: #fff;
+    transition: width 0.3s;
 }
 
-.percentText {
+.percent {
     font-size: 12px;
-    font-weight: 600;
-    color: #ff8800;
-    text-align: right;
+    color: #555;
+    margin-top: 4px;
 }
 
-/* ========== Actions ========== */
-.error {
-    color: #f87171;
-    margin: 0 28px 12px;
-    font-size: 0.85em;
-    background: rgba(248, 113, 113, 0.08);
-    padding: 10px 14px;
-    border-radius: 8px;
-}
-
-.actions {
+/* Footer */
+.footer {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: center;
-    padding: 16px 28px 24px;
-    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    padding: 20px 24px;
+    border-top: 1px solid #1a1a1a;
+    gap: 12px;
 }
 
-.cancelBtn,
-.backBtn {
-    padding: 10px 18px;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    font-size: 0.9em;
-    font-weight: 500;
+.backBtn, .cancelBtn {
+    padding: 12px 20px;
     background: transparent;
-    color: #71717a;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.cancelBtn:hover,
-.backBtn:hover {
-    color: white;
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.nextBtn {
-    padding: 10px 22px;
+    border: 1px solid #1a1a1a;
     border-radius: 10px;
-    border: none;
+    color: #666;
+    font-size: 14px;
     cursor: pointer;
-    font-size: 0.9em;
-    font-weight: 600;
-    background: rgba(255, 255, 255, 0.08);
-    color: white;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    transition: all 0.2s;
-}
-
-.nextBtn:hover {
-    background: rgba(255, 255, 255, 0.14);
-    transform: translateX(2px);
-}
-
-.nextBtn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.createBtn {
-    padding: 10px 24px;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    font-size: 0.9em;
-    font-weight: 600;
-    background: linear-gradient(135deg, #ff8800, #ff6600);
-    color: white;
     display: flex;
     align-items: center;
     gap: 6px;
     transition: all 0.2s;
-    box-shadow: 0 4px 16px rgba(255, 136, 0, 0.25);
 }
 
-.createBtn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 24px rgba(255, 136, 0, 0.35);
+.backBtn:hover, .cancelBtn:hover {
+    background: #0a0a0a;
+    border-color: #333;
+    color: #888;
 }
 
-.createBtn:active {
-    transform: translateY(0);
-}
-
-.createBtn:disabled {
-    background: #27272a;
-    color: #52525b;
+.backBtn:disabled, .cancelBtn:disabled {
+    opacity: 0.3;
     cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
 }
 
-/* Spinner */
-.spinner {
-    animation: spin 1s linear infinite;
+.nextBtn, .createBtn {
+    padding: 12px 24px;
+    background: #fff;
+    border: none;
+    border-radius: 10px;
+    color: #000;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    margin-left: auto;
 }
 
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
+.nextBtn:hover:not(:disabled), .createBtn:hover:not(:disabled) {
+    background: #e5e5e5;
+}
+
+.nextBtn:disabled, .createBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.error {
+    padding: 12px 20px;
+    background: #1a0a0a;
+    border: 1px solid #3a1a1a;
+    border-radius: 8px;
+    color: #ff5555;
+    font-size: 13px;
+    margin: 0 24px;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .formRow {
+        grid-template-columns: 1fr;
     }
-
-    to {
-        transform: rotate(360deg);
+    
+    .reviewGrid {
+        grid-template-columns: 1fr;
+    }
+    
+    .modGrid {
+        grid-template-columns: 1fr;
     }
 }

@@ -48,8 +48,8 @@ export class DiscordManager {
     private buttons: { label: string; url: string }[] = [];
 
     private loadButtons() {
-        const downloadUrl = process.env.DISCORD_BUTTON_DOWNLOAD || 'https://whoap.net';
-        const githubUrl = process.env.DISCORD_BUTTON_GITHUB || 'https://github.com/whoap';
+        const downloadUrl = process.env.VITE_DISCORD_BUTTON_DOWNLOAD || 'https://whoap.net';
+        const githubUrl = process.env.VITE_DISCORD_BUTTON_GITHUB || 'https://github.com/whoap';
         
         this.buttons = [
             { label: 'Download Launcher', url: downloadUrl },

@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './Sidebar.module.css';
-import { Home, Settings, FolderOpen, Package, Image, LogOut, Newspaper, Code, ShieldAlert, User } from 'lucide-react';
+import { Home, Settings, FolderOpen, Package, Image, LogOut, Newspaper, Code, ShieldAlert, User, Globe, Boxes } from 'lucide-react';
 import logo from '../assets/logo.png';
 import { UserAvatar } from './UserAvatar';
 import { useAuth } from '../context/AuthContext';
@@ -12,26 +12,25 @@ interface SidebarProps {
         name: string;
         uuid: string;
         token: string;
-        role?: 'developer' | 'admin' | 'user' | 'other';
+        role?: string;
+        type?: string;
+        preferredSkin?: string;
     };
     onLogout?: () => void;
     isNavLocked?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, user, onLogout, isNavLocked }) => {
-    // Get real-time role from Supabase Auth Context
     const { role: realtimeRole } = useAuth();
-
-    // Role Configuration
-    // Prioritize real-time role, fallback to prop (for offline/initial state)
-    const role = (realtimeRole || user.role || 'user') as 'developer' | 'admin' | 'user' | 'other';
-    const roleConfig = {
-        developer: { label: 'Developer', color: '#00a8ff', icon: Code },
-        admin: { label: 'Admin', color: '#ff4757', icon: ShieldAlert },
-        user: { label: 'Member', color: '#7f8c8d', icon: User },
-        other: { label: 'Guest', color: '#7f8c8d', icon: User }
+    const role = (realtimeRole || user.role || 'user') as string;
+    
+    const roleConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
+        developer: { label: 'Developer', color: '#666', icon: Code },
+        admin: { label: 'Admin', color: '#666', icon: ShieldAlert },
+        user: { label: 'User', color: '#666', icon: User }
     };
-    const currentRole = roleConfig[role] || roleConfig.user;
+    
+    const currentRole = roleConfig[role] || { label: 'User', color: '#666', icon: User };
     const RankIcon = currentRole.icon;
 
     const categories = [
@@ -47,6 +46,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, user, 
             name: 'Library',
             tabs: [
                 { id: 'library', label: 'Library', icon: Package },
+                { id: 'modpacks', label: 'Modpacks', icon: Boxes },
+                { id: 'worlds', label: 'Worlds', icon: Globe },
                 { id: 'screenshots', label: 'Screenshots', icon: Image },
             ]
         },
@@ -59,14 +60,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, user, 
         }
     ];
 
-
     return (
         <div className={styles.sidebar}>
             <div className={styles.logoArea}>
                 <img src={logo} alt="Whoap" className={styles.logoImg} />
-                <div style={{ display: 'flex', flexDirection: 'column', paddingLeft: '2px' }}>
-                    <span className={styles.logoText}>Whoap</span>
-                    <span className={styles.logoRank} style={{ color: currentRole.color }}>{currentRole.label}</span>
+                <div>
+                    <div className={styles.logoText}>Whoap</div>
+                    <div className={styles.logoRank} style={{ color: currentRole.color }}>{currentRole.label}</div>
                 </div>
             </div>
 
@@ -85,13 +85,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, user, 
                                     disabled={isNavLocked}
                                 >
                                     <span className={styles.icon}>
-                                        <Icon size={18} strokeWidth={isActive ? 2 : 1.75} />
+                                        <Icon size={18} strokeWidth={isActive ? 2 : 1.5} />
                                     </span>
                                     <span className={styles.label}>
                                         {tab.label}
                                         {(tab as any).beta && <span className={styles.betaBadge}>BETA</span>}
                                     </span>
-                                    {isActive && <div className={styles.activeIndicator} />}
                                 </button>
                             );
                         })}
@@ -102,7 +101,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, user, 
             <div
                 className={`${styles.userProfile} ${activeTab === 'profile' ? styles.activeProfile : ''}`}
                 onClick={() => onTabChange('profile')}
-                title="View Profile"
             >
                 <div className={styles.avatarHead}>
                     <UserAvatar
@@ -115,14 +113,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, user, 
                 </div>
                 <div className={styles.userInfo}>
                     <div className={styles.userName}>{user.name}</div>
-                    <div className={styles.userRole} style={{ color: currentRole.color }}>
-                        <RankIcon size={12} strokeWidth={2.5} />
+                    <div className={styles.userRole}>
+                        <RankIcon size={10} strokeWidth={2.5} />
                         {currentRole.label}
                     </div>
                 </div>
                 {onLogout && (
-                    <button className={styles.logoutBtn} onClick={(e) => { e.stopPropagation(); onLogout(); }} title="Logout">
-                        <LogOut size={18} />
+                    <button 
+                        className={styles.logoutBtn} 
+                        onClick={(e) => { e.stopPropagation(); onLogout(); }} 
+                        title="Logout"
+                    >
+                        <LogOut size={16} />
                     </button>
                 )}
             </div>

@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from './ModBrowser.module.css';
-import { Search, Download, Check, AlertTriangle, Package, CheckCircle, X, Sparkles, Layers, WifiOff, RefreshCw } from 'lucide-react';
+import { 
+    Search, Download, Check, AlertTriangle, Package, CheckCircle, X, Sparkles, 
+    Layers, WifiOff, RefreshCw, Filter, ChevronRight
+} from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import ReactMarkdown from 'react-markdown';
 
@@ -22,6 +25,7 @@ interface Project {
     author: string;
     downloads: number;
     categories?: string[];
+    date_modified?: string;
 }
 
 interface InstallStatus {
@@ -44,13 +48,21 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
     const [dependencyNames, setDependencyNames] = useState<{ [key: string]: string }>({});
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [updateStatus, setUpdateStatus] = useState<{ [projectId: string]: { hasUpdate: boolean; currentVersion?: string; currentFilename?: string } }>({});
+    const [showFilters, setShowFilters] = useState(false);
     const { showToast } = useToast();
+    const searchInputRef = useRef<HTMLInputElement>(null);
 
     const config = {
-        mod: { title: 'Mod Browser', icon: Package, ipcPrefix: 'mods' },
-        resourcepack: { title: 'Resource Pack Browser', icon: Layers, ipcPrefix: 'resourcepacks' },
-        shader: { title: 'Shader Browser', icon: Sparkles, ipcPrefix: 'shaderpacks' }
+        mod: { title: 'Mod Browser', icon: Package, subtitle: 'Browse and install mods', ipcPrefix: 'mods' },
+        resourcepack: { title: 'Resource Pack Browser', icon: Layers, subtitle: 'Find texture packs', ipcPrefix: 'resourcepacks' },
+        shader: { title: 'Shader Browser', icon: Sparkles, subtitle: 'Discover shaders', ipcPrefix: 'shaderpacks' }
     }[type];
+
+    const categories = type === 'mod' 
+        ? ['Performance', 'Utility', 'Adventure', 'Magic', 'Tech', 'Decoration', 'Library']
+        : type === 'resourcepack'
+        ? ['Faithful', 'PvP', 'Low-res', 'HD', 'Fantasy', 'Realistic']
+        : ['Performance', 'Cinematic', 'Realistic', 'Fantasy', 'Light'];
 
     // Internet check
     useEffect(() => {
@@ -69,19 +81,42 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
         loadInstalledItems();
     }, [instanceId, type]);
 
+    // Track installed mods by project ID for accurate matching
+    const [installedProjectIds, setInstalledProjectIds] = useState<Set<string>>(new Set());
+
     const loadInstalledItems = async () => {
         try {
             const list = await window.ipcRenderer.invoke(`${config.ipcPrefix}:list`, instanceId);
-            // Simple heuristic for installed check
             const names = new Set<string>(list.map((m: any) => m.name.toLowerCase()));
             setInstalledItems(names);
+            
+            // Also check for project IDs in metadata
+            const projectIds = new Set<string>();
+            for (const item of list) {
+                // Check if there's metadata stored for this mod
+                try {
+                    const result = await window.ipcRenderer.invoke('mods:get-metadata', instanceId, type, item.name);
+                    if (result.success && result.metadata?.projectId) {
+                        projectIds.add(result.metadata.projectId);
+                    }
+                } catch (e) {
+                    // Ignore errors for items without metadata
+                }
+            }
+            setInstalledProjectIds(projectIds);
         } catch (e) {
             console.error(`Failed to load installed ${type}s`, e);
         }
     };
 
-    const isInstalled = (projectTitle: string) => {
-        const titleLower = projectTitle.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const isInstalled = (project: Project) => {
+        // First check by project ID (most accurate)
+        if (installedProjectIds.has(project.project_id)) {
+            return true;
+        }
+        
+        // Fallback to filename matching
+        const titleLower = project.title.toLowerCase().replace(/[^a-z0-9]/g, '');
         for (const name of installedItems) {
             const nameLower = name.replace(/\.jar$|\.zip$|\.disabled$/i, '').replace(/[^a-z0-9]/g, '');
             if (nameLower.includes(titleLower) || titleLower.includes(nameLower)) {
@@ -91,18 +126,15 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
         return false;
     };
 
-    // Check for updates when projects are loaded
+    // Check for updates
     const checkForUpdates = async (projectsList: Project[]) => {
         const updates: { [projectId: string]: { hasUpdate: boolean; currentVersion?: string; currentFilename?: string } } = {};
         
         for (const project of projectsList) {
             try {
-                // Get latest version info
                 const versions = await window.ipcRenderer.invoke('platform:get-versions', project.project_id, type, { version, loader });
                 if (versions.length > 0) {
                     const latestVersion = versions[0];
-                    
-                    // Check if we have metadata for this project
                     const result = await window.ipcRenderer.invoke('mods:find-by-project', instanceId, type, project.project_id);
                     
                     if (result.found) {
@@ -159,7 +191,6 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
             const hits = res.hits || [];
             setProjects(hits);
             
-            // Check for updates after loading projects
             if (hits.length > 0) {
                 checkForUpdates(hits);
             }
@@ -181,7 +212,6 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
             if (versions.length > 0) {
                 const bestVersion = versions[0];
 
-                // Pre-fetch dependency names
                 if (bestVersion.dependencies && bestVersion.dependencies.length > 0) {
                     const idsToFetch = bestVersion.dependencies
                         .filter((d: any) => d.project_id)
@@ -216,7 +246,6 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
         setProgress('Preparing installation...');
 
         try {
-            // If updating, delete the old version first
             const isUpdate = updateStatus[selectedProject.project_id]?.hasUpdate;
             if (isUpdate) {
                 const updateInfo = updateStatus[selectedProject.project_id];
@@ -231,7 +260,6 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
                 const action = isUpdate ? 'Updated' : 'Installed';
                 showToast(`${action} ${selectedProject?.title}!`, 'success');
                 
-                // Refresh update status
                 if (isUpdate) {
                     setUpdateStatus(prev => ({
                         ...prev,
@@ -265,73 +293,107 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
             <div className={styles.modal} onClick={e => e.stopPropagation()}>
                 {/* Header */}
                 <div className={styles.header}>
-                    <div className={styles.titleArea}>
-                        <div className={styles.titleWithIcon}>
-                            <Icon size={24} className={styles.headerIcon} />
-                            <h2>{config.title}</h2>
-                        </div>
-                        <div className={styles.tags}>
-                            {type === 'mod' && <span className={styles.loaderTag}>{loader}</span>}
-                            <span className={styles.versionTag}>{version}</span>
+                    <div className={styles.headerLeft}>
+                        <button className={styles.backBtn} onClick={onClose}>
+                            <X size={20} />
+                        </button>
+                        <div className={styles.headerTitle}>
+                            <Icon size={22} />
+                            <div>
+                                <h2>{config.title}</h2>
+                                <p>{config.subtitle}</p>
+                            </div>
                         </div>
                     </div>
-                    <button className={styles.closeBtn} onClick={onClose}><X size={20} /></button>
+                    <div className={styles.headerRight}>
+                        <span className={styles.versionTag}>{version}</span>
+                        {type === 'mod' && <span className={styles.loaderTag}>{loader}</span>}
+                    </div>
                 </div>
 
+                {/* Main Content */}
                 <div className={styles.body}>
                     {!isOnline && (
-                        <div style={{
-                            position: 'absolute', inset: 0, zIndex: 50,
-                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                            background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', borderRadius: 12, gap: 12
-                        }}>
-                            <WifiOff size={48} color="#ff8800" strokeWidth={1.5} />
-                            <h3 style={{ color: '#fff', margin: 0, fontWeight: 600 }}>No Internet Connection</h3>
-                            <p style={{ color: '#71717a', fontSize: 14, margin: 0 }}>Connect to the internet to browse content</p>
-                            <button onClick={onClose} style={{
-                                marginTop: 8, padding: '8px 20px', background: 'rgba(255,255,255,0.1)',
-                                border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8,
-                                color: '#fff', cursor: 'pointer', fontSize: 13
-                            }}>Close</button>
+                        <div className={styles.offlineOverlay}>
+                            <WifiOff size={48} />
+                            <h3>No Internet Connection</h3>
+                            <p>Connect to the internet to browse content</p>
+                            <button onClick={onClose}>Close</button>
                         </div>
                     )}
+
                     {/* Left Panel - Search & List */}
                     <div className={styles.leftPanel}>
-                        <div className={styles.searchWrapper}>
-                            <Search size={18} className={styles.searchIcon} />
-                            <input
-                                className={styles.searchInput}
-                                placeholder={`Search ${type}s...`}
-                                value={query}
-                                onChange={e => setQuery(e.target.value)}
-                                autoFocus
-                            />
+                        {/* Search Bar */}
+                        <div className={styles.searchSection}>
+                            <div className={styles.searchWrapper}>
+                                <Search size={18} />
+                                <input
+                                    ref={searchInputRef}
+                                    placeholder={`Search ${type}s...`}
+                                    value={query}
+                                    onChange={e => setQuery(e.target.value)}
+                                    autoFocus
+                                />
+                                {query && (
+                                    <button className={styles.clearSearch} onClick={() => { setQuery(''); searchInputRef.current?.focus(); }}>
+                                        <X size={14} />
+                                    </button>
+                                )}
+                            </div>
+                            
+                            {/* Filters */}
+                            <div className={styles.filtersRow}>
+                                <button 
+                                    className={`${styles.filterBtn} ${showFilters ? styles.active : ''}`}
+                                    onClick={() => setShowFilters(!showFilters)}
+                                >
+                                    <Filter size={14} />
+                                    Filter
+                                </button>
+                                
+                                <span className={styles.resultsCount}>
+                                    {loading ? 'Searching...' : `${projects.length} results`}
+                                </span>
+                            </div>
+
+                            {/* Category Filters */}
+                            {showFilters && (
+                                <div className={styles.categoryFilters}>
+                                    {categories.map(cat => (
+                                        <button key={cat}>{cat}</button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
-                        <div className={styles.modList}>
+                        {/* Project List */}
+                        <div className={styles.listView}>
                             {loading ? (
-                                Array.from({ length: 6 }).map((_, i) => (
+                                Array.from({ length: 8 }).map((_, i) => (
                                     <div key={i} className={styles.skeletonCard}>
                                         <div className={styles.skeletonIcon} />
                                         <div className={styles.skeletonText}>
-                                            <div className={styles.skeletonLine} style={{ width: '70%' }} />
+                                            <div className={styles.skeletonLine} style={{ width: '60%' }} />
                                             <div className={styles.skeletonLine} style={{ width: '40%' }} />
                                         </div>
                                     </div>
                                 ))
                             ) : projects.length === 0 ? (
                                 <div className={styles.emptyState}>
-                                    <Search size={32} strokeWidth={1.5} />
+                                    <Search size={32} />
                                     <p>No results found</p>
                                 </div>
                             ) : (
                                 projects.map(project => {
-                                    const installed = isInstalled(project.title);
+                                    const installed = isInstalled(project);
                                     const hasUpdate = updateStatus[project.project_id]?.hasUpdate;
+                                    const isSelected = selectedProject?.project_id === project.project_id;
+                                    
                                     return (
                                         <div
                                             key={project.project_id}
-                                            className={`${styles.modCard} ${selectedProject?.project_id === project.project_id ? styles.selected : ''} ${installed ? styles.installed : ''} ${hasUpdate ? styles.hasUpdate : ''}`}
+                                            className={`${styles.modRow} ${isSelected ? styles.selected : ''}`}
                                             onClick={() => handleSelectProject(project)}
                                         >
                                             <img
@@ -340,27 +402,24 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
                                                 className={styles.modIcon}
                                             />
                                             <div className={styles.modInfo}>
-                                                <div className={styles.modName}>{project.title}</div>
-                                                <div className={styles.modAuthor}>by {project.author}</div>
-                                            </div>
-                                            {installed ? (
-                                                hasUpdate ? (
-                                                    <div className={styles.updateBadge}>
-                                                        <RefreshCw size={14} />
-                                                        Update
-                                                    </div>
-                                                ) : (
-                                                    <div className={styles.installedBadge}>
-                                                        <CheckCircle size={14} />
-                                                        Installed
-                                                    </div>
-                                                )
-                                            ) : (
-                                                <div className={styles.modDownloads}>
-                                                    <Download size={12} />
-                                                    {formatDownloads(project.downloads)}
+                                                <div className={styles.modTitleRow}>
+                                                    <span className={styles.modName}>{project.title}</span>
+                                                    {installed && (
+                                                        <span className={`${styles.statusBadge} ${hasUpdate ? styles.update : ''}`}>
+                                                            {hasUpdate ? 'Update' : 'Installed'}
+                                                        </span>
+                                                    )}
                                                 </div>
-                                            )}
+                                                <div className={styles.modMeta}>
+                                                    <span>by {project.author}</span>
+                                                    <span className={styles.separator}>|</span>
+                                                    <span className={styles.downloads}>
+                                                        <Download size={12} />
+                                                        {formatDownloads(project.downloads)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <ChevronRight size={18} className={styles.arrow} />
                                         </div>
                                     );
                                 })
@@ -376,37 +435,36 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
                                     <img
                                         src={selectedProject.icon_url || 'https://cdn.modrinth.com/data/AANobbMI/icon.png'}
                                         className={styles.detailIcon}
+                                        alt={selectedProject.title}
                                     />
                                     <div className={styles.detailMeta}>
                                         <h1>{selectedProject.title}</h1>
-                                        <div className={styles.stats}>
-                                            <span><Download size={14} /> {formatDownloads(selectedProject.downloads)} downloads</span>
-                                        </div>
+                                        <p>by {selectedProject.author}</p>
                                     </div>
                                 </div>
 
-                                <div className={`${styles.versionStatus} ${loadingVersion ? styles.loadingStatus : (activeVersion ? (isInstalled(selectedProject.title) ? styles.installedStatus : styles.compatible) : styles.incompatible)}`}>
+                                <div className={`${styles.versionStatus} ${loadingVersion ? styles.loading : (activeVersion ? (isInstalled(selectedProject) ? styles.installed : styles.compatible) : styles.incompatible)}`}>
                                     {loadingVersion ? (
                                         <>
-                                            <div className={styles.smallSpinner} />
+                                            <RefreshCw size={16} className={styles.spin} />
                                             <span>Checking compatibility...</span>
                                         </>
                                     ) : activeVersion ? (
-                                        isInstalled(selectedProject.title) ? (
+                                        isInstalled(selectedProject) ? (
                                             <>
                                                 <CheckCircle size={16} />
-                                                <span>Already installed • Version: <strong>{activeVersion.version_number}</strong></span>
+                                                <span>Installed • Version {activeVersion.version_number}</span>
                                             </>
                                         ) : (
                                             <>
                                                 <Check size={16} />
-                                                <span>Compatible version: <strong>{activeVersion.version_number}</strong></span>
+                                                <span>Compatible • Version {activeVersion.version_number}</span>
                                             </>
                                         )
                                     ) : (
                                         <>
                                             <AlertTriangle size={16} />
-                                            <span>No compatible version for {version}</span>
+                                            <span>No compatible version</span>
                                         </>
                                     )}
                                 </div>
@@ -420,20 +478,14 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
 
                                 {activeVersion && activeVersion.dependencies && activeVersion.dependencies.length > 0 && (
                                     <div className={styles.depsSection}>
-                                        <h3><Package size={14} /> Dependencies ({activeVersion.dependencies.length})</h3>
+                                        <h3>Dependencies ({activeVersion.dependencies.length})</h3>
                                         <div className={styles.depsList}>
                                             {activeVersion.dependencies.map((d: any, i: number) => (
-                                                <div
-                                                    key={i}
-                                                    className={`${styles.depItem} ${d.dependency_type === 'required' ? styles.required : styles.optional}`}
-                                                >
-                                                    <span className={styles.depType}>
-                                                        {d.dependency_type === 'required' ? 'Required' : 'Optional'}
+                                                <div key={i} className={styles.depItem}>
+                                                    <span className={d.dependency_type === 'required' ? styles.required : styles.optional}>
+                                                        {d.dependency_type}
                                                     </span>
-                                                    <span className={styles.depId}>
-                                                        {d.project_id ? (dependencyNames[d.project_id] || `Project: ${d.project_id.substring(0, 8)}...`) : 'Unknown'}
-                                                    </span>
-                                                    <span className={styles.depAuto}>Auto-install</span>
+                                                    <span>{d.project_id ? (dependencyNames[d.project_id] || d.project_id.substring(0, 8)) : 'Unknown'}</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -442,48 +494,34 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
 
                                 <div className={styles.installArea}>
                                     {installing ? (
-                                        <button className={`${styles.installBtn} ${styles.installingBtn}`} disabled>
-                                            <div className={styles.installProgress}>
-                                                <span className={styles.installStatus}>{progress || 'Installing...'}</span>
-                                                <div className={styles.progressBar}>
-                                                    <div className={styles.progressFill} style={{ width: `${installPercent}%` }} />
-                                                </div>
-                                                <span className={styles.percentText}>{installPercent}%</span>
+                                        <button className={styles.installBtn} disabled>
+                                            <div className={styles.progressBar}>
+                                                <div className={styles.progressFill} style={{ width: `${installPercent}%` }} />
                                             </div>
+                                            <span>{progress}</span>
                                         </button>
                                     ) : updateStatus[selectedProject.project_id]?.hasUpdate ? (
-                                        <button
-                                            className={`${styles.installBtn} ${styles.updateBtn}`}
-                                            onClick={handleInstall}
-                                            disabled={!activeVersion}
-                                        >
+                                        <button className={styles.installBtn} onClick={handleInstall} disabled={!activeVersion}>
                                             <RefreshCw size={18} />
-                                            <span>Update to {activeVersion?.version_number || 'Latest'}</span>
+                                            Update
                                         </button>
-                                    ) : isInstalled(selectedProject.title) ? (
-                                        <button className={`${styles.installBtn} ${styles.installedBtn}`} disabled>
+                                    ) : isInstalled(selectedProject) ? (
+                                        <button className={styles.installBtn} disabled>
                                             <CheckCircle size={18} />
-                                            <span>Already Installed</span>
+                                            Installed
                                         </button>
                                     ) : (
-                                        <button
-                                            className={styles.installBtn}
-                                            onClick={handleInstall}
-                                            disabled={!activeVersion}
-                                        >
+                                        <button className={styles.installBtn} onClick={handleInstall} disabled={!activeVersion}>
                                             <Download size={18} />
-                                            <span>Install {type === 'mod' ? 'Mod' : type === 'resourcepack' ? 'Pack' : 'Shader'}</span>
+                                            Install
                                         </button>
                                     )}
                                 </div>
                             </div>
                         ) : (
                             <div className={styles.placeholder}>
-                                <div className={styles.placeholderIcon}>
-                                    <Icon size={48} strokeWidth={1} />
-                                </div>
+                                <Icon size={48} />
                                 <p>Select a {type} to view details</p>
-                                <span>Browse and install from Modrinth</span>
                             </div>
                         )}
                     </div>

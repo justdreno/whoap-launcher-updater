@@ -22,6 +22,14 @@ export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNaviga
     const [processing, setProcessing] = useState<{ message: string; subMessage?: string; progress?: number } | null>(null);
     const { showToast } = useToast();
 
+    const handleToggleFavorite = async (e: React.MouseEvent, instance: Instance) => {
+        e.stopPropagation();
+        await InstanceApi.toggleFavorite(instance.id);
+        const list = await InstanceApi.list();
+        setInstances(list);
+        showToast(instance.isFavorite ? 'Removed from favorites' : 'Added to favorites', 'success');
+    };
+
     const loadInstances = async () => {
         setLoading(true);
         try {
@@ -54,6 +62,51 @@ export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNaviga
             window.ipcRenderer.off('instance:import-progress', handleProgress);
         };
     }, []);
+
+    // Keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Don't trigger shortcuts when typing in input fields
+            if (e.target instanceof HTMLInputElement || 
+                e.target instanceof HTMLTextAreaElement ||
+                (e.target as HTMLElement).isContentEditable) {
+                return;
+            }
+
+            if (e.ctrlKey || e.metaKey) {
+                switch (e.key.toLowerCase()) {
+                    case 'n':
+                        e.preventDefault();
+                        setShowCreateModal(true);
+                        break;
+                    case 'r':
+                        e.preventDefault();
+                        loadInstances();
+                        break;
+                    case 'i':
+                        e.preventDefault();
+                        const importInstance = async () => {
+                            setProcessing({ message: 'Importing Instance...', subMessage: 'Initializing...', progress: 0 });
+                            try {
+                                const res = await InstanceApi.import();
+                                if (res.success) {
+                                    showToast('Instance imported successfully!', 'success');
+                                    loadInstances();
+                                }
+                                else if (res.error) showToast(res.error, 'error');
+                            } finally {
+                                setProcessing(null);
+                            }
+                        };
+                        importInstance();
+                        break;
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [loadInstances]);
 
     return (
         <div className={styles.container}>
@@ -132,11 +185,24 @@ export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNaviga
                         return (
                             <div key={instance.id} className={styles.instanceCard} onClick={() => onSelectInstance?.(instance)}>
                                 <div className={styles.instanceIcon} style={{
-                                    background: instance.isFavorite
+                                    background: instance.icon ? 'transparent' : instance.isFavorite
                                         ? 'linear-gradient(135deg, #ff8800, #ff4400)'
                                         : undefined
                                 }}>
-                                    {instance.name.charAt(0).toUpperCase()}
+                                    {instance.icon ? (
+                                        <img 
+                                            src={instance.icon} 
+                                            alt={instance.name}
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }}
+                                            onError={(e) => {
+                                                // Fallback to letter if image fails to load
+                                                (e.target as HTMLImageElement).style.display = 'none';
+                                                (e.target as HTMLImageElement).parentElement!.innerText = instance.name.charAt(0).toUpperCase();
+                                            }}
+                                        />
+                                    ) : (
+                                        instance.name.charAt(0).toUpperCase()
+                                    )}
                                 </div>
                                 <div className={styles.instanceInfo}>
                                     <div className={styles.instanceName}>{instance.name}</div>
@@ -152,11 +218,25 @@ export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNaviga
                                     </div>
                                 </div>
 
-                                {instance.isFavorite && (
-                                    <div style={{ position: 'absolute', top: 12, right: 12, color: '#ffaa00' }}>
-                                        <Star size={16} fill="#ffaa00" />
-                                    </div>
-                                )}
+                                <button
+                                    className={`${styles.favoriteBtn} ${instance.isFavorite ? styles.favoriteActive : ''}`}
+                                    onClick={(e) => handleToggleFavorite(e, instance)}
+                                    title={instance.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                                    style={{
+                                        position: 'absolute',
+                                        top: 12,
+                                        right: 12,
+                                        background: 'rgba(0,0,0,0.5)',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        padding: '6px',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                        zIndex: 2
+                                    }}
+                                >
+                                    <Star size={16} fill={instance.isFavorite ? '#ffaa00' : 'none'} color={instance.isFavorite ? '#ffaa00' : '#666'} />
+                                </button>
 
                                 <div className={styles.playOverlay}>
                                     <div style={{ marginRight: 'auto', display: 'flex', gap: 8 }}>
@@ -199,7 +279,14 @@ export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNaviga
                 <InstanceSettingsModal
                     instance={settingsInstance}
                     onClose={() => setSettingsInstance(null)}
-                    onUpdate={loadInstances}
+                    onUpdate={async () => {
+                        await loadInstances();
+                        // Update settingsInstance with fresh data from the list
+                        const updatedInstance = instances.find(i => i.id === settingsInstance.id);
+                        if (updatedInstance) {
+                            setSettingsInstance(updatedInstance);
+                        }
+                    }}
                     onProcessing={(msg, sub) => setProcessing({ message: msg, subMessage: sub })}
                     onProcessingEnd={() => setProcessing(null)}
                 />

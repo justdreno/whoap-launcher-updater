@@ -8,7 +8,6 @@ import { supabase } from './lib/supabase';
 import { Skeleton } from './components/Skeleton';
 import { perf } from './utils/PerformanceProfiler';
 import { JavaInstallModal } from './components/JavaInstallModal';
-import { Onboarding } from './pages/Onboarding';
 
 // Mark app module load time
 perf.mark('App module loaded');
@@ -26,6 +25,8 @@ const Admin = lazy(() => import('./pages/Admin').then(m => ({ default: m.Admin }
 const Instances = lazy(() => import('./pages/Instances').then(m => ({ default: m.Instances })));
 const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
 const Profile = lazy(() => import('./pages/Profile').then(m => ({ default: m.Profile })));
+const WorldManagement = lazy(() => import('./pages/WorldManagement').then(m => ({ default: m.WorldManagement })));
+const ModpackBrowser = lazy(() => import('./pages/ModpackBrowser').then(m => ({ default: m.ModpackBrowser })));
 
 // Fallback component for lazy loading
 const PageLoader = () => (
@@ -36,7 +37,7 @@ const PageLoader = () => (
 );
 
 function App() {
-    const [activeTab, setActiveTab] = useState('news');
+    const [activeTab, setActiveTab] = useState('home');
     const [user, setUser] = useState<any>(null);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [selectedLibraryInstanceId, setSelectedLibraryInstanceId] = useState<string | null>(null);
@@ -46,8 +47,7 @@ function App() {
     
     // App initialization state - single source of truth
     const [appState, setAppState] = useState<{
-        stage: 'loading' | 'onboarding' | 'auth-check' | 'login' | 'main';
-        onboardingPath?: string;
+        stage: 'loading' | 'auth-check' | 'login' | 'main';
     }>({ stage: 'loading' });
 
     useEffect(() => {
@@ -64,22 +64,12 @@ function App() {
         };
     }, []);
 
-    // Sequential initialization: Onboarding check → Auth check
+    // Sequential initialization: Auth check
     useEffect(() => {
         const initializeApp = async () => {
             try {
-                // Step 1: Check if onboarding is needed
-                console.log('[App] Checking onboarding status...');
-                const onboardingResult = await window.ipcRenderer.invoke('config:is-first-launch');
-                
-                if (onboardingResult.isFirstLaunch) {
-                    console.log('[App] First launch detected, showing onboarding');
-                    setAppState({ stage: 'onboarding', onboardingPath: onboardingResult.defaultPath });
-                    return;
-                }
-
-                // Step 2: Onboarding complete, check auth
-                console.log('[App] Onboarding complete, checking session...');
+                // Check auth session
+                console.log('[App] Checking session...');
                 setAppState({ stage: 'auth-check' });
                 
                 const timeoutPromise = new Promise((_, reject) => 
@@ -228,32 +218,6 @@ function App() {
         setAppState({ stage: 'login' });
     };
 
-    const handleOnboardingComplete = () => {
-        // After onboarding, check auth
-        setAppState({ stage: 'auth-check' });
-        
-        // Re-run initialization to check session
-        const checkSession = async () => {
-            try {
-                const result: any = await window.ipcRenderer.invoke('auth:get-session');
-                if (result && result.success && result.profile) {
-                    setUser({
-                        name: result.profile.name,
-                        uuid: result.profile.uuid,
-                        token: result.profile.token,
-                        type: result.profile.type
-                    });
-                    setAppState({ stage: 'main' });
-                } else {
-                    setAppState({ stage: 'login' });
-                }
-            } catch (e) {
-                setAppState({ stage: 'login' });
-            }
-        };
-        checkSession();
-    };
-
     const handleLoginSuccess = (profile: any) => {
         setUser(profile);
         setAppState({ stage: 'main' });
@@ -262,17 +226,6 @@ function App() {
     // Show loading state
     if (appState.stage === 'loading') {
         return <PageLoader />;
-    }
-
-    // Show onboarding for first launch
-    if (appState.stage === 'onboarding') {
-        return (
-            <ErrorBoundary>
-                <ToastProvider>
-                    <Onboarding onComplete={handleOnboardingComplete} />
-                </ToastProvider>
-            </ErrorBoundary>
-        );
     }
 
     // Show login if no user
@@ -312,7 +265,7 @@ function App() {
                                     if (instanceId) setSelectedLibraryInstanceId(instanceId);
                                     setActiveTab(tab);
                                 }}
-                                onLockNav={(locked) => {
+                                onLockNav={(locked: boolean) => {
                                     setIsNavLocked(locked);
                                 }}
                             />}
@@ -323,6 +276,8 @@ function App() {
                                 }} />}
                                 {activeTab === 'settings' && <Settings />}
                                 {activeTab === 'library' && <Library user={user} isOnline={isOnline} preselectedInstanceId={selectedLibraryInstanceId} />}
+                                {activeTab === 'modpacks' && <ModpackBrowser />}
+                                {activeTab === 'worlds' && <WorldManagement />}
                                 {activeTab === 'screenshots' && <Screenshots user={user} />}
                                 {activeTab === 'friends' && <Friends isOnline={isOnline} />}
                                 {activeTab === 'news' && <News />}

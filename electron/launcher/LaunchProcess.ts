@@ -9,6 +9,7 @@ import { ConfigManager } from '../managers/ConfigManager';
 import { LogWindowManager } from '../managers/LogWindowManager';
 import { CloudManager } from '../managers/CloudManager';
 import { DiscordManager } from '../managers/DiscordManager';
+import { InstanceManager } from '../managers/InstanceManager';
 
 export class LaunchProcess {
     private downloader: AssetDownloader;
@@ -682,6 +683,10 @@ export class LaunchProcess {
 
                 DiscordManager.getInstance().setPlayingPresence(instanceId, versionId, undefined, false, undefined);
 
+                // Track playtime
+                const startTime = Date.now();
+                let sessionPlayTime = 0;
+
                 const gameProcess = spawn(javaPath, jvmArgs, {
                     cwd: instancePath,
                     detached: false, // Keep attached to main process to avoid new terminal window
@@ -724,7 +729,14 @@ export class LaunchProcess {
                     mainWindow?.show();
                 });
 
-                gameProcess.on('close', (code) => {
+                gameProcess.on('close', async (code) => {
+                    // Calculate and save playtime
+                    sessionPlayTime = Math.floor((Date.now() - startTime) / 1000);
+                    if (sessionPlayTime > 0) {
+                        console.log(`[LaunchProcess] Session lasted ${sessionPlayTime}s, saving playtime...`);
+                        await InstanceManager.getInstance().addPlayTime(instanceId, sessionPlayTime);
+                    }
+
                     if (code !== 0) {
                         console.log("Game crashed! Analyzing...");
                         import('./CrashAnalyzer').then(({ CrashAnalyzer }) => {

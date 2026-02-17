@@ -266,127 +266,123 @@ export const Screenshots: React.FC<ScreenshotsProps> = ({ hideHeader }) => {
                     <p>Take some screenshots in-game with F2 and they'll appear here!</p>
                 </div>
             ) : viewMode === 'grid' ? (
-                <div className={styles.screenshotsScrollContainer}>
-                    <div className={styles.gridView}>
-                        {filteredScreenshots.map((screenshot, index) => (
-                            <div
-                                key={screenshot.id}
-                                className={styles.screenshotCard}
-                                onClick={() => setLightboxIndex(index)}
-                                data-testid={`screenshot-card-${index}`}
-                            >
-                                <div className={styles.imageWrapper}>
-                                    <ScreenshotImage
-                                        screenshot={screenshot}
-                                        className={styles.screenshot}
-                                        alt={screenshot.filename}
-                                    />
-                                </div>
-                                <div className={styles.cardActions}>
-                                    <button
-                                        className={styles.actionBtn}
-                                        onClick={(e) => handleCopyToClipboard(screenshot, e)}
-                                        title="Copy to Clipboard"
-                                        data-testid="copy-screenshot-btn"
-                                    >
-                                        <Copy size={16} />
-                                    </button>
-                                    <button
-                                        className={styles.actionBtn}
-                                        onClick={(e) => handleExport(screenshot, e)}
-                                        title="Export"
-                                        data-testid="export-screenshot-btn"
-                                    >
-                                        <Download size={16} />
-                                    </button>
-                                    <button
-                                        className={styles.actionBtn}
-                                        onClick={(e) => handleOpenLocation(screenshot, e)}
-                                        title="Open Location"
-                                        data-testid="open-location-btn"
-                                    >
-                                        <FolderOpen size={16} />
-                                    </button>
-                                    <button
-                                        className={styles.actionBtn}
-                                        onClick={(e) => handleDelete(screenshot, e)}
-                                        title="Delete"
-                                        data-testid="delete-screenshot-btn"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-                                </div>
-                                <div className={styles.cardInfo}>
-                                    <div className={styles.cardTitle}>{screenshot.instanceName}</div>
-                                    <div className={styles.cardMeta}>
-                                        <span>{formatDate(screenshot.date)}</span>
-                                        <span>{formatSize(screenshot.size)}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            ) : (
-                <div className={styles.screenshotsScrollContainer}>
-                    <div className={styles.listView}>
-                        {filteredScreenshots.map((screenshot, index) => (
-                            <div
-                                key={screenshot.id}
-                                className={styles.listItem}
-                                onClick={() => setLightboxIndex(index)}
-                                data-testid={`screenshot-list-item-${index}`}
-                            >
+                <div className={styles.gridView}>
+                    {filteredScreenshots.map((screenshot, index) => (
+                        <div
+                            key={screenshot.id}
+                            className={styles.screenshotCard}
+                            onClick={() => setLightboxIndex(index)}
+                            data-testid={`screenshot-card-${index}`}
+                        >
+                            <div className={styles.imageWrapper}>
                                 <ScreenshotImage
                                     screenshot={screenshot}
-                                    className={styles.listThumbnail}
+                                    className={styles.screenshot}
                                     alt={screenshot.filename}
                                 />
-                                <div className={styles.listInfo}>
-                                    <div className={styles.listTitle}>{screenshot.filename}</div>
-                                    <div className={styles.listMeta}>
-                                        <span>{screenshot.instanceName}</span>
-                                        <span>•</span>
-                                        <span>{screenshot.version} • {screenshot.loader}</span>
-                                        <span>•</span>
-                                        <span>{formatDate(screenshot.date)}</span>
-                                        <span>•</span>
-                                        <span>{formatSize(screenshot.size)}</span>
-                                    </div>
-                                </div>
-                                <div className={styles.listActions}>
-                                    <button
-                                        className={styles.actionBtn}
-                                        onClick={(e) => handleCopyToClipboard(screenshot, e)}
-                                        title="Copy to Clipboard"
-                                    >
-                                        <Copy size={16} />
-                                    </button>
-                                    <button
-                                        className={styles.actionBtn}
-                                        onClick={(e) => handleExport(screenshot, e)}
-                                        title="Export"
-                                    >
-                                        <Download size={16} />
-                                    </button>
-                                    <button
-                                        className={styles.actionBtn}
-                                        onClick={(e) => handleOpenLocation(screenshot, e)}
-                                        title="Open Location"
-                                    >
-                                        <FolderOpen size={16} />
-                                    </button>
-                                    <button
-                                        className={styles.actionBtn}
-                                        onClick={(e) => handleDelete(screenshot, e)}
-                                        title="Delete"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                            </div>
+                            <div className={styles.cardActions}>
+                                <button
+                                    className={styles.actionBtn}
+                                    onClick={(e) => handleCopyToClipboard(screenshot, e)}
+                                    title="Copy to Clipboard"
+                                    data-testid="copy-screenshot-btn"
+                                >
+                                    <Copy size={16} />
+                                </button>
+                                <button
+                                    className={styles.actionBtn}
+                                    onClick={(e) => handleExport(screenshot, e)}
+                                    title="Export"
+                                    data-testid="export-screenshot-btn"
+                                >
+                                    <Download size={16} />
+                                </button>
+                                <button
+                                    className={styles.actionBtn}
+                                    onClick={(e) => handleOpenLocation(screenshot, e)}
+                                    title="Open Location"
+                                    data-testid="open-location-btn"
+                                >
+                                    <FolderOpen size={16} />
+                                </button>
+                                <button
+                                    className={styles.actionBtn}
+                                    onClick={(e) => handleDelete(screenshot, e)}
+                                    title="Delete"
+                                    data-testid="delete-screenshot-btn"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                            <div className={styles.cardInfo}>
+                                <div className={styles.cardTitle}>{screenshot.instanceName}</div>
+                                <div className={styles.cardMeta}>
+                                    <span>{formatDate(screenshot.date)}</span>
+                                    <span>{formatSize(screenshot.size)}</span>
                                 </div>
                             </div>
-                        ))}
-                    </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className={styles.listView}>
+                    {filteredScreenshots.map((screenshot, index) => (
+                        <div
+                            key={screenshot.id}
+                            className={styles.listItem}
+                            onClick={() => setLightboxIndex(index)}
+                            data-testid={`screenshot-list-item-${index}`}
+                        >
+                            <ScreenshotImage
+                                screenshot={screenshot}
+                                className={styles.listThumbnail}
+                                alt={screenshot.filename}
+                            />
+                            <div className={styles.listInfo}>
+                                <div className={styles.listTitle}>{screenshot.filename}</div>
+                                <div className={styles.listMeta}>
+                                    <span>{screenshot.instanceName}</span>
+                                    <span>•</span>
+                                    <span>{screenshot.version} • {screenshot.loader}</span>
+                                    <span>•</span>
+                                    <span>{formatDate(screenshot.date)}</span>
+                                    <span>•</span>
+                                    <span>{formatSize(screenshot.size)}</span>
+                                </div>
+                            </div>
+                            <div className={styles.listActions}>
+                                <button
+                                    className={styles.actionBtn}
+                                    onClick={(e) => handleCopyToClipboard(screenshot, e)}
+                                    title="Copy to Clipboard"
+                                >
+                                    <Copy size={16} />
+                                </button>
+                                <button
+                                    className={styles.actionBtn}
+                                    onClick={(e) => handleExport(screenshot, e)}
+                                    title="Export"
+                                >
+                                    <Download size={16} />
+                                </button>
+                                <button
+                                    className={styles.actionBtn}
+                                    onClick={(e) => handleOpenLocation(screenshot, e)}
+                                    title="Open Location"
+                                >
+                                    <FolderOpen size={16} />
+                                </button>
+                                <button
+                                    className={styles.actionBtn}
+                                    onClick={(e) => handleDelete(screenshot, e)}
+                                    title="Delete"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             )}
 

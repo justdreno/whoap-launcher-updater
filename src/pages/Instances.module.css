@@ -426,3 +426,22 @@
 .container::-webkit-scrollbar-thumb:hover {
     background: #444;
 }
+
+/* Favorite Button */
+.favoriteBtn {
+    opacity: 0;
+    transition: all 0.2s ease;
+}
+
+.instanceCard:hover .favoriteBtn {
+    opacity: 1;
+}
+
+.favoriteBtn:hover {
+    background: rgba(255, 170, 0, 0.2) !important;
+    transform: scale(1.1);
+}
+
+.favoriteActive {
+    opacity: 1 !important;
+}

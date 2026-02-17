@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { PageHeader } from '../components/PageHeader';
 import styles from './Admin.module.css';
-import { Shield, Users, Newspaper, Award, Plus, Trash2, Ban, UserCheck, Save, LayoutDashboard, Settings, GitBranch, Server, Globe, Edit2, Zap, Bell, Download } from 'lucide-react';
+import { 
+    Shield, Users, Newspaper, Award, Plus, Trash2, Ban, UserCheck, Save, 
+    LayoutDashboard, Settings, GitBranch, Server, Globe, Edit2, Zap, 
+    User, FileText, Medal, Clock, Star, Heart, Code, Bug, Gift, Crown, Trophy
+} from 'lucide-react';
 import { ProfileService, UserProfile, Badge as BadgeType } from '../services/ProfileService';
 import { ServerService, FeaturedServer } from '../services/ServerService';
 import { supabase } from '../lib/supabase';
@@ -9,8 +13,8 @@ import { useToast } from '../context/ToastContext';
 import { useConfirm, usePrompt } from '../context/ConfirmContext';
 import { useAuth } from '../context/AuthContext';
 import { CustomSelect } from '../components/CustomSelect';
-import { SystemService } from '../services/SystemService';
 import { ContentManager, ChangelogItem } from '../utils/ContentManager';
+import { UserAvatar } from '../components/UserAvatar';
 
 interface AdminProps {
     user: {
@@ -32,17 +36,27 @@ interface NewsItem {
     version?: string;
 }
 
+type TabType = 'overview' | 'users' | 'servers' | 'badges' | 'content' | 'system';
+
+// Icon mapping for badges
+const iconMap: Record<string, React.ElementType> = {
+    Shield, Award, Star, Heart, Code, Bug, Gift, Crown, Trophy, Globe, Clock, User, FileText, Medal
+};
+
+// Helper to get icon component
+const getIconComponent = (iconName: string): React.ElementType => {
+    return iconMap[iconName] || Shield;
+};
+
 export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
     const { role: authRole, profile: authProfile } = useAuth();
-    // Use auth context profile if available (realtime), otherwise prop
     const user = {
         name: authProfile?.username || propUser.name,
         uuid: authProfile?.id || propUser.uuid,
         role: authRole || propUser.role
     };
 
-    // State definitions
-    const [activeSection, setActiveSection] = useState<'overview' | 'servers' | 'badges' | 'users' | 'news' | 'system' | 'announcements'>('overview');
+    const [activeTab, setActiveTab] = useState<TabType>('overview');
     const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(true);
     const { showToast } = useToast();
@@ -55,8 +69,6 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
     const [news, setNews] = useState<NewsItem[]>([]);
     const [changelogs, setChangelogs] = useState<ChangelogItem[]>([]);
     const [featuredServers, setFeaturedServers] = useState<FeaturedServer[]>([]);
-    const [currentVersion, setCurrentVersion] = useState('');
-    const [newVersion, setNewVersion] = useState('');
 
     // Form State
     const [newBadge, setNewBadge] = useState({ name: '', description: '', icon: 'Shield', color: '#ff9f43' });
@@ -74,20 +86,11 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
 
     const [grantForm, setGrantForm] = useState({ userId: '', badgeId: '' });
 
-    // Announcement form state
-    const [announcements, setAnnouncements] = useState<any[]>([]);
-    const [newUpdate, setNewUpdate] = useState({
-        version: '',
-        downloadUrl: '',
-        buttonTitle: 'Update Now',
-        message: '',
-        priority: 'normal' as 'low' | 'normal' | 'high' | 'critical'
-    });
+    const iconOptions = ['Shield', 'Award', 'Star', 'Heart', 'Code', 'Bug', 'Gift', 'Crown', 'Trophy', 'Globe'];
 
     // Permissions Check
     useEffect(() => {
         const check = async () => {
-            // Instant check from context
             if (authRole === 'admin' || authRole === 'developer') {
                 setIsAdmin(true);
                 await loadData();
@@ -95,7 +98,6 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
                 return;
             }
 
-            // Fallback fetch (e.g. if context is slow or initial load)
             const adminStatus = await ProfileService.isAdmin(user.uuid);
             setIsAdmin(adminStatus);
             if (adminStatus) await loadData();
@@ -113,7 +115,7 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
         setBadges(badgesData);
         setUsers(usersData);
         setFeaturedServers(serversData);
-        await Promise.all([loadNews(), loadChangelogs(), loadSystemConfig(), loadAnnouncements()]);
+        await Promise.all([loadNews(), loadChangelogs()]);
     };
 
     const loadNews = async () => {
@@ -126,23 +128,11 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
         setChangelogs(result.items);
     };
 
-    const loadAnnouncements = async () => {
-        const items = await SystemService.getAllUpdateAnnouncements();
-        setAnnouncements(items);
-    };
-
-    const loadSystemConfig = async () => {
-        const version = await SystemService.getAppVersion();
-        setCurrentVersion(version);
-        setNewVersion(version);
-    };
-
-    // --- Server Handlers ---
+    // Server Handlers
     const handleSaveServer = async () => {
         if (!serverForm.name || !serverForm.address) return showToast('Name and Address are required', 'error');
 
         if (editingServerId) {
-            // Update
             const success = await ServerService.updateServer(editingServerId, serverForm);
             if (success) {
                 showToast('Server updated', 'success');
@@ -150,7 +140,6 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
                 resetServerForm();
             }
         } else {
-            // Create
             const newServer = await ServerService.addServer(serverForm as any);
             if (newServer) {
                 showToast('Server added', 'success');
@@ -182,7 +171,7 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
         setShowServerForm(false);
     };
 
-    // --- Badge Handlers ---
+    // Badge Handlers
     const handleCreateBadge = async () => {
         if (!newBadge.name || !newBadge.description) return showToast('Fill all fields', 'error');
 
@@ -216,10 +205,9 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
         }
     };
 
-    // --- User Handlers ---
+    // User Handlers
     const handleBanUser = async (userId: string, currentBanned: boolean) => {
         if (currentBanned) {
-            // Unban
             if (await confirm('Unban User', 'Are you sure you want to unban this user?')) {
                 const success = await ProfileService.setUserBan(userId, false);
                 if (success) {
@@ -228,7 +216,6 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
                 }
             }
         } else {
-            // Ban
             const reason = await prompt('Ban User', 'Please enter a reason for the ban:', {
                 inputConfig: { placeholder: 'Violation of terms...', defaultValue: 'Violation of rules' },
                 isDanger: true,
@@ -256,7 +243,7 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
         }
     };
 
-    // --- News Handlers ---
+    // News Handlers
     const handleCreateNews = async () => {
         if (!newNews.title || !newNews.content) return showToast('Fill all fields', 'error');
 
@@ -286,21 +273,7 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
         }
     };
 
-    // --- System Handlers ---
-    const handleUpdateVersion = async () => {
-        if (!newVersion) return;
-        if (await confirm('Update Application Version', `Are you sure you want to change the version from v${currentVersion} to v${newVersion}? This will affect all users.`)) {
-            const success = await SystemService.updateAppVersion(newVersion, user.uuid);
-            if (success) {
-                setCurrentVersion(newVersion);
-                showToast('Version updated successfully!', 'success');
-            } else {
-                showToast('Failed to update version', 'error');
-            }
-        }
-    };
-
-    // --- Changelog Handlers ---
+    // Changelog Handlers
     const handleCreateChangelog = async () => {
         if (!newChangelog.version || !newChangelog.description) return showToast('Fill all fields', 'error');
 
@@ -325,41 +298,12 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
         }
     };
 
-    // --- Update Announcement Handlers ---
-    const handleCreateUpdate = async () => {
-        if (!newUpdate.version || !newUpdate.downloadUrl) {
-            showToast('Version and Download URL are required', 'error');
-            return;
-        }
+    if (loading) return (
+        <div className={styles.container}>
+            <div className={styles.loading}>Loading Admin Panel...</div>
+        </div>
+    );
 
-        const success = await SystemService.createUpdateAnnouncement(
-            newUpdate.version,
-            newUpdate.downloadUrl,
-            newUpdate.buttonTitle,
-            newUpdate.message || undefined,
-            newUpdate.priority
-        );
-
-        if (success) {
-            showToast('Update announcement created!', 'success');
-            loadAnnouncements();
-            setNewUpdate({ version: '', downloadUrl: '', buttonTitle: 'Update Now', message: '', priority: 'normal' });
-        } else {
-            showToast('Failed to create update', 'error');
-        }
-    };
-
-    const handleDeleteUpdate = async (id: string) => {
-        if (await confirm('Delete Update', 'Are you sure?')) {
-            const success = await SystemService.deleteUpdateAnnouncement(id);
-            if (success) {
-                setAnnouncements(announcements.filter(a => a.id !== id));
-                showToast('Update deleted', 'success');
-            }
-        }
-    };
-
-    if (loading) return <div className={styles.loading}>Loading Admin Panel...</div>;
     if (!isAdmin) return (
         <div className={styles.container}>
             <div className={styles.accessDenied}>
@@ -370,100 +314,152 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
         </div>
     );
 
-    const iconOptions = ['Shield', 'Gift', 'Code', 'Heart', 'Bug', 'Star', 'Award', 'Crown'];
-
-    return (
-        <div className={styles.container}>
-            {/* Sidebar Navigation */}
-            <div className={styles.sidebar}>
-                <div className={styles.header}>
-                    <div className={styles.headerIcon}>
-                        <Shield size={24} color="#ff8800" />
-                    </div>
-                    <div>
-                        <h2 className={styles.headerTitle}>Admin Panel</h2>
-                        <span className={styles.headerSub}>{user.name}</span>
-                    </div>
-                </div>
-
-                <div className={styles.navGroup}>
-                    <span className={styles.navLabel}>Management</span>
-                    <nav className={styles.nav}>
-                        <button className={`${styles.navItem} ${activeSection === 'overview' ? styles.active : ''}`} onClick={() => setActiveSection('overview')}>
-                            <LayoutDashboard size={18} /> Overview
-                        </button>
-                        <button className={`${styles.navItem} ${activeSection === 'users' ? styles.active : ''}`} onClick={() => setActiveSection('users')}>
-                            <Users size={18} /> Users & Roles
-                        </button>
-                    </nav>
-                </div>
-
-                <div className={styles.navGroup}>
-                    <span className={styles.navLabel}>Content</span>
-                    <nav className={styles.nav}>
-                        <button className={`${styles.navItem} ${activeSection === 'servers' ? styles.active : ''}`} onClick={() => setActiveSection('servers')}>
-                            <Server size={18} /> Featured Servers
-                        </button>
-                        <button className={`${styles.navItem} ${activeSection === 'badges' ? styles.active : ''}`} onClick={() => setActiveSection('badges')}>
-                            <Award size={18} /> Badges
-                        </button>
-                        <button className={`${styles.navItem} ${activeSection === 'news' ? styles.active : ''}`} onClick={() => setActiveSection('news')}>
-                            <Newspaper size={18} /> News & Updates
-                        </button>
-                    </nav>
-                </div>
-
-                <div className={styles.navGroup}>
-                    <span className={styles.navLabel}>System</span>
-                    <nav className={styles.nav}>
-                        <button className={`${styles.navItem} ${activeSection === 'system' ? styles.active : ''}`} onClick={() => setActiveSection('system')}>
-                            <Settings size={18} /> Configuration
-                        </button>
-                        <button className={`${styles.navItem} ${activeSection === 'announcements' ? styles.active : ''}`} onClick={() => setActiveSection('announcements')}>
-                            <Bell size={18} /> Announcements
-                        </button>
-                    </nav>
-                </div>
-            </div>
-
-            {/* Main Content */}
-            <div className={styles.content}>
-
-                {activeSection === 'overview' && (
+    const renderTabContent = () => {
+        switch (activeTab) {
+            case 'overview':
+                return (
                     <>
                         <PageHeader title="Dashboard Overview" description="Welcome to the control center." />
+                        
+                        {/* Quick Stats */}
                         <div className={styles.overviewGrid}>
                             <div className={styles.statCard}>
-                                <div className={styles.statIcon} style={{ background: 'rgba(255, 136, 0, 0.1)', color: '#ff8800' }}><Users size={24} /></div>
+                                <div className={styles.statIcon} style={{ background: 'rgba(255, 136, 0, 0.1)', color: '#ff8800' }}>
+                                    <Users size={24} />
+                                </div>
                                 <div className={styles.statInfo}>
                                     <div className={styles.statValue}>{users.length}</div>
                                     <div className={styles.statLabel}>Total Users</div>
                                 </div>
                             </div>
                             <div className={styles.statCard}>
-                                <div className={styles.statIcon} style={{ background: 'rgba(52, 152, 219, 0.1)', color: '#3498db' }}><Server size={24} /></div>
+                                <div className={styles.statIcon} style={{ background: 'rgba(52, 152, 219, 0.1)', color: '#3498db' }}>
+                                    <Server size={24} />
+                                </div>
                                 <div className={styles.statInfo}>
                                     <div className={styles.statValue}>{featuredServers.length}</div>
                                     <div className={styles.statLabel}>Featured Servers</div>
                                 </div>
                             </div>
                             <div className={styles.statCard}>
-                                <div className={styles.statIcon} style={{ background: 'rgba(46, 204, 113, 0.1)', color: '#2ecc71' }}><Zap size={24} /></div>
+                                <div className={styles.statIcon} style={{ background: 'rgba(155, 89, 182, 0.1)', color: '#9b59b6' }}>
+                                    <Award size={24} />
+                                </div>
                                 <div className={styles.statInfo}>
-                                    <div className={styles.statValue}>v{currentVersion}</div>
+                                    <div className={styles.statValue}>{badges.length}</div>
+                                    <div className={styles.statLabel}>Badges Created</div>
+                                </div>
+                            </div>
+                            <div className={styles.statCard}>
+                                <div className={styles.statIcon} style={{ background: 'rgba(46, 204, 113, 0.1)', color: '#2ecc71' }}>
+                                    <Zap size={24} />
+                                </div>
+                                <div className={styles.statInfo}>
+                                    <div className={styles.statValue}>{import.meta.env.VITE_APP_VERSION || '3.0.0'}</div>
                                     <div className={styles.statLabel}>System Version</div>
                                 </div>
                             </div>
                         </div>
-                    </>
-                )}
 
-                {activeSection === 'servers' && (
+                        {/* Quick Actions */}
+                        <div className={styles.sectionTitleSmall}>Quick Actions</div>
+                        <div className={styles.quickActions}>
+                            <div className={styles.quickActionCard} onClick={() => setActiveTab('users')}>
+                                <div className={styles.quickActionIcon} style={{ background: 'rgba(52, 152, 219, 0.1)', color: '#3498db' }}>
+                                    <User size={20} />
+                                </div>
+                                <div>
+                                    <div className={styles.quickActionTitle}>Manage Users</div>
+                                    <div className={styles.quickActionDesc}>View and manage user accounts</div>
+                                </div>
+                            </div>
+                            <div className={styles.quickActionCard} onClick={() => setActiveTab('servers')}>
+                                <div className={styles.quickActionIcon} style={{ background: 'rgba(46, 204, 113, 0.1)', color: '#2ecc71' }}>
+                                    <Server size={20} />
+                                </div>
+                                <div>
+                                    <div className={styles.quickActionTitle}>Featured Servers</div>
+                                    <div className={styles.quickActionDesc}>Manage server listings</div>
+                                </div>
+                            </div>
+                            <div className={styles.quickActionCard} onClick={() => setActiveTab('content')}>
+                                <div className={styles.quickActionIcon} style={{ background: 'rgba(155, 89, 182, 0.1)', color: '#9b59b6' }}>
+                                    <FileText size={20} />
+                                </div>
+                                <div>
+                                    <div className={styles.quickActionTitle}>News & Updates</div>
+                                    <div className={styles.quickActionDesc}>Publish announcements</div>
+                                </div>
+                            </div>
+                            <div className={styles.quickActionCard} onClick={() => setActiveTab('badges')}>
+                                <div className={styles.quickActionIcon} style={{ background: 'rgba(241, 196, 15, 0.1)', color: '#f1c40f' }}>
+                                    <Medal size={20} />
+                                </div>
+                                <div>
+                                    <div className={styles.quickActionTitle}>Badge System</div>
+                                    <div className={styles.quickActionDesc}>Create and grant badges</div>
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                );
+
+            case 'users':
+                return (
+                    <>
+                        <PageHeader title="User Management" description="Manage user roles, bans, and permissions." />
+                        
+                        <div className={styles.grid}>
+                            {users.map(u => (
+                                <div key={u.id} className={`${styles.userCard} ${u.banned ? styles.banned : ''}`}>
+                                    <div className={styles.userAvatar}>
+                                        <UserAvatar
+                                            username={u.username}
+                                            uuid={u.id}
+                                            accountType="whoap"
+                                            className={styles.avatarImg}
+                                        />
+                                    </div>
+                                    <div className={styles.cardContent}>
+                                        <span className={styles.cardTitle}>
+                                            {u.username}
+                                            {u.banned && <span className={styles.banTag}>BANNED</span>}
+                                            {u.role === 'admin' && <span className={styles.badgeTag} style={{ marginLeft: 8, background: 'rgba(231, 76, 60, 0.2)', color: '#e74c3c' }}>ADMIN</span>}
+                                            {u.role === 'developer' && <span className={styles.badgeTag} style={{ marginLeft: 8, background: 'rgba(52, 152, 219, 0.2)', color: '#3498db' }}>DEV</span>}
+                                        </span>
+                                        <span className={styles.cardSub}>{u.email || 'No email'} • Joined {new Date(u.joined_at || Date.now()).toLocaleDateString()}</span>
+                                    </div>
+                                    <div className={styles.cardActions}>
+                                        <select
+                                            className={styles.roleSelect}
+                                            value={u.role}
+                                            onChange={(e) => handleRoleChange(u.id, e.target.value as any)}
+                                        >
+                                            <option value="user">User</option>
+                                            <option value="admin">Admin</option>
+                                            <option value="developer">Developer</option>
+                                        </select>
+                                        <button
+                                            className={`${styles.iconBtn} ${u.banned ? '' : styles.danger}`}
+                                            title={u.banned ? "Unban" : "Ban"}
+                                            onClick={() => handleBanUser(u.id, u.banned || false)}
+                                        >
+                                            {u.banned ? <UserCheck size={18} /> : <Ban size={18} />}
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                );
+
+            case 'servers':
+                return (
                     <>
                         <div className={styles.sectionHeader}>
                             <PageHeader title="Featured Servers" description="Drag to reorder. Manage servers promoted on the home page." />
                             <div style={{ display: 'flex', gap: 10 }}>
-                                <button className={styles.actionBtn} onClick={() => ServerService.reorderServers(featuredServers.map(s => s.id))
+                                <button className={styles.actionBtnSecondary} onClick={() => ServerService.reorderServers(featuredServers.map(s => s.id))
                                     .then(() => showToast('Order saved!', 'success'))}>
                                     <Save size={18} /> Save Order
                                 </button>
@@ -475,7 +471,9 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
 
                         {showServerForm && (
                             <div className={styles.formCard}>
-                                <h3>{editingServerId ? 'Edit Server' : 'Add New Server'}</h3>
+                                <div className={styles.sectionTitle}>
+                                    {editingServerId ? 'Edit Server' : 'Add New Server'}
+                                </div>
                                 <div className={styles.formGrid}>
                                     <input className={styles.input} placeholder="Server Name" value={serverForm.name} onChange={e => setServerForm({ ...serverForm, name: e.target.value })} />
                                     <input className={styles.input} placeholder="Address (IP)" value={serverForm.address} onChange={e => setServerForm({ ...serverForm, address: e.target.value })} />
@@ -541,20 +539,21 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
                             ))}
                         </div>
                     </>
-                )}
+                );
 
-                {activeSection === 'badges' && (
+            case 'badges':
+                return (
                     <>
                         <div className={styles.sectionHeader}>
                             <PageHeader title="Badge Management" description="Create and grant badges to users." />
                             <button className={styles.actionBtn} onClick={() => setShowBadgeForm(!showBadgeForm)}>
-                                <Plus size={18} /> New Badge
+                                <Plus size={18} /> {showBadgeForm ? 'Cancel' : 'New Badge'}
                             </button>
                         </div>
 
                         {showBadgeForm && (
                             <div className={styles.formCard}>
-                                <h3>Create New Badge</h3>
+                                <div className={styles.sectionTitle}>Create New Badge</div>
                                 <div className={styles.formGrid}>
                                     <input className={styles.input} placeholder="Name" value={newBadge.name} onChange={e => setNewBadge({ ...newBadge, name: e.target.value })} />
                                     <input className={styles.input} placeholder="Description" value={newBadge.description} onChange={e => setNewBadge({ ...newBadge, description: e.target.value })} />
@@ -563,118 +562,83 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
                                     <CustomSelect
                                         value={newBadge.icon}
                                         onChange={(val) => setNewBadge({ ...newBadge, icon: val })}
-                                        options={iconOptions.map(i => ({ value: i, label: i, icon: <Shield size={14} /> }))} // Simple icon mapping for now
+                                        options={iconOptions.map(i => ({ value: i, label: i }))}
                                         placeholder="Select Icon"
                                     />
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                        <span>Color:</span>
+                                        <span style={{ color: '#888', fontSize: '14px' }}>Color:</span>
                                         <input type="color" className={styles.colorPicker} value={newBadge.color} onChange={e => setNewBadge({ ...newBadge, color: e.target.value })} />
                                     </div>
                                 </div>
-                                <button className={styles.actionBtn} onClick={handleCreateBadge}><Save size={16} /> Save Badge</button>
+                                <button className={styles.actionBtn} onClick={handleCreateBadge} style={{ marginTop: 16 }}>
+                                    <Save size={16} /> Save Badge
+                                </button>
                             </div>
                         )}
 
-                        <div className={styles.grid}>
-                            {/* Grant Section */}
-                            <div className={styles.card}>
-                                <div className={styles.cardContent}>
-                                    <span className={styles.cardTitle}>Grant Badges</span>
-                                    <div className={styles.formGrid} style={{ marginTop: 10, marginBottom: 0 }}>
-                                        <CustomSelect
-                                            value={grantForm.userId}
-                                            onChange={(val) => setGrantForm({ ...grantForm, userId: val })}
-                                            options={users.map(u => ({ value: u.id, label: u.username }))}
-                                            placeholder="Select User"
-                                        />
-                                        <CustomSelect
-                                            value={grantForm.badgeId}
-                                            onChange={(val) => setGrantForm({ ...grantForm, badgeId: val })}
-                                            options={badges.map(b => ({ value: b.id, label: b.name }))}
-                                            placeholder="Select Badge"
-                                        />
-                                    </div>
-                                </div>
-                                <div className={styles.cardActions}>
-                                    <button className={styles.actionBtn} style={{ background: '#222', color: 'white', border: '1px solid #444' }} onClick={handleGrantBadge}>Grant</button>
-                                </div>
+                        {/* Grant Badge Section */}
+                        <div className={styles.formCard} style={{ marginBottom: 24 }}>
+                            <div className={styles.sectionTitle}>Grant Badge to User</div>
+                            <div className={styles.formGrid}>
+                                <CustomSelect
+                                    value={grantForm.userId}
+                                    onChange={(val) => setGrantForm({ ...grantForm, userId: val })}
+                                    options={users.map(u => ({ value: u.id, label: u.username }))}
+                                    placeholder="Select User"
+                                />
+                                <CustomSelect
+                                    value={grantForm.badgeId}
+                                    onChange={(val) => setGrantForm({ ...grantForm, badgeId: val })}
+                                    options={badges.map(b => ({ value: b.id, label: b.name }))}
+                                    placeholder="Select Badge"
+                                />
                             </div>
-
-                            {badges.map(badge => (
-                                <div key={badge.id} className={styles.card}>
-                                    <div className={styles.cardContent}>
-                                        <span className={styles.badgePreview} style={{ borderColor: badge.color, color: badge.color }}>
-                                            {badge.name}
-                                        </span>
-                                        <span className={styles.cardSub} style={{ marginLeft: 10 }}>{badge.description}</span>
-                                    </div>
-                                    <div className={styles.cardActions}>
-                                        <button className={`${styles.iconBtn} ${styles.danger}`}><Trash2 size={16} /></button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </>
-                )}
-
-                {activeSection === 'users' && (
-                    <>
-                        <div className={styles.sectionHeader}>
-                            <PageHeader title="User Directory" description="Manage user roles and bans." />
+                            <button className={styles.actionBtn} onClick={handleGrantBadge} style={{ marginTop: 16 }}>
+                                <Award size={16} /> Grant Badge
+                            </button>
                         </div>
 
+                        {/* Badge List */}
+                        <div className={styles.sectionTitleSmall}>All Badges</div>
                         <div className={styles.grid}>
-                            {users.map(u => (
-                                <div key={u.id} className={`${styles.card} ${u.banned ? styles.banned : ''}`}>
-                                    <div className={styles.cardContent}>
-                                        <span className={styles.cardTitle}>
-                                            {u.username}
-                                            {u.banned && <span className={styles.banTag}>BANNED</span>}
-                                        </span>
-                                        <span className={styles.cardSub}>{u.email} • Joined {new Date(u.joined_at || Date.now()).toLocaleDateString()}</span>
+                            {badges.map(badge => {
+                                const IconComponent = getIconComponent(badge.icon);
+                                return (
+                                    <div key={badge.id} className={styles.card}>
+                                        <div className={styles.cardIcon} style={{ background: `${badge.color}20` }}>
+                                            <IconComponent size={24} color={badge.color} />
+                                        </div>
+                                        <div className={styles.cardContent}>
+                                            <span className={styles.badgePreview} style={{ borderColor: badge.color, color: badge.color }}>
+                                                {badge.name}
+                                            </span>
+                                            <span className={styles.cardSub}>{badge.description}</span>
+                                        </div>
                                     </div>
-                                    <div className={styles.cardActions}>
-                                        <CustomSelect
-                                            value={u.role}
-                                            onChange={(val) => handleRoleChange(u.id, val as any)}
-                                            options={[
-                                                { value: 'user', label: 'User' },
-                                                { value: 'admin', label: 'Admin' },
-                                                { value: 'developer', label: 'Dev' },
-                                            ]}
-                                            width={140}
-                                        />
-                                        <button
-                                            className={`${styles.iconBtn} ${u.banned ? '' : styles.danger}`}
-                                            title={u.banned ? "Unban" : "Ban"}
-                                            onClick={() => handleBanUser(u.id, u.banned || false)}
-                                        >
-                                            {u.banned ? <UserCheck size={18} /> : <Ban size={18} />}
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </>
-                )}
+                );
 
-                {activeSection === 'news' && (
+            case 'content':
+                return (
                     <>
                         <div className={styles.sectionHeader}>
                             <PageHeader title="News & Updates" description="Publish news articles and changelogs." />
                             <div style={{ display: 'flex', gap: 12 }}>
+                                <button className={styles.actionBtnSecondary} onClick={() => { setShowChangelogForm(!showChangelogForm); setShowNewsForm(false); }}>
+                                    <GitBranch size={18} /> Changelog
+                                </button>
                                 <button className={styles.actionBtn} onClick={() => { setShowNewsForm(!showNewsForm); setShowChangelogForm(false); }}>
                                     <Plus size={18} /> New Post
-                                </button>
-                                <button className={styles.actionBtn} style={{ background: '#222', border: '1px solid #444', color: 'white' }} onClick={() => { setShowChangelogForm(!showChangelogForm); setShowNewsForm(false); }}>
-                                    <GitBranch size={18} /> Changelog
                                 </button>
                             </div>
                         </div>
 
                         {showNewsForm && (
                             <div className={styles.formCard}>
-                                <h3>Create Post</h3>
+                                <div className={styles.sectionTitle}>Create News Post</div>
                                 <div className={styles.formGrid}>
                                     <input className={styles.input} placeholder="Title" value={newNews.title} onChange={e => setNewNews({ ...newNews, title: e.target.value })} />
                                     <CustomSelect
@@ -691,26 +655,23 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
                                 <textarea className={styles.textarea} rows={6} placeholder="Content (Markdown supported)" value={newNews.content} onChange={e => setNewNews({ ...newNews, content: e.target.value })} />
                                 <div className={styles.formGrid} style={{ marginTop: 16 }}>
                                     {newNews.category === 'update' && (
-                                        <input
-                                            className={styles.input}
-                                            placeholder="Version (e.g. v1.0.5)"
-                                            value={newNews.version}
-                                            onChange={e => setNewNews({ ...newNews, version: e.target.value })}
-                                        />
+                                        <input className={styles.input} placeholder="Version (e.g. v1.0.5)" value={newNews.version} onChange={e => setNewNews({ ...newNews, version: e.target.value })} />
                                     )}
                                     <input className={styles.input} placeholder="Image URL (optional)" value={newNews.image_url} onChange={e => setNewNews({ ...newNews, image_url: e.target.value })} />
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                        <span>Accent:</span>
+                                        <span style={{ color: '#888', fontSize: '14px' }}>Accent:</span>
                                         <input type="color" className={styles.colorPicker} value={newNews.color} onChange={e => setNewNews({ ...newNews, color: e.target.value })} />
                                     </div>
                                 </div>
-                                <button className={styles.actionBtn} style={{ marginTop: 16 }} onClick={handleCreateNews}><Save size={16} /> Publish Post</button>
+                                <button className={styles.actionBtn} style={{ marginTop: 16 }} onClick={handleCreateNews}>
+                                    <Save size={16} /> Publish Post
+                                </button>
                             </div>
                         )}
 
                         {showChangelogForm && (
                             <div className={styles.formCard}>
-                                <h3>Create Changelog</h3>
+                                <div className={styles.sectionTitle}>Create Changelog Entry</div>
                                 <div className={styles.formGrid}>
                                     <input className={styles.input} placeholder="Version (e.g. 1.0.2)" value={newChangelog.version} onChange={e => setNewChangelog({ ...newChangelog, version: e.target.value })} />
                                     <CustomSelect
@@ -724,20 +685,25 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
                                     />
                                 </div>
                                 <textarea className={styles.textarea} rows={4} placeholder="Description (Markdown supported)" value={newChangelog.description} onChange={e => setNewChangelog({ ...newChangelog, description: e.target.value })} />
-                                <button className={styles.actionBtn} style={{ marginTop: 16 }} onClick={handleCreateChangelog}><Save size={16} /> Save Changelog</button>
+                                <button className={styles.actionBtn} style={{ marginTop: 16 }} onClick={handleCreateChangelog}>
+                                    <Save size={16} /> Save Changelog
+                                </button>
                             </div>
                         )}
 
+                        {/* News List */}
+                        <div className={styles.sectionTitleSmall}>News Articles ({news.length})</div>
                         <div className={styles.grid}>
-                            {/* News List */}
-                            <div style={{ gridColumn: '1 / -1' }}>
-                                <h4 style={{ margin: '10px 0', opacity: 0.5, fontSize: '12px', textTransform: 'uppercase' }}>News Articles</h4>
-                            </div>
+                            {news.length === 0 && <div className={styles.emptyState}>No news articles yet.</div>}
                             {news.map(item => (
-                                <div key={item.id} className={styles.card} style={{ borderLeft: `4px solid ${item.color || '#ff8800'}` }}>
+                                <div key={item.id} className={styles.newsCard} style={{ borderLeftColor: item.color || '#ff8800' }}>
                                     <div className={styles.cardContent}>
                                         <span className={styles.cardTitle}>{item.title}</span>
-                                        <span className={styles.cardSub}>{item.category} • {new Date(item.created_at).toLocaleDateString()}</span>
+                                        <span className={styles.cardSub}>
+                                            <span className={styles.typeTag}>{item.category}</span>
+                                            {' • '}
+                                            {new Date(item.created_at).toLocaleDateString()}
+                                        </span>
                                     </div>
                                     <div className={styles.cardActions}>
                                         <button className={`${styles.iconBtn} ${styles.danger}`} onClick={() => handleDeleteNews(item.id)}>
@@ -746,15 +712,19 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
                                     </div>
                                 </div>
                             ))}
+                        </div>
 
-                            {/* Changelog List */}
-                            <div style={{ gridColumn: '1 / -1', marginTop: 20 }}>
-                                <h4 style={{ margin: '10px 0', opacity: 0.5, fontSize: '12px', textTransform: 'uppercase' }}>Recent Changelogs</h4>
-                            </div>
+                        {/* Changelog List */}
+                        <div className={styles.sectionTitleSmall} style={{ marginTop: 32 }}>Changelogs ({changelogs.length})</div>
+                        <div className={styles.grid}>
+                            {changelogs.length === 0 && <div className={styles.emptyState}>No changelogs yet.</div>}
                             {changelogs.map(log => (
                                 <div key={log.id} className={styles.card}>
                                     <div className={styles.cardContent}>
-                                        <span className={styles.cardTitle}>v{log.version} <span className={styles.typeTag}>{log.type}</span></span>
+                                        <span className={styles.cardTitle}>
+                                            v{log.version}
+                                            <span className={styles.typeTag} style={{ marginLeft: 8 }}>{log.type}</span>
+                                        </span>
                                         <span className={styles.cardSub}>{new Date(log.date).toLocaleDateString()}</span>
                                     </div>
                                     <div className={styles.cardActions}>
@@ -766,124 +736,88 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
                             ))}
                         </div>
                     </>
-                )}
+                );
 
-                {activeSection === 'system' && (
-                    <div className={styles.systemSection}>
-                        <div className={styles.sectionHeader}>
-                            <PageHeader title="System Configuration" description="Manage global settings." />
-                        </div>
-
-                        <div className={styles.card} style={{ maxWidth: '500px' }}>
-                            <div className={styles.cardContent}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                                    <Settings size={24} color="#ff8800" />
-                                    <span className={styles.cardTitle}>Application Version</span>
+            case 'system':
+                return (
+                    <>
+                        <PageHeader title="System Configuration" description="Manage global settings and view system information." />
+                        
+                        <div className={styles.systemSection}>
+                            <div className={styles.sectionTitle}>
+                                <Settings size={20} style={{ color: '#ff8800' }} />
+                                Application Version
+                            </div>
+                            <div className={styles.versionDisplay}>
+                                <div style={{ 
+                                    width: 64, 
+                                    height: 64, 
+                                    borderRadius: 16, 
+                                    background: 'linear-gradient(135deg, rgba(255, 136, 0, 0.2), rgba(255, 170, 0, 0.1))',
+                                    border: '1px solid rgba(255, 136, 0, 0.3)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <Zap size={32} color="#ff8800" />
                                 </div>
-                                <p style={{ color: '#888', fontSize: '14px', marginBottom: 20 }}>
-                                    Updating the version here will reflect across the TitleBar, Splash screen, and other areas for all users.
-                                </p>
-
-                                <div className={styles.versionManager}>
-                                    <div className={styles.versionDisplay}>
-                                        <span style={{ fontSize: '12px', color: '#666', textTransform: 'uppercase' }}>Current</span>
-                                        <span style={{ fontSize: '24px', fontWeight: 800, color: '#fff' }}>v{currentVersion}</span>
-                                    </div>
-                                    <div className={styles.versionInputGroup}>
-                                        <input
-                                            className={styles.input}
-                                            placeholder="New Version (e.g. 1.0.1)"
-                                            value={newVersion}
-                                            onChange={e => setNewVersion(e.target.value)}
-                                        />
-                                        <button className={styles.actionBtn} onClick={handleUpdateVersion}>
-                                            <Save size={18} /> Update
-                                        </button>
-                                    </div>
+                                <div>
+                                    <div className={styles.versionLabel}>Current Version</div>
+                                    <div className={styles.versionValue}>{import.meta.env.VITE_APP_VERSION || '3.0.0'}</div>
                                 </div>
                             </div>
+                            <p style={{ color: '#888', fontSize: '14px', marginTop: 20, lineHeight: 1.6 }}>
+                                The application version is managed through package.json and GitHub releases. 
+                                Updates are distributed through the auto-updater system.
+                            </p>
                         </div>
+                    </>
+                );
+
+            default:
+                return null;
+        }
+    };
+
+    return (
+        <div className={styles.container}>
+            <div className={styles.content}>
+                {/* Header */}
+                <div className={styles.header}>
+                    <div className={styles.headerIcon}>
+                        <Shield size={28} color="#ff8800" />
                     </div>
-                )}
-
-                {activeSection === 'announcements' && (
-                    <div className={styles.systemSection}>
-                        <div className={styles.sectionHeader}>
-                            <PageHeader title="Update Announcements" description="Notify users about new versions." />
-                        </div>
-
-                        <div className={styles.formCard}>
-                            <h3>Create Update Announcement</h3>
-                            <div className={styles.formGrid}>
-                                <input
-                                    className={styles.input}
-                                    placeholder="Version (e.g. 2.4.0)"
-                                    value={newUpdate.version}
-                                    onChange={e => setNewUpdate({ ...newUpdate, version: e.target.value })}
-                                />
-                                <input
-                                    className={styles.input}
-                                    placeholder="Download URL"
-                                    value={newUpdate.downloadUrl}
-                                    onChange={e => setNewUpdate({ ...newUpdate, downloadUrl: e.target.value })}
-                                />
-                            </div>
-                            <div className={styles.formGrid}>
-                                <input
-                                    className={styles.input}
-                                    placeholder="Button Title (e.g. Download v2.4.0)"
-                                    value={newUpdate.buttonTitle}
-                                    onChange={e => setNewUpdate({ ...newUpdate, buttonTitle: e.target.value })}
-                                />
-                                <select
-                                    className={styles.input}
-                                    value={newUpdate.priority}
-                                    onChange={e => setNewUpdate({ ...newUpdate, priority: e.target.value as any })}
-                                >
-                                    <option value="low">Low</option>
-                                    <option value="normal">Normal</option>
-                                    <option value="high">High</option>
-                                    <option value="critical">Critical</option>
-                                </select>
-                            </div>
-                            <textarea
-                                className={styles.textarea}
-                                rows={2}
-                                placeholder="Optional message..."
-                                value={newUpdate.message}
-                                onChange={e => setNewUpdate({ ...newUpdate, message: e.target.value })}
-                            />
-                            <button className={styles.actionBtn} style={{ marginTop: 12 }} onClick={handleCreateUpdate}>
-                                <Download size={16} /> Create Update
-                            </button>
-                        </div>
-
-                        <div className={styles.grid}>
-                            {announcements.length === 0 && <div className={styles.emptyState}>No updates announced yet.</div>}
-                            {announcements.map(update => (
-                                <div key={update.id} className={styles.card}>
-                                    <div className={styles.cardContent}>
-                                        <span className={styles.cardTitle}>
-                                            v{update.version}
-                                            <span className={styles.badge}>{update.priority}</span>
-                                        </span>
-                                        <span className={styles.cardSub}>Created: {new Date(update.created_at).toLocaleDateString()}</span>
-                                        {update.message && <p style={{ color: '#aaa', fontSize: '13px', marginTop: 6 }}>{update.message}</p>}
-                                        <span style={{ fontSize: '11px', color: '#666' }}>{update.download_url}</span>
-                                    </div>
-                                    <div className={styles.cardActions}>
-                                        <button className={`${styles.iconBtn} ${styles.danger}`} onClick={() => handleDeleteUpdate(update.id)}>
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                    <div className={styles.headerInfo}>
+                        <h2 className={styles.headerTitle}>Admin Panel</h2>
+                        <span className={styles.headerSub}>Welcome back, {user.name}</span>
                     </div>
-                )}
+                </div>
 
+                {/* Tabs */}
+                <div className={styles.tabs}>
+                    <button className={`${styles.tab} ${activeTab === 'overview' ? styles.active : ''}`} onClick={() => setActiveTab('overview')}>
+                        <LayoutDashboard size={18} /> Overview
+                    </button>
+                    <button className={`${styles.tab} ${activeTab === 'users' ? styles.active : ''}`} onClick={() => setActiveTab('users')}>
+                        <Users size={18} /> Users
+                    </button>
+                    <button className={`${styles.tab} ${activeTab === 'servers' ? styles.active : ''}`} onClick={() => setActiveTab('servers')}>
+                        <Server size={18} /> Servers
+                    </button>
+                    <button className={`${styles.tab} ${activeTab === 'badges' ? styles.active : ''}`} onClick={() => setActiveTab('badges')}>
+                        <Award size={18} /> Badges
+                    </button>
+                    <button className={`${styles.tab} ${activeTab === 'content' ? styles.active : ''}`} onClick={() => setActiveTab('content')}>
+                        <Newspaper size={18} /> Content
+                    </button>
+                    <button className={`${styles.tab} ${activeTab === 'system' ? styles.active : ''}`} onClick={() => setActiveTab('system')}>
+                        <Settings size={18} /> System
+                    </button>
+                </div>
+
+                {/* Tab Content */}
+                {renderTabContent()}
             </div>
         </div>
     );
 };
-

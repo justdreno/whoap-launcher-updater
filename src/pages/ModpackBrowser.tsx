@@ -37,12 +37,7 @@ interface ModpackVersion {
     files: any[];
 }
 
-interface ModpackBrowserProps {
-    isOnline?: boolean;
-    hideHeader?: boolean;
-}
-
-export const ModpackBrowser: React.FC<ModpackBrowserProps> = ({ hideHeader }) => {
+export const ModpackBrowser: React.FC = () => {
     const [query, setQuery] = useState('');
     const [modpacks, setModpacks] = useState<Modpack[]>([]);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -236,12 +231,10 @@ export const ModpackBrowser: React.FC<ModpackBrowserProps> = ({ hideHeader }) =>
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                {!hideHeader && (
-                    <PageHeader
-                        title="Modpacks"
-                        description="Browse and install modpacks from Modrinth."
-                    />
-                )}
+                <PageHeader
+                    title="Modpacks"
+                    description="Browse and install modpacks from Modrinth."
+                />
                 <button className={styles.importBtn} onClick={handleImportFile}>
                     <Upload size={18} />
                     <span>Import File</span>

@@ -193,6 +193,77 @@
     gap: 12px;
 }
 
+/* Statistics */
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.statCard {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+}
+
+.statCard:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 136, 0, 0.2);
+}
+
+.statIcon {
+    color: rgba(255, 136, 0, 0.8);
+    flex-shrink: 0;
+}
+
+.statInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.statValue {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+}
+
+.statLabel {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.favoriteInstance {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: rgba(255, 136, 0, 0.06);
+    border: 1px solid rgba(255, 136, 0, 0.15);
+    border-radius: 10px;
+    margin-top: 8px;
+}
+
+.favLabel {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.favValue {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffaa00;
+}
+
 .presetCard {
     background: rgba(255, 255, 255, 0.02);
     border: 2px solid rgba(255, 255, 255, 0.06);
@@ -580,8 +651,9 @@
     .rightPanel {
         width: 100%;
         min-width: 0;
-        height: 300px;
+        height: 400px;
         border-left: none;
         border-top: 1px solid rgba(255, 255, 255, 0.04);
+        padding: 10px;
     }
 }

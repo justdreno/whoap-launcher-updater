@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { InstanceApi } from '../api/instances';
 import { VersionsApi, MinecraftVersion } from '../api/versions';
 import styles from './CreateInstanceModal.module.css';
-import { CustomSelect } from './common/CustomSelect';
-import { X, ChevronRight, ChevronLeft, Search, Download, Check, WifiOff, Package, Sparkles, Loader2, CheckCircle } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, Search, Download, Check, Package, Loader2, Box } from 'lucide-react';
 
 interface CreateInstanceModalProps {
     onClose: () => void;
@@ -11,7 +10,6 @@ interface CreateInstanceModalProps {
 }
 
 type LoaderType = 'vanilla' | 'fabric' | 'forge' | 'neoforge' | 'quilt';
-type VersionFilter = 'release' | 'snapshot' | 'all';
 
 interface PresetMod {
     project_id: string;
@@ -20,24 +18,19 @@ interface PresetMod {
     icon_url?: string;
     downloads: number;
     compatible: boolean;
-    version_id?: string;
 }
 
 export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClose, onCreated }) => {
-    
-    // Step state
     const [step, setStep] = useState(1);
 
     // Step 1: Config
     const [name, setName] = useState('');
     const [version, setVersion] = useState('');
     const [loader, setLoader] = useState<LoaderType>('vanilla');
-    const [versionFilter, setVersionFilter] = useState<VersionFilter>('release');
     const [versions, setVersions] = useState<MinecraftVersion[]>([]);
     const [fetchingVersions, setFetchingVersions] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [fabricLoaders, setFabricLoaders] = useState<{ id: string; stable: boolean }[]>([]);
-    const [extraLoaders, setExtraLoaders] = useState<string[]>([]);
     const [selectedLoaderVersion, setSelectedLoaderVersion] = useState('');
     const [loadingLoaders, setLoadingLoaders] = useState(false);
 
@@ -46,32 +39,11 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
     const [searchResults, setSearchResults] = useState<PresetMod[]>([]);
     const [searchingMods, setSearchingMods] = useState(false);
     const [selectedMods, setSelectedMods] = useState<PresetMod[]>([]);
-    const [isOnline, setIsOnline] = useState(navigator.onLine);
 
     // Step 3: Creating
     const [creating, setCreating] = useState(false);
     const [createProgress, setCreateProgress] = useState(0);
     const [createStatus, setCreateStatus] = useState('');
-
-    // Internet check
-    useEffect(() => {
-        const handleOnline = () => setIsOnline(true);
-        const handleOffline = () => setIsOnline(false);
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-        };
-    }, []);
-
-    // Ensure only available loaders are selected
-    useEffect(() => {
-        const disabledLoaders = ['forge', 'neoforge', 'quilt'];
-        if (disabledLoaders.includes(loader)) {
-            setLoader('vanilla');
-        }
-    }, [loader]);
 
     // Load versions
     useEffect(() => {
@@ -97,7 +69,6 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
     useEffect(() => {
         const fetchLoaders = async () => {
             if (loader === 'vanilla' || !version) {
-                setExtraLoaders([]);
                 setFabricLoaders([]);
                 setSelectedLoaderVersion('');
                 return;
@@ -115,14 +86,6 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
                         const stable = loaders.find(l => l.stable);
                         setSelectedLoaderVersion(stable ? stable.id : loaders[0].id);
                     }
-                } else if (loader === 'forge') {
-                    const loaders = await InstanceApi.getForgeLoaders(version);
-                    setExtraLoaders(loaders);
-                    if (loaders.length > 0) setSelectedLoaderVersion(loaders[0]);
-                } else if (loader === 'neoforge') {
-                    const loaders = await InstanceApi.getNeoForgeLoaders(version);
-                    setExtraLoaders(loaders);
-                    if (loaders.length > 0) setSelectedLoaderVersion(loaders[0]);
                 } else if (loader === 'quilt') {
                     const loaders = await InstanceApi.getQuiltLoaders(version);
                     setFabricLoaders(loaders);
@@ -146,13 +109,6 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
         if (!version) return;
         setSearchingMods(true);
         try {
-            const facets = [];
-            facets.push(`["versions:${version}"]`);
-            facets.push(`["project_type:mod"]`);
-            if (loader !== 'vanilla') {
-                facets.push(`["categories:${loader}"]`);
-            }
-
             const res = await window.ipcRenderer.invoke('platform:search', q, 'mod', { version, loader });
             const hits: PresetMod[] = (res.hits || []).map((h: any) => ({
                 project_id: h.project_id,
@@ -160,7 +116,7 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
                 description: h.description,
                 icon_url: h.icon_url,
                 downloads: h.downloads || 0,
-                compatible: true, // It came back from a version-filtered search
+                compatible: true,
             }));
             setSearchResults(hits);
         } catch (e) {
@@ -278,31 +234,6 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
         }
     };
 
-    const filteredVersions = versions.filter(v => {
-        if (versionFilter === 'release') return v.type === 'release';
-        if (versionFilter === 'snapshot') return v.type === 'snapshot';
-        return true;
-    });
-
-    const versionOptions = filteredVersions.slice(0, 50).map(v => ({
-        value: v.id,
-        label: `${v.type === 'release' ? '' : `[${v.type}] `}${v.id}`
-    }));
-
-    const loaderOptions = [
-        { value: 'vanilla', label: 'Vanilla' },
-        { value: 'fabric', label: 'Fabric' },
-        { value: 'forge', label: 'Forge', disabled: true, badge: 'Coming Soon' },
-        { value: 'neoforge', label: 'NeoForge', disabled: true, badge: 'Coming Soon' },
-        { value: 'quilt', label: 'Quilt', disabled: true, badge: 'Coming Soon' }
-    ];
-
-    const filterOptions = [
-        { value: 'release', label: 'Releases' },
-        { value: 'snapshot', label: 'Snapshots' },
-        { value: 'all', label: 'All Versions' }
-    ];
-
     const formatNumber = (n: number) => {
         if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
         if (n >= 1000) return (n / 1000).toFixed(0) + 'K';
@@ -310,7 +241,7 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
     };
 
     const stepLabels = showModStep
-        ? ['Configure', 'Mod Presets', 'Review']
+        ? ['Configure', 'Mods', 'Review']
         : ['Configure', 'Review'];
 
     const effectiveStepIndex = showModStep
@@ -318,206 +249,180 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
         : (step === 1 ? 0 : 1);
 
     return (
-        <div className={styles.overlay} onClick={onClose}>
+        <div className={styles.overlay} onClick={creating ? undefined : onClose} style={creating ? { cursor: 'default' } : {}}>
             <div className={styles.modal} onClick={e => e.stopPropagation()}>
                 {/* Header */}
                 <div className={styles.header}>
                     <div className={styles.headerLeft}>
-                        <Sparkles size={22} className={styles.headerLogo} />
-                        <h2>New Profile</h2>
+                        <div className={styles.headerIcon}>
+                            <Box size={18} />
+                        </div>
+                        <h2>Create Profile</h2>
                     </div>
-                    <button onClick={onClose} className={styles.closeIcon}><X size={20} /></button>
+                    <button onClick={creating ? undefined : onClose} className={styles.closeBtn} disabled={creating}>
+                        <X size={18} />
+                    </button>
                 </div>
 
-                {/* Step Indicator */}
+                {/* Stepper */}
                 <div className={styles.stepper}>
                     {stepLabels.map((label, idx) => (
-                        <div key={label} className={`${styles.stepItem} ${idx <= effectiveStepIndex ? styles.stepActive : ''} ${idx < effectiveStepIndex ? styles.stepCompleted : ''}`}>
-                            <div className={styles.stepDot}>
-                                {idx < effectiveStepIndex ? <Check size={12} /> : idx + 1}
+                        <React.Fragment key={label}>
+                            <div className={`${styles.stepItem} ${idx <= effectiveStepIndex ? styles.stepActive : ''} ${idx < effectiveStepIndex ? styles.stepCompleted : ''}`}>
+                                <div className={styles.stepDot}>
+                                    {idx < effectiveStepIndex ? <Check size={12} /> : idx + 1}
+                                </div>
+                                <span>{label}</span>
                             </div>
-                            <span className={styles.stepLabel}>{label}</span>
                             {idx < stepLabels.length - 1 && <div className={styles.stepLine} />}
-                        </div>
+                        </React.Fragment>
                     ))}
                 </div>
 
-                {/* Step Content */}
-                <div className={styles.stepContent}>
-                    {/* Step 1: Config */}
+                {/* Content */}
+                <div className={styles.content}>
                     {step === 1 && (
-                        <div className={styles.stepPanel}>
+                        <div className={styles.panel}>
                             <div className={styles.formGroup}>
                                 <label>Profile Name</label>
                                 <input
                                     type="text"
+                                    className={styles.input}
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     placeholder="My Survival World"
                                     autoFocus
-                                    className={styles.input}
                                 />
                             </div>
 
                             <div className={styles.formRow}>
                                 <div className={styles.formGroup}>
                                     <label>Mod Loader</label>
-                                    <CustomSelect
+                                    <select 
+                                        className={styles.select}
                                         value={loader}
-                                        onChange={(v) => setLoader(v as LoaderType)}
-                                        options={loaderOptions}
-                                        placeholder="Select loader"
-                                    />
+                                        onChange={(e) => setLoader(e.target.value as LoaderType)}
+                                    >
+                                        <option value="vanilla">Vanilla</option>
+                                        <option value="fabric">Fabric</option>
+                                        <option value="forge" disabled>Forge (Soon)</option>
+                                        <option value="neoforge" disabled>NeoForge (Soon)</option>
+                                        <option value="quilt" disabled>Quilt (Soon)</option>
+                                    </select>
                                 </div>
                                 <div className={styles.formGroup}>
-                                    <label>Version Filter</label>
-                                    <CustomSelect
-                                        value={versionFilter}
-                                        onChange={(v) => setVersionFilter(v as VersionFilter)}
-                                        options={filterOptions}
-                                        placeholder="Filter"
-                                    />
+                                    <label>Game Version</label>
+                                    {fetchingVersions ? (
+                                        <div className={styles.loadingText}>Loading...</div>
+                                    ) : (
+                                        <select 
+                                            className={styles.select}
+                                            value={version}
+                                            onChange={(e) => setVersion(e.target.value)}
+                                        >
+                                            {versions.filter(v => v.type === 'release').slice(0, 50).map(v => (
+                                                <option key={v.id} value={v.id}>{v.id}</option>
+                                            ))}
+                                        </select>
+                                    )}
                                 </div>
-                            </div>
-
-                            <div className={styles.formGroup}>
-                                <label>Game Version</label>
-                                {fetchingVersions ? (
-                                    <div className={styles.loadingVersions}>Loading versions...</div>
-                                ) : (
-                                    <CustomSelect
-                                        value={version}
-                                        onChange={setVersion}
-                                        options={versionOptions}
-                                        placeholder="Select a version"
-                                    />
-                                )}
                             </div>
 
                             {(loader === 'fabric' || loader === 'quilt') && (
                                 <div className={styles.formGroup}>
-                                    <label>{loader.charAt(0).toUpperCase() + loader.slice(1)} Loader Version</label>
+                                    <label>Loader Version</label>
                                     {loadingLoaders ? (
-                                        <div className={styles.loadingVersions}>Fetching loaders...</div>
+                                        <div className={styles.loadingText}>Fetching...</div>
                                     ) : (
-                                        <CustomSelect
+                                        <select 
+                                            className={styles.select}
                                             value={selectedLoaderVersion}
-                                            onChange={setSelectedLoaderVersion}
-                                            options={fabricLoaders.map(l => ({
-                                                value: l.id,
-                                                label: `${l.id} ${l.stable ? '(Stable)' : ''}`
-                                            }))}
-                                            placeholder="Select loader version"
-                                        />
-                                    )}
-                                </div>
-                            )}
-
-                            {(loader === 'forge' || loader === 'neoforge') && (
-                                <div className={styles.formGroup}>
-                                    <label>{loader.charAt(0).toUpperCase() + loader.slice(1)} Version</label>
-                                    {loadingLoaders ? (
-                                        <div className={styles.loadingVersions}>Fetching loaders...</div>
-                                    ) : (
-                                        <CustomSelect
-                                            value={selectedLoaderVersion}
-                                            onChange={setSelectedLoaderVersion}
-                                            options={extraLoaders.map(l => ({
-                                                value: l,
-                                                label: l
-                                            }))}
-                                            placeholder={`Select ${loader} version`}
-                                        />
+                                            onChange={(e) => setSelectedLoaderVersion(e.target.value)}
+                                        >
+                                            {fabricLoaders.map(l => (
+                                                <option key={l.id} value={l.id}>
+                                                    {l.id} {l.stable ? '(Stable)' : ''}
+                                                </option>
+                                            ))}
+                                        </select>
                                     )}
                                 </div>
                             )}
                         </div>
                     )}
 
-                    {/* Step 2: Mod Presets */}
                     {step === 2 && (
-                        <div className={styles.stepPanel}>
-                            {!isOnline ? (
-                                <div className={styles.offlineBanner}>
-                                    <WifiOff size={32} />
-                                    <h3>Internet Required</h3>
-                                    <p>Connect to the internet to browse and select mod presets.</p>
-                                    <button className={styles.skipBtn} onClick={() => setStep(3)}>
-                                        Skip to Review
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className={styles.presetLayout}>
-                                    <div className={styles.presetSearch}>
-                                        <div className={styles.searchWrapper}>
-                                            <Search size={16} className={styles.searchIcon} />
-                                            <input
-                                                className={styles.searchInput}
-                                                placeholder={`Search mods for ${version}...`}
-                                                value={modQuery}
-                                                onChange={(e) => setModQuery(e.target.value)}
-                                                autoFocus
-                                            />
-                                        </div>
-                                        {selectedMods.length > 0 && (
-                                            <div className={styles.selectedCount}>
-                                                <CheckCircle size={14} />
-                                                {selectedMods.length} selected
-                                            </div>
-                                        )}
+                        <div className={styles.panel}>
+                            <div className={styles.modSearch}>
+                                <Search size={16} />
+                                <input
+                                    type="text"
+                                    placeholder={`Search mods for ${version}...`}
+                                    value={modQuery}
+                                    onChange={(e) => setModQuery(e.target.value)}
+                                    autoFocus
+                                />
+                                {selectedMods.length > 0 && (
+                                    <div className={styles.selectedCount}>
+                                        <Check size={12} />
+                                        {selectedMods.length}
                                     </div>
+                                )}
+                            </div>
 
-                                    <div className={styles.modGrid}>
-                                        {searchingMods ? (
-                                            Array(6).fill(0).map((_, i) => (
-                                                <div key={i} className={styles.modCardSkeleton} />
-                                            ))
-                                        ) : searchResults.length === 0 ? (
-                                            <div className={styles.emptyMods}>
-                                                <Package size={36} strokeWidth={1.2} />
-                                                <p>No mods found</p>
+                            <div className={styles.modGrid}>
+                                {searchingMods ? (
+                                    Array(4).fill(0).map((_, i) => (
+                                        <div key={i} className={styles.modCard} style={{ opacity: 0.5 }}>
+                                            <div className={styles.modIcon} />
+                                            <div className={styles.modInfo}>
+                                                <div className={styles.modName}>Loading...</div>
                                             </div>
-                                        ) : (
-                                            searchResults.map(mod => (
-                                                <div
-                                                    key={mod.project_id}
-                                                    className={`${styles.modCard} ${isModSelected(mod.project_id) ? styles.modCardSelected : ''}`}
-                                                    onClick={() => toggleMod(mod)}
-                                                >
-                                                    <div className={styles.modIcon}>
-                                                        {mod.icon_url ? (
-                                                            <img src={mod.icon_url} alt="" />
-                                                        ) : (
-                                                            <Package size={20} />
-                                                        )}
-                                                    </div>
-                                                    <div className={styles.modInfo}>
-                                                        <span className={styles.modTitle}>{mod.title}</span>
-                                                        <span className={styles.modDesc}>{mod.description}</span>
-                                                        <div className={styles.modMeta}>
-                                                            <span><Download size={11} /> {formatNumber(mod.downloads)}</span>
-                                                            <span className={styles.compatBadge}>
-                                                                <Check size={10} /> {version}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className={styles.modCheck}>
-                                                        {isModSelected(mod.project_id) && <CheckCircle size={18} />}
-                                                    </div>
-                                                </div>
-                                            ))
-                                        )}
+                                        </div>
+                                    ))
+                                ) : searchResults.length === 0 ? (
+                                    <div className={styles.modEmpty}>
+                                        <Package size={32} />
+                                        <p>No mods found</p>
                                     </div>
-                                </div>
-                            )}
+                                ) : (
+                                    searchResults.map(mod => (
+                                        <div
+                                            key={mod.project_id}
+                                            className={`${styles.modCard} ${isModSelected(mod.project_id) ? styles.selected : ''}`}
+                                            onClick={() => toggleMod(mod)}
+                                        >
+                                            <div className={styles.modIcon}>
+                                                {mod.icon_url ? (
+                                                    <img src={mod.icon_url} alt="" />
+                                                ) : (
+                                                    <Package size={18} />
+                                                )}
+                                            </div>
+                                            <div className={styles.modInfo}>
+                                                <div className={styles.modName}>{mod.title}</div>
+                                                <div className={styles.modDesc}>{mod.description}</div>
+                                                <div className={styles.modMeta}>
+                                                    <Download size={10} />
+                                                    {formatNumber(mod.downloads)}
+                                                </div>
+                                            </div>
+                                            {isModSelected(mod.project_id) && (
+                                                <div className={styles.modCheck}>
+                                                    <Check size={16} />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
                         </div>
                     )}
 
-                    {/* Step 3: Review */}
                     {step === 3 && (
-                        <div className={styles.stepPanel}>
+                        <div className={styles.panel}>
                             <div className={styles.reviewSection}>
-                                <h3 className={styles.reviewTitle}>Instance Configuration</h3>
+                                <h3 className={styles.reviewTitle}>Configuration</h3>
                                 <div className={styles.reviewGrid}>
                                     <div className={styles.reviewItem}>
                                         <span className={styles.reviewLabel}>Name</span>
@@ -529,7 +434,9 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
                                     </div>
                                     <div className={styles.reviewItem}>
                                         <span className={styles.reviewLabel}>Loader</span>
-                                        <span className={styles.reviewValue}>{loader}{selectedLoaderVersion ? ` (${selectedLoaderVersion})` : ''}</span>
+                                        <span className={styles.reviewValue}>
+                                            {loader}{selectedLoaderVersion ? ` (${selectedLoaderVersion})` : ''}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -538,20 +445,16 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
                                 <div className={styles.reviewSection}>
                                     <h3 className={styles.reviewTitle}>
                                         Selected Mods
-                                        <span className={styles.modCount}>{selectedMods.length}</span>
+                                        <span className={styles.badge}>{selectedMods.length}</span>
                                     </h3>
-                                    <div className={styles.reviewModList}>
+                                    <div className={styles.modList}>
                                         {selectedMods.map(mod => (
-                                            <div key={mod.project_id} className={styles.reviewModItem}>
-                                                <div className={styles.reviewModIcon}>
-                                                    {mod.icon_url ? <img src={mod.icon_url} alt="" /> : <Package size={16} />}
+                                            <div key={mod.project_id} className={styles.modItem}>
+                                                <div className={styles.modItemIcon}>
+                                                    {mod.icon_url ? <img src={mod.icon_url} alt="" /> : <Package size={14} />}
                                                 </div>
                                                 <span>{mod.title}</span>
-                                                <button
-                                                    className={styles.removeModBtn}
-                                                    onClick={() => toggleMod(mod)}
-                                                    title="Remove"
-                                                >
+                                                <button onClick={() => toggleMod(mod)}>
                                                     <X size={14} />
                                                 </button>
                                             </div>
@@ -561,14 +464,14 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
                             )}
 
                             {creating && (
-                                <div className={styles.creatingProgress}>
-                                    <Loader2 size={18} className={styles.spinner} />
+                                <div className={styles.progress}>
+                                    <Loader2 size={20} className={styles.spinner} />
                                     <div className={styles.progressInfo}>
-                                        <span className={styles.statusText}>{createStatus}</span>
+                                        <div className={styles.statusText}>{createStatus}</div>
                                         <div className={styles.progressBar}>
                                             <div className={styles.progressFill} style={{ width: `${createProgress}%` }} />
                                         </div>
-                                        <span className={styles.percentText}>{Math.round(createProgress)}%</span>
+                                        <div className={styles.percent}>{Math.round(createProgress)}%</div>
                                     </div>
                                 </div>
                             )}
@@ -579,7 +482,7 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
                 {/* Footer */}
                 {error && <div className={styles.error}>{error}</div>}
 
-                <div className={styles.actions}>
+                <div className={styles.footer}>
                     {step > 1 ? (
                         <button className={styles.backBtn} onClick={handleBack} disabled={creating}>
                             <ChevronLeft size={16} /> Back
@@ -606,7 +509,7 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
                             {creating ? (
                                 <><Loader2 size={16} className={styles.spinner} /> Creating...</>
                             ) : (
-                                <><Sparkles size={16} /> Create Profile</>
+                                'Create Profile'
                             )}
                         </button>
                     )}

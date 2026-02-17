@@ -499,7 +499,8 @@ export class ConfigManager {
     }
 
     static isOnboardingCompleted(): boolean {
-        return appLevelStore.get('onboardingCompleted');
+        // Onboarding is disabled - always return true
+        return true;
     }
 
     static getFirstLaunchDate(): string | null {

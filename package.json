@@ -1,6 +1,6 @@
 {
   "name": "whoap",
-  "version": "2.3.7",
+  "version": "3.0.3",
   "description": "The Next Level Minecraft launcher",
   "main": "dist-electron/main.js",
   "scripts": {
@@ -39,7 +39,6 @@
     "axios": "^1.13.2",
     "discord-rpc": "^4.0.1",
     "electron-store": "^8.1.0",
-    "electron-updater": "^6.7.3",
     "express": "^5.2.1",
     "lucide-react": "^0.562.0",
     "minecraft-launcher-core": "^3.18.2",

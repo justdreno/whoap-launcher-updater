@@ -13,6 +13,7 @@ interface SkinViewer3DProps {
     autoRotateSpeed?: number;
     enableZoom?: boolean;
     initialRotation?: { y?: number; x?: number };
+    facing?: 'left' | 'right';
 }
 
 export const SkinViewer3D: React.FC<SkinViewer3DProps> = ({
@@ -22,10 +23,11 @@ export const SkinViewer3D: React.FC<SkinViewer3DProps> = ({
     height = 400,
     className,
     lastUpdated,
-    autoRotate = true,
+    autoRotate = false,
     autoRotateSpeed = 0.5,
     enableZoom = false,
-    initialRotation = { y: 0.5, x: 0 }
+    initialRotation = { y: 0, x: 0 },
+    facing = 'right'
 }) => {
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
     const viewerRef = React.useRef<skinview3d.SkinViewer | null>(null);
@@ -45,9 +47,18 @@ export const SkinViewer3D: React.FC<SkinViewer3DProps> = ({
         viewer.autoRotateSpeed = autoRotateSpeed;
         viewer.controls.enableZoom = enableZoom;
 
-        // Set initial rotation
-        if (initialRotation.y !== undefined) viewer.camera.rotation.y = initialRotation.y;
+        // Set facing direction
+        const baseRotation = facing === 'right' ? 1.5 : -1.5;
+        if (initialRotation.y !== undefined) {
+            viewer.camera.rotation.y = baseRotation + initialRotation.y;
+        } else {
+            viewer.camera.rotation.y = baseRotation;
+        }
         if (initialRotation.x !== undefined) viewer.camera.rotation.x = initialRotation.x;
+
+        // Always use walking animation
+        viewer.animation = new skinview3d.WalkingAnimation();
+        viewer.animation.speed = 1.5;
 
         // Load initial skin/cape
         const resolvedSkin = SkinUtils.getSkinUrl(skinUrl, 'body', lastUpdated);

@@ -25,6 +25,7 @@
     border-radius: 20px;
     /* More rounded */
     backdrop-filter: blur(10px);
+    margin-bottom: 24px;
 }
 
 .section h3 {
