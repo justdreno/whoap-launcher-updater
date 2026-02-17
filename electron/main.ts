@@ -164,6 +164,22 @@ function createMainWindow() {
     win.on('maximize', () => win?.webContents.send('window:maximized-changed', true));
     win.on('unmaximize', () => win?.webContents.send('window:maximized-changed', false));
     win.on('closed', () => { win = null; });
+    
+    // Handle minimize - keep window stable and visible in taskbar
+    win.on('minimize', () => {
+        // Don't hide from taskbar, just minimize normally
+        // This ensures the window thumbnail shows on hover
+        if (process.platform === 'win32') {
+            // On Windows, ensure the taskbar button stays visible
+            win?.setSkipTaskbar(false);
+        }
+    });
+    
+    // Handle restore from minimize
+    win.on('restore', () => {
+        win?.focus();
+        win?.show();
+    });
 
     // Handle external links - open in branded window instead of default browser
     win.webContents.setWindowOpenHandler(({ url }) => {
@@ -187,16 +203,52 @@ function createTray() {
     const icon = nativeImage.createFromPath(getIconPath()).resize({ width: 16, height: 16 });
     tray = new Tray(icon);
 
-    const contextMenu = Menu.buildFromTemplate([
-        { label: 'Show Launcher', click: () => win?.show() },
-        { label: 'Quit', click: () => app.quit() }
-    ]);
+    const updateTrayMenu = () => {
+        const template: any[] = [
+            { label: 'Show Launcher', click: () => {
+                if (win) {
+                    if (win.isMinimized()) win.restore();
+                    win.show();
+                    win.focus();
+                }
+            }},
+            { type: 'separator' }
+        ];
+        
+        // Add game status if running
+        if (LaunchProcess.gameIsRunning) {
+            template.push({
+                label: 'Game is Running',
+                enabled: false
+            });
+        }
+        
+        template.push(
+            { type: 'separator' },
+            { label: 'Quit', click: () => app.quit() }
+        );
+
+        const contextMenu = Menu.buildFromTemplate(template);
+        tray?.setContextMenu(contextMenu);
+    };
 
     tray.setToolTip('Whoap Launcher');
-    tray.setContextMenu(contextMenu);
+    updateTrayMenu();
+    
+    // Update menu periodically to reflect game status
+    setInterval(updateTrayMenu, 5000);
+    
     tray.on('click', () => {
         if (!win) return;
+        if (win.isMinimized()) {
+            win.restore();
+        }
         win.isVisible() ? win.hide() : win.show();
+    });
+    
+    tray.on('right-click', () => {
+        updateTrayMenu();
+        tray?.popUpContextMenu();
     });
 }
 

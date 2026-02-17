@@ -14,6 +14,11 @@ import { InstanceManager } from '../managers/InstanceManager';
 export class LaunchProcess {
     private downloader: AssetDownloader;
     private javaManager: JavaManager;
+    private static _gameIsRunning: boolean = false;
+
+    public static get gameIsRunning(): boolean {
+        return LaunchProcess._gameIsRunning;
+    }
 
     constructor() {
         this.downloader = new AssetDownloader();
@@ -796,7 +801,12 @@ export class LaunchProcess {
                 if (launchBehavior === 'hide') {
                     mainWindow?.hide();
                 } else if (launchBehavior === 'minimize') {
-                    mainWindow?.minimize();
+                    // Minimize to taskbar - more stable than hide
+                    if (mainWindow) {
+                        mainWindow.minimize();
+                        // Ensure window stays in taskbar and can be restored
+                        mainWindow.setSkipTaskbar(false);
+                    }
                 }
                 // 'keep' = keep launcher open, do nothing
 
@@ -830,6 +840,9 @@ export class LaunchProcess {
                 let currentServer: string | undefined;
                 let isMultiplayer = false;
 
+                // Mark game as running
+                LaunchProcess._gameIsRunning = true;
+                
                 const gameProcess = spawn(javaPath, jvmArgs, {
                     cwd: instancePath,
                     detached: false, // Keep attached to main process to avoid new terminal window
@@ -915,14 +928,26 @@ export class LaunchProcess {
 
                 gameProcess.on('error', (err) => {
                     console.error("Failed to start game process", err);
+                    // Mark game as not running since it failed to start
+                    LaunchProcess._gameIsRunning = false;
                     event.sender.send('launch:error', err.message);
                     if (showConsole) {
                         LogWindowManager.send(instanceId, `Launch Error: ${err.message}`, 'stderr');
                     }
-                    mainWindow?.show();
+                    // Restore launcher window on error
+                    if (mainWindow) {
+                        if (mainWindow.isMinimized()) {
+                            mainWindow.restore();
+                        }
+                        mainWindow.show();
+                        mainWindow.focus();
+                    }
                 });
 
                 gameProcess.on('close', async (code) => {
+                    // Mark game as no longer running
+                    LaunchProcess._gameIsRunning = false;
+                    
                     // Calculate and save playtime
                     sessionPlayTime = Math.floor((Date.now() - startTime) / 1000);
                     if (sessionPlayTime > 0) {
@@ -941,9 +966,16 @@ export class LaunchProcess {
                         });
                     }
 
-                    // Show Launcher
-                    mainWindow?.show();
-                    mainWindow?.focus();
+                    // Show Launcher - restore from minimized or hidden state
+                    if (mainWindow) {
+                        // Restore from minimize if needed
+                        if (mainWindow.isMinimized()) {
+                            mainWindow.restore();
+                        }
+                        // Show window (in case it was hidden)
+                        mainWindow.show();
+                        mainWindow.focus();
+                    }
 
                     // Restore Menu Presence
                     DiscordManager.getInstance().setMenuPresence();
