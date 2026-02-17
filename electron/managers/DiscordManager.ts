@@ -226,6 +226,8 @@ export class DiscordManager {
             'forge': 'forge',
             'neoforge': 'neoforge',
             'quilt': 'quilt',
+            'vanilla': 'vanilla',
+            'custom': 'vanilla',
         };
         return loader ? loaderImages[loader.toLowerCase()] : undefined;
     }
@@ -276,28 +278,28 @@ export class DiscordManager {
         });
     }
 
-    public setPlayingPresence(instanceId: string, versionId: string, loader?: string, isMultiplayer?: boolean, serverName?: string, playerCount?: number, maxPlayers?: number) {
-        const loaderKey = this.getLoaderImageKey(loader);
-        
-        // Only show version in state if it's different from instance name
-        let stateText = '';
+    public setPlayingPresence(instanceId: string, versionId: string, loader?: string, isMultiplayer?: boolean, serverName?: string, playerCount?: number, maxPlayers?: number, username?: string) {
         const instanceName = this.formatInstanceName(instanceId);
         
+        // Use loader for small image (fabric, vanilla, forge, etc.)
+        const smallImageKey = this.getLoaderImageKey(loader) || 'logo';
+        
+        // Details: Playing as Username
+        const detailsText = username ? `Playing as ${username}` : 'Playing Minecraft';
+        
+        // State: Instance name or server
+        let stateText = instanceName;
         if (isMultiplayer && serverName) {
-            stateText = `Playing on ${serverName}`;
-        } else if (isMultiplayer) {
-            stateText = 'Playing Multiplayer';
-        } else if (versionId !== instanceId && versionId !== instanceName) {
-            stateText = `Minecraft ${versionId}`;
+            stateText = `On ${serverName}`;
         }
 
         this.updatePresence({
             presenceState: PresenceState.PLAYING,
-            details: `Playing ${instanceName}`,
+            details: detailsText,
             state: stateText,
             largeImageKey: this.getVersionImageKey(versionId),
             largeImageText: `Minecraft ${versionId}`,
-            smallImageKey: loaderKey || 'logo',
+            smallImageKey: smallImageKey,
             smallImageText: loader ? loader.charAt(0).toUpperCase() + loader.slice(1) : 'Whoap Launcher',
             startTimestamp: Date.now(),
             isMultiplayer: isMultiplayer,

@@ -832,7 +832,10 @@ export class LaunchProcess {
                     instanceLoader = instanceConfig.loader;
                 }
 
-                DiscordManager.getInstance().setPlayingPresence(instanceId, versionId, instanceLoader, false, undefined);
+                // Get username from auth data
+                const username = authData?.name || 'Player';
+
+                DiscordManager.getInstance().setPlayingPresence(instanceId, versionId, instanceLoader, false, undefined, undefined, undefined, username);
 
                 // Track playtime and server info for Discord Rich Presence
                 const startTime = Date.now();
@@ -875,7 +878,10 @@ export class LaunchProcess {
                                 versionId, 
                                 instanceLoader, 
                                 true, 
-                                currentServer
+                                currentServer,
+                                undefined,
+                                undefined,
+                                username
                             );
                         }
                     }
@@ -903,7 +909,10 @@ export class LaunchProcess {
                             versionId,
                             instanceLoader,
                             false,
-                            undefined
+                            undefined,
+                            undefined,
+                            undefined,
+                            username
                         );
                     }
                 };
