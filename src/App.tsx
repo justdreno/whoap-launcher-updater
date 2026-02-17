@@ -8,6 +8,8 @@ import { supabase } from './lib/supabase';
 import { Skeleton } from './components/Skeleton';
 import { perf } from './utils/PerformanceProfiler';
 import { JavaInstallModal } from './components/JavaInstallModal';
+import { OfflineManager } from './utils/OfflineManager';
+import { WifiOff } from 'lucide-react';
 
 // Mark app module load time
 perf.mark('App module loaded');
@@ -51,16 +53,16 @@ function App() {
     }>({ stage: 'loading' });
 
     useEffect(() => {
-        const handleStatusChange = () => {
-            setIsOnline(navigator.onLine);
-        };
-
-        window.addEventListener('online', handleStatusChange);
-        window.addEventListener('offline', handleStatusChange);
+        // Initialize offline manager
+        OfflineManager.init();
+        
+        // Subscribe to offline state changes
+        const unsubscribe = OfflineManager.subscribe((offline) => {
+            setIsOnline(!offline);
+        });
 
         return () => {
-            window.removeEventListener('online', handleStatusChange);
-            window.removeEventListener('offline', handleStatusChange);
+            unsubscribe();
         };
     }, []);
 
@@ -251,10 +253,39 @@ function App() {
                 <ToastProvider>
                     <ConfirmProvider>
                         <JavaInstallModal />
-                        <MainLayout 
-                            activeTab={activeTab} 
-                            onTabChange={setActiveTab} 
-                            user={user} 
+                        {/* Offline Indicator */}
+                        {!isOnline && (
+                            <div style={{
+                                position: 'fixed',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                height: '36px',
+                                background: 'rgba(0, 0, 0, 0.95)',
+                                color: '#666',
+                                padding: '8px 16px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                fontSize: '13px',
+                                zIndex: 9999,
+                                borderBottom: '1px solid #1a1a1a',
+                                boxSizing: 'border-box'
+                            }}>
+                                <WifiOff size={16} />
+                                <span>You are offline. Some features may be unavailable.</span>
+                            </div>
+                        )}
+                        <div style={{ 
+                            height: !isOnline ? 'calc(100vh - 36px)' : '100vh',
+                            marginTop: !isOnline ? '36px' : '0',
+                            overflow: 'hidden'
+                        }}>
+                        <MainLayout
+                            activeTab={activeTab}
+                            onTabChange={setActiveTab}
+                            user={user}
                             onLogout={handleLogout}
                             isNavLocked={isNavLocked}
                         >
@@ -285,6 +316,7 @@ function App() {
                                 {activeTab === 'profile' && <Profile user={user} setUser={setUser} />}
                             </Suspense>
                         </MainLayout>
+                        </div>
                     </ConfirmProvider>
                 </ToastProvider >
             </AnimationProvider>
