@@ -326,14 +326,32 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
                     <div className={styles.leftPanel}>
                         {/* Search Bar */}
                         <div className={styles.searchSection}>
+                            {!isOnline && (
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    padding: '8px 12px',
+                                    background: 'rgba(255, 193, 7, 0.1)',
+                                    border: '1px solid rgba(255, 193, 7, 0.2)',
+                                    borderRadius: '8px',
+                                    marginBottom: '12px',
+                                    color: '#ffc107',
+                                    fontSize: '12px'
+                                }}>
+                                    <WifiOff size={14} />
+                                    <span>Search requires internet connection</span>
+                                </div>
+                            )}
                             <div className={styles.searchWrapper}>
                                 <Search size={18} />
                                 <input
                                     ref={searchInputRef}
-                                    placeholder={`Search ${type}s...`}
+                                    placeholder={!isOnline ? `Internet required...` : `Search ${type}s...`}
                                     value={query}
                                     onChange={e => setQuery(e.target.value)}
                                     autoFocus
+                                    disabled={!isOnline}
                                 />
                                 {query && (
                                     <button className={styles.clearSearch} onClick={() => { setQuery(''); searchInputRef.current?.focus(); }}>
@@ -499,6 +517,11 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
                                                 <div className={styles.progressFill} style={{ width: `${installPercent}%` }} />
                                             </div>
                                             <span>{progress}</span>
+                                        </button>
+                                    ) : !isOnline ? (
+                                        <button className={styles.installBtn} disabled title="Internet connection required to download">
+                                            <WifiOff size={18} />
+                                            Offline
                                         </button>
                                     ) : updateStatus[selectedProject.project_id]?.hasUpdate ? (
                                         <button className={styles.installBtn} onClick={handleInstall} disabled={!activeVersion}>
