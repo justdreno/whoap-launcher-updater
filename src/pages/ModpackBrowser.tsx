@@ -377,15 +377,18 @@ export const ModpackBrowser: React.FC = () => {
 
                                         <button
                                             className={styles.installButton}
-                                            disabled={!selectedVersion || installing}
+                                            disabled={!selectedVersion || installing || !isOnline}
                                             onClick={handleInstall}
+                                            title={!isOnline ? 'Internet connection required to install modpacks' : ''}
                                         >
-                                            {installing ? (
+                                            {!isOnline ? (
+                                                <WifiOff size={18} />
+                                            ) : installing ? (
                                                 <Loader2 className={styles.spinner} size={18} />
                                             ) : (
                                                 <Download size={18} />
                                             )}
-                                            <span>{installing ? 'Installing...' : 'Install'}</span>
+                                            <span>{!isOnline ? 'Offline' : installing ? 'Installing...' : 'Install'}</span>
                                         </button>
                                     </div>
                                 </div>

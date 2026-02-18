@@ -580,3 +580,21 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Offline Banner */
+.offlineBanner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.2);
+    border-radius: 10px;
+    margin-bottom: 16px;
+    color: #ffc107;
+    font-size: 13px;
+}
+
+.offlineBanner svg {
+    flex-shrink: 0;
+}

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { InstanceApi } from '../api/instances';
 import { VersionsApi, MinecraftVersion } from '../api/versions';
 import styles from './CreateInstanceModal.module.css';
-import { X, ChevronRight, ChevronLeft, Search, Download, Check, Package, Loader2, Box } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, Search, Download, Check, Package, Loader2, Box, WifiOff } from 'lucide-react';
+import { useOfflineStatus } from '../hooks/useOfflineStatus';
 
 interface CreateInstanceModalProps {
     onClose: () => void;
@@ -22,6 +23,7 @@ interface PresetMod {
 
 export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClose, onCreated }) => {
     const [step, setStep] = useState(1);
+    const isOffline = useOfflineStatus();
 
     // Step 1: Config
     const [name, setName] = useState('');
@@ -353,14 +355,21 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
 
                     {step === 2 && (
                         <div className={styles.panel}>
+                            {isOffline && (
+                                <div className={styles.offlineBanner}>
+                                    <WifiOff size={16} />
+                                    <span>You are offline. Mod search requires internet connection.</span>
+                                </div>
+                            )}
                             <div className={styles.modSearch}>
                                 <Search size={16} />
                                 <input
                                     type="text"
-                                    placeholder={`Search mods for ${version}...`}
+                                    placeholder={isOffline ? 'Internet required to search mods...' : `Search mods for ${version}...`}
                                     value={modQuery}
                                     onChange={(e) => setModQuery(e.target.value)}
                                     autoFocus
+                                    disabled={isOffline}
                                 />
                                 {selectedMods.length > 0 && (
                                     <div className={styles.selectedCount}>
@@ -382,8 +391,18 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
                                     ))
                                 ) : searchResults.length === 0 ? (
                                     <div className={styles.modEmpty}>
-                                        <Package size={32} />
-                                        <p>No mods found</p>
+                                        {isOffline ? (
+                                            <>
+                                                <WifiOff size={32} />
+                                                <p>Mod search requires internet connection</p>
+                                                <span style={{ color: '#666', fontSize: '12px' }}>Create the instance and install mods later when online</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Package size={32} />
+                                                <p>No mods found</p>
+                                            </>
+                                        )}
                                     </div>
                                 ) : (
                                     searchResults.map(mod => (
