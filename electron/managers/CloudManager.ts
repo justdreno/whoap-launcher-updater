@@ -30,14 +30,14 @@ export class CloudManager {
             return await this.deleteInstance(instanceName, userId);
         });
 
-        // Lookup Whoap user by username (for multiplayer skin visibility)
-        ipcMain.handle('cloud:lookup-whoap-user', async (_, username: string) => {
-            return await this.lookupWhoapUser(username);
+        // Lookup Yashin user by username (for multiplayer skin visibility)
+        ipcMain.handle('cloud:lookup-yashin-user', async (_, username: string) => {
+            return await this.lookupYashinUser(username);
         });
 
-        // Lookup multiple Whoap users by usernames
-        ipcMain.handle('cloud:lookup-whoap-users', async (_, usernames: string[]) => {
-            return await this.lookupWhoapUsers(usernames);
+        // Lookup multiple Yashin users by usernames
+        ipcMain.handle('cloud:lookup-yashin-users', async (_, usernames: string[]) => {
+            return await this.lookupYashinUsers(usernames);
         });
 
         // Register a player for skin visibility on multiplayer servers
@@ -46,8 +46,8 @@ export class CloudManager {
         });
     }
 
-    // Look up a Whoap user by username and register them for skin visibility
-    async lookupWhoapUser(username: string): Promise<{ success: boolean; user?: { uuid: string; name: string }; error?: string }> {
+    // Look up a Yashin user by username and register them for skin visibility
+    async lookupYashinUser(username: string): Promise<{ success: boolean; user?: { uuid: string; name: string }; error?: string }> {
         try {
             const { data, error } = await this.supabase
                 .from('profiles')
@@ -64,13 +64,13 @@ export class CloudManager {
 
             return { success: true, user: { uuid: data.id, name: data.username } };
         } catch (e) {
-            console.error('[Cloud] Failed to lookup Whoap user:', e);
+            console.error('[Cloud] Failed to lookup Yashin user:', e);
             return { success: false, error: String(e) };
         }
     }
 
-    // Look up multiple Whoap users by usernames
-    async lookupWhoapUsers(usernames: string[]): Promise<{ success: boolean; users: { uuid: string; name: string }[]; error?: string }> {
+    // Look up multiple Yashin users by usernames
+    async lookupYashinUsers(usernames: string[]): Promise<{ success: boolean; users: { uuid: string; name: string }[]; error?: string }> {
         try {
             if (!usernames || usernames.length === 0) {
                 return { success: true, users: [] };
@@ -93,18 +93,18 @@ export class CloudManager {
                 return { uuid: user.id, name: user.username };
             });
 
-            console.log(`[Cloud] Found ${users.length} Whoap users out of ${limitedUsernames.length} requested`);
+            console.log(`[Cloud] Found ${users.length} Yashin users out of ${limitedUsernames.length} requested`);
             return { success: true, users };
         } catch (e) {
-            console.error('[Cloud] Failed to lookup Whoap users:', e);
+            console.error('[Cloud] Failed to lookup Yashin users:', e);
             return { success: false, users: [], error: String(e) };
         }
     }
 
-    // Register a multiplayer player for skin visibility (checks if they're a Whoap user)
-    async registerMultiplayerPlayer(uuid: string, username: string): Promise<{ success: boolean; isWhoapUser: boolean; error?: string }> {
+    // Register a multiplayer player for skin visibility (checks if they're a Yashin user)
+    async registerMultiplayerPlayer(uuid: string, username: string): Promise<{ success: boolean; isYashinUser: boolean; error?: string }> {
         try {
-            // First check if this is a Whoap user
+            // First check if this is a Yashin user
             const { data, error } = await this.supabase
                 .from('profiles')
                 .select('id, username')
@@ -113,16 +113,16 @@ export class CloudManager {
                 .single();
 
             if (data) {
-                console.log(`[Cloud] ✓ Registered Whoap user: ${username} (${data.id})`);
-                return { success: true, isWhoapUser: true };
+                console.log(`[Cloud] ✓ Registered Yashin user: ${username} (${data.id})`);
+                return { success: true, isYashinUser: true };
             } else {
-                // Not a Whoap user - still register them but without Whoap skin
-                console.log(`[Cloud] Registered non-Whoap player: ${username}`);
-                return { success: true, isWhoapUser: false };
+                // Not a Yashin user - still register them but without Yashin skin
+                console.log(`[Cloud] Registered non-Yashin player: ${username}`);
+                return { success: true, isYashinUser: false };
             }
         } catch (e) {
             console.error('[Cloud] Failed to register multiplayer player:', e);
-            return { success: false, isWhoapUser: false, error: String(e) };
+            return { success: false, isYashinUser: false, error: String(e) };
         }
     }
 
@@ -176,7 +176,7 @@ export class CloudManager {
             // Note: 'authData.token' from Minecraft Auth is a Mojang token, NOT Supabase.
             // We need the Supabase session token.
             // LaunchProcess receives 'authData' which currently only has Mojang info.
-            // We need to ensure we are passing the WHOAP/Supabase token if logged in.
+            // We need to ensure we are passing the YASHIN/Supabase token if logged in.
             // If the user is Offline or Mojang-only, they might NOT have a Supabase token.
             // In that case, we can't sync to "instances" table protected by RLS.
             // We should check if we have a supabase token.

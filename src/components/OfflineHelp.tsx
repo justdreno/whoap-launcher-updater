@@ -18,7 +18,7 @@ const helpSections: HelpSection[] = [
     id: 'what-is-offline',
     icon: <WifiOff size={20} />,
     title: 'What is Offline Mode?',
-    content: 'Offline mode allows you to use Whoap Launcher even without an internet connection. You can create, edit, and manage your Minecraft instances, view cached news and skins, and queue changes that will sync automatically when you reconnect.'
+    content: 'Offline mode allows you to use Yashin Launcher even without an internet connection. You can create, edit, and manage your Minecraft instances, view cached news and skins, and queue changes that will sync automatically when you reconnect.'
   },
   {
     id: 'how-sync-works',
@@ -64,7 +64,7 @@ export const OfflineHelp: React.FC<OfflineHelpProps> = ({ onClose }) => {
 
         <div className={styles.content}>
           <p className={styles.intro}>
-            Learn how Whoap Launcher works offline and keeps your data in sync across devices.
+            Learn how Yashin Launcher works offline and keeps your data in sync across devices.
           </p>
 
           <div className={styles.sections}>

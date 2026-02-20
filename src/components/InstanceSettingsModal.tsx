@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    X, 
-    Edit3, 
-    Copy, 
-    Download, 
-    FolderOpen, 
-    Trash2, 
+import {
+    X,
+    Edit3,
+    Copy,
+    Download,
+    FolderOpen,
+    Trash2,
     Image,
     Star,
     Box,
@@ -41,7 +41,7 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
     const [isDuplicating, setIsDuplicating] = useState(false);
     const [inputValue, setInputValue] = useState('');
     const [iconUrl, setIconUrl] = useState(instance.icon || '');
-    
+
     // Java management state
     const [systemJava, setSystemJava] = useState<{ version: string; path: string }[]>([]);
     const [selectedJava, setSelectedJava] = useState<string | null>(instance.javaPath || null);
@@ -58,7 +58,7 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
     }, [activeTab]);
 
     const canRename = instance.type === 'created';
-    
+
     const handleJavaSelect = async (javaPath: string | null) => {
         const result = await InstanceApi.updateJavaPath(instance.id, javaPath);
         if (result.success) {
@@ -95,9 +95,9 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
                 onUpdate();
                 setIsRenaming(false);
                 showToast('Profile renamed!', 'success');
-                
+
                 // Queue cloud sync
-                if (user?.type === 'whoap' && user?.uuid) {
+                if (user?.type === 'yashin' && user?.uuid) {
                     SyncQueue.enqueue('instance:update', {
                         instance: { ...instance, name: inputValue.trim() },
                         userId: user.uuid,
@@ -160,15 +160,15 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
             try {
                 await InstanceApi.delete(instance.id);
                 showToast('Profile deleted.', 'success');
-                
+
                 // Queue cloud sync for deletion
-                if (user?.type === 'whoap' && user?.uuid) {
+                if (user?.type === 'yashin' && user?.uuid) {
                     SyncQueue.enqueue('instance:delete', {
                         instanceName: instance.name,
                         userId: user.uuid
                     });
                 }
-                
+
                 onUpdate();
                 onClose();
             } catch (e) {
@@ -301,25 +301,25 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
 
                 {/* Tabs */}
                 <div className={styles.tabs}>
-                    <button 
+                    <button
                         className={`${styles.tab} ${activeTab === 'general' ? styles.active : ''}`}
                         onClick={() => setActiveTab('general')}
                     >
                         General
                     </button>
-                    <button 
+                    <button
                         className={`${styles.tab} ${activeTab === 'icon' ? styles.active : ''}`}
                         onClick={() => setActiveTab('icon')}
                     >
                         Icon
                     </button>
-                    <button 
+                    <button
                         className={`${styles.tab} ${activeTab === 'java' ? styles.active : ''}`}
                         onClick={() => setActiveTab('java')}
                     >
                         Java
                     </button>
-                    <button 
+                    <button
                         className={`${styles.tab} ${activeTab === 'danger' ? styles.danger : ''} ${activeTab === 'danger' ? styles.active : ''}`}
                         onClick={() => setActiveTab('danger')}
                     >
@@ -333,7 +333,7 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
                         <div className={styles.panel}>
                             {/* Favorite Action */}
                             <div className={styles.actionCard} onClick={handleToggleFavorite}>
-                                <div className={styles.actionIcon} style={{ 
+                                <div className={styles.actionIcon} style={{
                                     background: instance.isFavorite ? 'rgba(255, 170, 0, 0.15)' : 'rgba(255, 255, 255, 0.05)',
                                     color: instance.isFavorite ? '#ffaa00' : '#666'
                                 }}>
@@ -344,8 +344,8 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
                                         {instance.isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
                                     </div>
                                     <div className={styles.actionDesc}>
-                                        {instance.isFavorite 
-                                            ? 'This profile is in your favorites' 
+                                        {instance.isFavorite
+                                            ? 'This profile is in your favorites'
                                             : 'Add this profile to your favorites list'}
                                     </div>
                                 </div>
@@ -355,7 +355,7 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
                             {/* Actions Grid */}
                             <div className={styles.sectionTitle}>Actions</div>
                             <div className={styles.actionsGrid}>
-                                <button 
+                                <button
                                     className={`${styles.actionBtn} ${!canRename ? styles.disabled : ''}`}
                                     onClick={startRename}
                                     title={canRename ? "Rename Profile" : "Cannot rename external profile"}
@@ -385,8 +385,8 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
                             <div className={styles.iconSection}>
                                 <div className={styles.iconPreview}>
                                     {iconUrl ? (
-                                        <img 
-                                            src={iconUrl} 
+                                        <img
+                                            src={iconUrl}
                                             alt="Icon preview"
                                             onError={(e) => {
                                                 // If preview fails, show placeholder
@@ -419,7 +419,7 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
                                     </button>
                                 </div>
                                 {(instance.icon || iconUrl) && (
-                                    <button 
+                                    <button
                                         className={styles.removeIconBtn}
                                         onClick={() => { setIconUrl(''); handleUpdateIcon(); }}
                                     >
@@ -433,7 +433,7 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
                     {activeTab === 'java' && (
                         <div className={styles.panel}>
                             <div className={styles.sectionTitle}>Java Runtime</div>
-                            
+
                             {/* Current Java Info */}
                             <div className={styles.javaInfoCard}>
                                 <div className={styles.javaInfoHeader}>
@@ -444,7 +444,7 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
                                     {selectedJava ? (
                                         <>
                                             <div className={styles.javaPath}>{selectedJava}</div>
-                                            <button 
+                                            <button
                                                 className={styles.clearJavaBtn}
                                                 onClick={() => handleJavaSelect(null)}
                                             >
@@ -464,7 +464,7 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
                             ) : (
                                 <div className={styles.javaList}>
                                     {systemJava.map((java, idx) => (
-                                        <div 
+                                        <div
                                             key={idx}
                                             className={`${styles.javaItem} ${selectedJava === java.path ? styles.selected : ''}`}
                                             onClick={() => handleJavaSelect(java.path)}
@@ -476,7 +476,7 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
                                     ))}
                                 </div>
                             )}
-                            
+
                             <div className={styles.javaNote}>
                                 Select a specific Java version to use for this profile, or leave as default for automatic detection.
                             </div>
@@ -496,9 +496,9 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
                                         Permanently delete "{instance.name}" and all its data. This action cannot be undone.
                                     </div>
                                 </div>
-                                <button 
-                                    className={styles.deleteBtn} 
-                                    onClick={handleDelete} 
+                                <button
+                                    className={styles.deleteBtn}
+                                    onClick={handleDelete}
                                     disabled={deleting}
                                 >
                                     <Trash2 size={16} />

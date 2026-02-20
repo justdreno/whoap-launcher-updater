@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SkinUtils } from '../utils/SkinUtils';
-import whoapSkin from '../assets/whoap-skin.png';
+import yashinSkin from '../assets/yashin-skin.png';
 import steveFace from '../assets/steve.png';
 
 interface UserAvatarProps {
@@ -8,7 +8,7 @@ interface UserAvatarProps {
     preferredSkin?: string;
     uuid?: string;
     className?: string;
-    accountType?: 'microsoft' | 'whoap' | 'offline';
+    accountType?: 'microsoft' | 'yashin' | 'offline';
     variant?: 'face' | 'body';
     lastUpdated?: number; // For cache-busting local custom skins
 }
@@ -23,7 +23,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
     lastUpdated
 }) => {
     // Determine the fallback image based on variant
-    const fallbackSrc = variant === 'body' ? whoapSkin : steveFace;
+    const fallbackSrc = variant === 'body' ? yashinSkin : steveFace;
 
     // Determine the primary URL to try fetching
     const getPrimaryUrl = () => {
@@ -31,18 +31,18 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
         if (!preferredSkin) {
             return null; // Will trigger fallback to Steve
         }
-        
+
         // If preferredSkin is already a URL (cloud uploaded), use it directly
         if (preferredSkin.startsWith('http://') || preferredSkin.startsWith('https://')) {
             return preferredSkin;
         }
-        
+
         // Prioritize preferredSkin if provided
         const identifier = preferredSkin;
 
-        // If it's a body request for a custom skin, show the default Whoap skin
+        // If it's a body request for a custom skin, show the default Yashin skin
         if (variant === 'body' && SkinUtils.isCustom(identifier)) {
-            return whoapSkin;
+            return yashinSkin;
         }
 
         return SkinUtils.getSkinUrl(identifier, variant, lastUpdated);
@@ -54,9 +54,9 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 
     useEffect(() => {
         setIsProcessed(false);
-        
+
         const url = getPrimaryUrl();
-        
+
         // If no URL (no skin set), use default Steve skin immediately
         if (!url) {
             setCurrentSrc(fallbackSrc);
@@ -68,7 +68,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
         if ((SkinUtils.isCustom(url) || isDirectUrl) && variant === 'face') {
             const img = new Image();
             // Don't set crossOrigin for our own custom protocols as it can sometimes block them
-            if (!url.startsWith('whoap-')) {
+            if (!url.startsWith('yashin-')) {
                 img.crossOrigin = 'Anonymous';
             }
 
@@ -82,7 +82,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
                     if (ctx) {
                         // Disable smoothing for pixelated look
                         ctx.imageSmoothingEnabled = false;
-                        
+
                         // Face is at 8, 8 with size 8x8 on the skin
                         // Draw it scaled up to fill the 64x64 canvas
                         ctx.drawImage(img, 8, 8, 8, 8, 0, 0, 64, 64);

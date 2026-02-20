@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import styles from './WhoapProfileView.module.css';
+import styles from './YashinProfileView.module.css';
 import { SkinViewer3D } from '../components/SkinViewer3D';
 import { CloudManager } from '../utils/CloudManager';
 import { ProfileService, Badge } from '../services/ProfileService';
@@ -16,7 +16,7 @@ const BadgeIcon: React.FC<{ iconName: string; size?: number; color?: string }> =
     return <IconComponent size={size} color={color} />;
 };
 
-interface WhoapProfileViewProps {
+interface YashinProfileViewProps {
     username: string;
     currentUser?: {
         uuid: string;
@@ -29,7 +29,7 @@ interface WhoapProfileViewProps {
     onBack?: () => void;
 }
 
-export const WhoapProfileView: React.FC<WhoapProfileViewProps> = ({
+export const YashinProfileView: React.FC<YashinProfileViewProps> = ({
     username,
     currentUser,
     onAddFriend,
@@ -94,7 +94,7 @@ export const WhoapProfileView: React.FC<WhoapProfileViewProps> = ({
                 setBadges([]);
             }
         } catch (e) {
-            console.error('[WhoapProfileView] Failed to load profile:', e);
+            console.error('[YashinProfileView] Failed to load profile:', e);
             setError('Failed to load profile');
         } finally {
             setLoading(false);
@@ -116,7 +116,7 @@ export const WhoapProfileView: React.FC<WhoapProfileViewProps> = ({
     };
 
     const handleUseThisSkin = async () => {
-        if (!currentUser || !profile || currentUser.type !== 'whoap' || !navigator.onLine) return;
+        if (!currentUser || !profile || currentUser.type !== 'yashin' || !navigator.onLine) return;
         setApplyingSkin(true);
         try {
             const skinUrl = selectedHistorySkin || profile.skin_url;
@@ -129,7 +129,7 @@ export const WhoapProfileView: React.FC<WhoapProfileViewProps> = ({
                 showToast('Failed to apply skin', 'error');
             }
         } catch (e) {
-            console.error('[WhoapProfileView] Failed to apply skin:', e);
+            console.error('[YashinProfileView] Failed to apply skin:', e);
             showToast('Failed to apply skin', 'error');
         } finally {
             setApplyingSkin(false);
@@ -172,7 +172,7 @@ export const WhoapProfileView: React.FC<WhoapProfileViewProps> = ({
 
     const activeSkinUrl = selectedHistorySkin || profile.skin_url || profile.username;
     const isOwnProfile = currentUser?.uuid === profile.id;
-    const canApplySkin = currentUser && !isOwnProfile && currentUser.type === 'whoap' && navigator.onLine && profile.skin_url;
+    const canApplySkin = currentUser && !isOwnProfile && currentUser.type === 'yashin' && navigator.onLine && profile.skin_url;
 
     return (
         <div className={styles.container}>

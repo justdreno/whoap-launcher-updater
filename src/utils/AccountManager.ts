@@ -4,13 +4,13 @@ export interface StoredAccount {
     token: string;
     refreshToken?: string;
     expiresAt?: number;
-    type: 'microsoft' | 'offline' | 'whoap';
+    type: 'microsoft' | 'offline' | 'yashin';
     preferredSkin?: string;
     preferredCape?: string;
 }
 
-const STORAGE_KEY = 'whoap_accounts';
-const ACTIVE_ACCOUNT_KEY = 'whoap_active_account';
+const STORAGE_KEY = 'yashin_accounts';
+const ACTIVE_ACCOUNT_KEY = 'yashin_active_account';
 
 export const AccountManager = {
     getAccounts: (): StoredAccount[] => {

@@ -8,7 +8,7 @@ export interface NewsItem {
     color?: string;
     link_url?: string;
     date: string;
-    source?: 'whoap' | 'minecraft';
+    source?: 'yashin' | 'minecraft';
 }
 
 export interface MinecraftNewsItem {
@@ -42,8 +42,8 @@ interface CachedData<T> {
 }
 
 const CACHE_KEYS = {
-    news: 'whoap_news_cache',
-    changelogs: 'whoap_changelogs_cache',
+    news: 'yashin_news_cache',
+    changelogs: 'yashin_changelogs_cache',
     minecraftNews: 'minecraft_news_cache',
 };
 
@@ -70,20 +70,20 @@ function loadFromCache<T>(key: string): { data: T[]; fromCache: boolean; age: nu
     try {
         const raw = localStorage.getItem(key);
         if (!raw) return null;
-        
+
         const cached: CachedData<T> = JSON.parse(raw);
         if (!cached.data || !Array.isArray(cached.data)) return null;
         if (cached.metadata?.version !== CACHE_VERSION) return null;
-        
+
         const now = Date.now();
         const expired = now > cached.metadata.expiresAt;
         const age = now - cached.metadata.timestamp;
-        
-        return { 
-            data: cached.data, 
-            fromCache: true, 
+
+        return {
+            data: cached.data,
+            fromCache: true,
             age,
-            expired 
+            expired
         };
     } catch {
         return null;
@@ -95,7 +95,7 @@ function formatCacheAge(ageMs: number): string {
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
-    
+
     if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
     if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
     if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
@@ -103,8 +103,8 @@ function formatCacheAge(ageMs: number): string {
 }
 
 export const ContentManager = {
-    fetchNews: async (forceRefresh: boolean = false): Promise<{ 
-        items: NewsItem[]; 
+    fetchNews: async (forceRefresh: boolean = false): Promise<{
+        items: NewsItem[];
         fromCache: boolean;
         cacheAge?: string;
     }> => {
@@ -112,8 +112,8 @@ export const ContentManager = {
         if (!forceRefresh) {
             const cached = loadFromCache<NewsItem>(CACHE_KEYS.news);
             if (cached && !cached.expired) {
-                return { 
-                    items: cached.data, 
+                return {
+                    items: cached.data,
                     fromCache: true,
                     cacheAge: formatCacheAge(cached.age)
                 };
@@ -148,8 +148,8 @@ export const ContentManager = {
             // Fallback to cache (even if expired)
             const cached = loadFromCache<NewsItem>(CACHE_KEYS.news);
             if (cached) {
-                return { 
-                    items: cached.data, 
+                return {
+                    items: cached.data,
                     fromCache: true,
                     cacheAge: formatCacheAge(cached.age) + ' (expired)'
                 };
@@ -158,8 +158,8 @@ export const ContentManager = {
         }
     },
 
-    fetchChangelogs: async (forceRefresh: boolean = false): Promise<{ 
-        items: ChangelogItem[]; 
+    fetchChangelogs: async (forceRefresh: boolean = false): Promise<{
+        items: ChangelogItem[];
         fromCache: boolean;
         cacheAge?: string;
     }> => {
@@ -167,8 +167,8 @@ export const ContentManager = {
         if (!forceRefresh) {
             const cached = loadFromCache<ChangelogItem>(CACHE_KEYS.changelogs);
             if (cached && !cached.expired) {
-                return { 
-                    items: cached.data, 
+                return {
+                    items: cached.data,
                     fromCache: true,
                     cacheAge: formatCacheAge(cached.age)
                 };
@@ -199,8 +199,8 @@ export const ContentManager = {
             console.error("[ContentManager] Changelog fetch failed, trying cache:", e);
             const cached = loadFromCache<ChangelogItem>(CACHE_KEYS.changelogs);
             if (cached) {
-                return { 
-                    items: cached.data, 
+                return {
+                    items: cached.data,
                     fromCache: true,
                     cacheAge: formatCacheAge(cached.age) + ' (expired)'
                 };
@@ -253,8 +253,8 @@ export const ContentManager = {
         return true;
     },
 
-    fetchMinecraftNews: async (forceRefresh: boolean = false): Promise<{ 
-        items: NewsItem[]; 
+    fetchMinecraftNews: async (forceRefresh: boolean = false): Promise<{
+        items: NewsItem[];
         fromCache: boolean;
         cacheAge?: string;
     }> => {
@@ -262,8 +262,8 @@ export const ContentManager = {
         if (!forceRefresh) {
             const cached = loadFromCache<NewsItem>(CACHE_KEYS.minecraftNews);
             if (cached && !cached.expired) {
-                return { 
-                    items: cached.data, 
+                return {
+                    items: cached.data,
                     fromCache: true,
                     cacheAge: formatCacheAge(cached.age)
                 };
@@ -273,22 +273,22 @@ export const ContentManager = {
         try {
             const response = await fetch('https://launchercontent.mojang.com/news.json');
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            
+
             const data = await response.json();
-            
+
             const items: NewsItem[] = (data.entries || []).slice(0, 10).map((entry: any, index: number) => {
                 // Get image URL - prefer newsPageImage, fallback to playPageImage
                 let imageUrl = '';
                 if (entry.newsPageImage?.url) {
-                    imageUrl = entry.newsPageImage.url.startsWith('http') 
-                        ? entry.newsPageImage.url 
+                    imageUrl = entry.newsPageImage.url.startsWith('http')
+                        ? entry.newsPageImage.url
                         : `https://launchercontent.mojang.com${entry.newsPageImage.url}`;
                 } else if (entry.playPageImage?.url) {
-                    imageUrl = entry.playPageImage.url.startsWith('http') 
-                        ? entry.playPageImage.url 
+                    imageUrl = entry.playPageImage.url.startsWith('http')
+                        ? entry.playPageImage.url
                         : `https://launchercontent.mojang.com${entry.playPageImage.url}`;
                 }
-                
+
                 return {
                     id: `mc_${entry.id || index}`,
                     title: entry.title || 'Untitled',
@@ -309,8 +309,8 @@ export const ContentManager = {
             // Fallback to cache (even if expired)
             const cached = loadFromCache<NewsItem>(CACHE_KEYS.minecraftNews);
             if (cached) {
-                return { 
-                    items: cached.data, 
+                return {
+                    items: cached.data,
                     fromCache: true,
                     cacheAge: formatCacheAge(cached.age) + ' (expired)'
                 };
@@ -337,7 +337,7 @@ export const ContentManager = {
     },
 
     // Get cache status
-    getCacheStatus: (): { 
+    getCacheStatus: (): {
         news: { hasCache: boolean; age?: string; expired?: boolean };
         changelogs: { hasCache: boolean; age?: string; expired?: boolean };
         minecraftNews: { hasCache: boolean; age?: string; expired?: boolean };

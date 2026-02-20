@@ -45,10 +45,10 @@ function App() {
     const [user, setUser] = useState<any>(null);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [selectedLibraryInstanceId, setSelectedLibraryInstanceId] = useState<string | null>(null);
-    
+
     // Navigation lock during downloads/launches
     const [isNavLocked, setIsNavLocked] = useState(false);
-    
+
     // App initialization state - single source of truth
     const [appState, setAppState] = useState<{
         stage: 'loading' | 'auth-check' | 'login' | 'main';
@@ -57,7 +57,7 @@ function App() {
     useEffect(() => {
         // Initialize offline manager
         OfflineManager.init();
-        
+
         // Subscribe to offline state changes
         const unsubscribe = OfflineManager.subscribe((offline) => {
             setIsOnline(!offline);
@@ -75,8 +75,8 @@ function App() {
                 // Check auth session
                 console.log('[App] Checking session...');
                 setAppState({ stage: 'auth-check' });
-                
-                const timeoutPromise = new Promise((_, reject) => 
+
+                const timeoutPromise = new Promise((_, reject) =>
                     setTimeout(() => reject(new Error("Session check timed out")), 3000)
                 );
                 const sessionPromise = window.ipcRenderer.invoke('auth:get-session');
@@ -86,7 +86,7 @@ function App() {
                 if (result && result.success && result.profile) {
                     // Fetch role from database dynamically
                     let role = 'user';
-                    if (result.profile.type === 'whoap' && navigator.onLine) {
+                    if (result.profile.type === 'yashin' && navigator.onLine) {
                         try {
                             const { ProfileService } = await import('./services/ProfileService');
                             const rolePromise = ProfileService.getRole(result.profile.uuid);
@@ -122,8 +122,8 @@ function App() {
                         preferredCape: storedCape
                     });
 
-                    // Sync with Supabase if whoap account
-                    if (result.profile.type === 'whoap' && result.profile.token && navigator.onLine) {
+                    // Sync with Supabase if yashin account
+                    if (result.profile.type === 'yashin' && result.profile.token && navigator.onLine) {
                         try {
                             const { CloudManager } = await import('./utils/CloudManager');
                             const syncResult = await CloudManager.syncSession(result.profile.token, result.profile.refreshToken);
@@ -135,7 +135,7 @@ function App() {
                                     uuid: syncResult.session.user.id,
                                     token: syncResult.session.access_token,
                                     refreshToken: syncResult.session.refresh_token,
-                                    type: 'whoap'
+                                    type: 'yashin'
                                 });
 
                                 window.ipcRenderer.invoke('auth:update-session', {
@@ -185,7 +185,7 @@ function App() {
                         uuid: session.user.id,
                         token: session.access_token,
                         refreshToken: session.refresh_token,
-                        type: 'whoap'
+                        type: 'yashin'
                     });
 
                     window.ipcRenderer.invoke('auth:update-session', {
@@ -207,12 +207,12 @@ function App() {
     }, []);
 
     const handleLogout = async () => {
-        if (user && user.type === 'whoap') {
+        if (user && user.type === 'yashin') {
             try {
                 const { AccountManager } = await import('./utils/AccountManager');
                 AccountManager.removeAccount(user.uuid);
             } catch (e) {
-                console.error("Failed to remove WHOAP account from storage", e);
+                console.error("Failed to remove YASHIN account from storage", e);
             }
         }
 
@@ -222,7 +222,7 @@ function App() {
             // Sync queue is persisted, so actions will remain
             console.log(`[App] User logging out with ${pendingCount} pending sync actions - queue will be preserved`);
         }
-        
+
         await window.ipcRenderer.invoke('auth:logout');
         await supabase.auth.signOut();
         setUser(null);
@@ -286,50 +286,50 @@ function App() {
                                 <span>You are offline. Some features may be unavailable.</span>
                             </div>
                         )}
-                        <div style={{ 
+                        <div style={{
                             height: !isOnline ? 'calc(100vh - 36px)' : '100vh',
                             marginTop: !isOnline ? '36px' : '0',
                             overflow: 'hidden'
                         }}>
-                        <MainLayout
-                            activeTab={activeTab}
-                            onTabChange={setActiveTab}
-                            user={user}
-                            onLogout={handleLogout}
-                            isNavLocked={isNavLocked}
-                        >
-                            {activeTab === 'home' && <Home 
-                                user={user} 
-                                setUser={setUser} 
-                                onNavigate={(tab, instanceId) => {
-                                    if (instanceId) setSelectedLibraryInstanceId(instanceId);
-                                    setActiveTab(tab);
-                                }}
-                                onLockNav={(locked: boolean) => {
-                                    setIsNavLocked(locked);
-                                }}
-                            />}
-                            <Suspense fallback={<PageLoader />}>
-                                {activeTab === 'profiles' && <Instances onNavigate={(tab, instanceId) => {
-                                    if (instanceId) setSelectedLibraryInstanceId(instanceId);
-                                    setActiveTab(tab);
-                                }} />}
-                                {activeTab === 'settings' && <Settings />}
-                                {activeTab === 'library' && <Library user={user} isOnline={isOnline} preselectedInstanceId={selectedLibraryInstanceId} />}
-                                {activeTab === 'modpacks' && <ModpackBrowser />}
-                                {activeTab === 'worlds' && <WorldManagement />}
-                                {activeTab === 'screenshots' && <Screenshots user={user} />}
-                                {activeTab === 'friends' && <Friends isOnline={isOnline} />}
-                                {activeTab === 'news' && <News />}
-                                {activeTab === 'admin' && <Admin user={user} />}
-                                {activeTab === 'profile' && <Profile user={user} setUser={setUser} />}
-                            </Suspense>
-                        </MainLayout>
+                            <MainLayout
+                                activeTab={activeTab}
+                                onTabChange={setActiveTab}
+                                user={user}
+                                onLogout={handleLogout}
+                                isNavLocked={isNavLocked}
+                            >
+                                {activeTab === 'home' && <Home
+                                    user={user}
+                                    setUser={setUser}
+                                    onNavigate={(tab, instanceId) => {
+                                        if (instanceId) setSelectedLibraryInstanceId(instanceId);
+                                        setActiveTab(tab);
+                                    }}
+                                    onLockNav={(locked: boolean) => {
+                                        setIsNavLocked(locked);
+                                    }}
+                                />}
+                                <Suspense fallback={<PageLoader />}>
+                                    {activeTab === 'profiles' && <Instances onNavigate={(tab, instanceId) => {
+                                        if (instanceId) setSelectedLibraryInstanceId(instanceId);
+                                        setActiveTab(tab);
+                                    }} />}
+                                    {activeTab === 'settings' && <Settings />}
+                                    {activeTab === 'library' && <Library user={user} isOnline={isOnline} preselectedInstanceId={selectedLibraryInstanceId} />}
+                                    {activeTab === 'modpacks' && <ModpackBrowser />}
+                                    {activeTab === 'worlds' && <WorldManagement />}
+                                    {activeTab === 'screenshots' && <Screenshots user={user} />}
+                                    {activeTab === 'friends' && <Friends isOnline={isOnline} />}
+                                    {activeTab === 'news' && <News />}
+                                    {activeTab === 'admin' && <Admin user={user} />}
+                                    {activeTab === 'profile' && <Profile user={user} setUser={setUser} />}
+                                </Suspense>
+                            </MainLayout>
                         </div>
                     </ConfirmProvider>
                 </ToastProvider >
             </AnimationProvider>
-            
+
             {/* Onboarding Tour for first-time users */}
             <OnboardingTour />
         </ErrorBoundary >

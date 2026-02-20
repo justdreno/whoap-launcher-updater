@@ -14,7 +14,7 @@ const tourSteps: TourStep[] = [
   {
     id: 'welcome',
     title: 'Welcome to Offline Mode',
-    description: 'Whoap Launcher now works seamlessly even without internet. Your changes are saved locally and synced when you reconnect.',
+    description: 'Yashin Launcher now works seamlessly even without internet. Your changes are saved locally and synced when you reconnect.',
     icon: <WifiOff size={32} />
   },
   {
@@ -51,7 +51,7 @@ const tourSteps: TourStep[] = [
   }
 ];
 
-const TOUR_STORAGE_KEY = 'whoap_offline_tour_completed';
+const TOUR_STORAGE_KEY = 'yashin_offline_tour_completed';
 
 export const OnboardingTour: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -116,9 +116,8 @@ export const OnboardingTour: React.FC = () => {
             {tourSteps.map((_, index) => (
               <div
                 key={index}
-                className={`${styles.dot} ${index === currentStep ? styles.active : ''} ${
-                  index < currentStep ? styles.completed : ''
-                }`}
+                className={`${styles.dot} ${index === currentStep ? styles.active : ''} ${index < currentStep ? styles.completed : ''
+                  }`}
               />
             ))}
           </div>
@@ -139,7 +138,7 @@ export const OnboardingTour: React.FC = () => {
                 Back
               </button>
             )}
-            
+
             <button className={styles.primaryBtn} onClick={handleNext}>
               {isLastStep ? 'Get Started' : 'Next'}
               {!isLastStep && <ChevronRight size={16} />}

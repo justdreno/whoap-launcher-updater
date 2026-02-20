@@ -44,7 +44,7 @@ interface AppLevelConfig {
 }
 
 const appLevelStore = new Store<AppLevelConfig>({
-    name: 'whoap-app-config',
+    name: 'yashin-app-config',
     defaults: {
         dataPath: null,
         onboardingCompleted: false,
@@ -56,22 +56,22 @@ const appLevelStore = new Store<AppLevelConfig>({
 let userConfigStore: Store<AppConfig> | null = null;
 
 function getDefaultDataPath(): string {
-    // Default to %USERPROFILE%/.whoap (hidden folder)
+    // Default to %USERPROFILE%/.yashin (hidden folder)
     const homeDir = app.getPath('home');
-    return path.join(homeDir, '.whoap');
+    return path.join(homeDir, '.yashin');
 }
 
 function getUserConfigStore(): Store<AppConfig> {
     if (!userConfigStore) {
         const dataPath = ConfigManager.getDataPath();
-        
+
         // Ensure the directory exists
         if (!fs.existsSync(dataPath)) {
             fs.mkdirSync(dataPath, { recursive: true });
         }
 
         userConfigStore = new Store<AppConfig>({
-            name: 'whoap-config',
+            name: 'yashin-config',
             cwd: dataPath,
             defaults: {
                 dataPath: dataPath,
@@ -150,9 +150,9 @@ export class ConfigManager {
         ipcMain.handle('config:select-data-path', async () => {
             const result = await dialog.showOpenDialog({
                 properties: ['openDirectory', 'createDirectory'],
-                title: 'Select Whoap Data Folder',
+                title: 'Select Yashin Data Folder',
                 defaultPath: ConfigManager.getDataPath(),
-                message: 'Choose where Whoap will store game data, instances, and settings'
+                message: 'Choose where Yashin will store game data, instances, and settings'
             });
 
             if (!result.canceled && result.filePaths.length > 0) {
@@ -179,7 +179,7 @@ export class ConfigManager {
                 }
 
                 appLevelStore.set('dataPath', newPath);
-                
+
                 // Update user config
                 const store = getUserConfigStore();
                 store.set('dataPath', newPath);
@@ -200,7 +200,7 @@ export class ConfigManager {
             try {
                 const defaultPath = getDefaultDataPath();
                 appLevelStore.set('dataPath', defaultPath);
-                
+
                 const store = getUserConfigStore();
                 store.set('dataPath', defaultPath);
                 store.set('gamePath', path.join(defaultPath, 'gamedata'));
@@ -332,24 +332,24 @@ export class ConfigManager {
         ipcMain.handle('config:get-storage-info', async () => {
             try {
                 const dataPath = ConfigManager.getDataPath();
-                
+
                 async function getFolderSize(folderPath: string): Promise<number> {
                     if (!fs.existsSync(folderPath)) return 0;
-                    
+
                     let size = 0;
                     const files = fs.readdirSync(folderPath);
-                    
+
                     for (const file of files) {
                         const filePath = path.join(folderPath, file);
                         const stats = fs.statSync(filePath);
-                        
+
                         if (stats.isDirectory()) {
                             size += await getFolderSize(filePath);
                         } else {
                             size += stats.size;
                         }
                     }
-                    
+
                     return size;
                 }
 
@@ -446,7 +446,7 @@ export class ConfigManager {
             if (version && javaPaths[version]) {
                 return javaPaths[version];
             }
-        } catch {}
+        } catch { }
         return 'auto';
     }
 
@@ -510,7 +510,7 @@ export class ConfigManager {
     static async completeOnboarding(dataPath?: string): Promise<{ success: boolean; path?: string; message?: string; error?: string }> {
         try {
             const selectedPath = dataPath || getDefaultDataPath();
-            
+
             // Create the directory structure
             if (!fs.existsSync(selectedPath)) {
                 fs.mkdirSync(selectedPath, { recursive: true });
@@ -532,7 +532,7 @@ export class ConfigManager {
             // Reinitialize the user config store
             userConfigStore = null;
             const store = getUserConfigStore();
-            
+
             // Set the paths in the user config
             store.set('dataPath', selectedPath);
             store.set('gamePath', path.join(selectedPath, 'gamedata'));
@@ -545,16 +545,16 @@ export class ConfigManager {
 
             console.log(`[ConfigManager] Onboarding completed. Data path: ${selectedPath}`);
 
-            return { 
-                success: true, 
+            return {
+                success: true,
                 path: selectedPath,
                 message: 'Onboarding completed successfully'
             };
         } catch (error) {
             console.error('[ConfigManager] Onboarding failed:', error);
-            return { 
-                success: false, 
-                error: String(error) 
+            return {
+                success: false,
+                error: String(error)
             };
         }
     }

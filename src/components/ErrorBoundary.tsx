@@ -43,7 +43,7 @@ export class ErrorBoundary extends Component<Props, State> {
         // Listen for online/offline changes
         this.onlineListener = () => this.setState({ isOnline: true });
         this.offlineListener = () => this.setState({ isOnline: false });
-        
+
         window.addEventListener('online', this.onlineListener);
         window.addEventListener('offline', this.offlineListener);
     }
@@ -63,7 +63,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         console.error("[ErrorBoundary] Uncaught error:", error, errorInfo);
-        
+
         this.setState(prevState => ({
             errorInfo,
             errorCount: prevState.errorCount + 1
@@ -95,15 +95,15 @@ export class ErrorBoundary extends Component<Props, State> {
             };
 
             // Store error report locally for debugging
-            const existingReports = JSON.parse(localStorage.getItem('whoap_error_reports') || '[]');
+            const existingReports = JSON.parse(localStorage.getItem('yashin_error_reports') || '[]');
             existingReports.push(report);
-            
+
             // Keep only last 10 reports
             if (existingReports.length > 10) {
                 existingReports.shift();
             }
-            
-            localStorage.setItem('whoap_error_reports', JSON.stringify(existingReports));
+
+            localStorage.setItem('yashin_error_reports', JSON.stringify(existingReports));
 
             // Send to analytics if online (optional)
             if (navigator.onLine) {
@@ -117,10 +117,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
     private handleReset = () => {
         this.props.onReset?.();
-        this.setState({ 
-            hasError: false, 
-            error: undefined, 
-            errorInfo: undefined 
+        this.setState({
+            hasError: false,
+            error: undefined,
+            errorInfo: undefined
         });
     };
 
@@ -136,12 +136,12 @@ export class ErrorBoundary extends Component<Props, State> {
 
     private handleExportReport = () => {
         try {
-            const reports = localStorage.getItem('whoap_error_reports') || '[]';
+            const reports = localStorage.getItem('yashin_error_reports') || '[]';
             const blob = new Blob([reports], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `whoap-error-report-${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `yashin-error-report-${new Date().toISOString().split('T')[0]}.json`;
             a.click();
             URL.revokeObjectURL(url);
         } catch (e) {
@@ -154,7 +154,7 @@ export class ErrorBoundary extends Component<Props, State> {
         if (!error) return 'An unexpected error occurred';
 
         const message = error.message.toLowerCase();
-        
+
         // Common error patterns
         if (message.includes('network') || message.includes('fetch') || message.includes('internet')) {
             return 'Network connection issue. Please check your internet connection.';
@@ -171,7 +171,7 @@ export class ErrorBoundary extends Component<Props, State> {
         if (message.includes('timeout')) {
             return 'Operation timed out. The server may be slow or unreachable.';
         }
-        
+
         return error.message;
     }
 
@@ -201,7 +201,7 @@ export class ErrorBoundary extends Component<Props, State> {
                         </h2>
 
                         <p className={styles.description}>
-                            {isOffline 
+                            {isOffline
                                 ? 'It looks like you\'ve lost your internet connection. Some features may not work properly until you\'re back online.'
                                 : errorDescription
                             }
@@ -264,7 +264,7 @@ export class ErrorBoundary extends Component<Props, State> {
                         )}
 
                         <p className={styles.footer}>
-                            Component: {componentName} | 
+                            Component: {componentName} |
                             Status: {isOffline ? 'Offline' : 'Online'} |
                             Time: {new Date().toLocaleTimeString()}
                         </p>
@@ -281,7 +281,7 @@ export class ErrorBoundary extends Component<Props, State> {
 export function useErrorHandler() {
     return (error: Error, errorInfo?: ErrorInfo) => {
         console.error('[useErrorHandler] Caught error:', error, errorInfo);
-        
+
         // Store error for boundary to catch
         const event = new ErrorEvent('error', {
             error,

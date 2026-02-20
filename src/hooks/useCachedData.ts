@@ -37,11 +37,11 @@ export function useCachedData<T>({
     try {
       // Try to load from cache first
       const cached = loadFromCache<T>(key);
-      
+
       if (cached && !forceRefresh) {
         // Check if cache is still valid
         const isExpired = Date.now() - cached.timestamp > ttl;
-        
+
         if (!isExpired || isOffline) {
           // Use cached data immediately (offline-first)
           setState({
@@ -56,7 +56,7 @@ export function useCachedData<T>({
           if (!isOffline && isExpired) {
             refreshInBackground();
           }
-          
+
           return;
         }
       }
@@ -75,10 +75,10 @@ export function useCachedData<T>({
 
       // Fetch fresh data
       const data = await fetcher();
-      
+
       // Save to cache
       saveToCache(key, data);
-      
+
       setState({
         data,
         isLoading: false,
@@ -88,7 +88,7 @@ export function useCachedData<T>({
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to load data';
-      
+
       // Try to use cached data on error
       const cached = loadFromCache<T>(key);
       if (cached) {
@@ -106,7 +106,7 @@ export function useCachedData<T>({
           error: errorMessage
         }));
       }
-      
+
       onError?.(error instanceof Error ? error : new Error(errorMessage));
     }
   }, [key, fetcher, ttl, isOffline, onError]);
@@ -115,7 +115,7 @@ export function useCachedData<T>({
     try {
       const data = await fetcher();
       saveToCache(key, data);
-      
+
       setState(prev => ({
         ...prev,
         data,
@@ -145,9 +145,9 @@ export function useCachedData<T>({
 // Cache storage functions
 function loadFromCache<T>(key: string): { data: T; timestamp: number } | null {
   try {
-    const stored = localStorage.getItem(`whoap_cache_${key}`);
+    const stored = localStorage.getItem(`yashin_cache_${key}`);
     if (!stored) return null;
-    
+
     const parsed = JSON.parse(stored);
     return {
       data: parsed.data,
@@ -160,7 +160,7 @@ function loadFromCache<T>(key: string): { data: T; timestamp: number } | null {
 
 function saveToCache<T>(key: string, data: T): void {
   try {
-    localStorage.setItem(`whoap_cache_${key}`, JSON.stringify({
+    localStorage.setItem(`yashin_cache_${key}`, JSON.stringify({
       data,
       timestamp: Date.now()
     }));
@@ -172,7 +172,7 @@ function saveToCache<T>(key: string, data: T): void {
 // Clear specific cache
 export function clearCache(key: string): void {
   try {
-    localStorage.removeItem(`whoap_cache_${key}`);
+    localStorage.removeItem(`yashin_cache_${key}`);
   } catch (error) {
     console.warn('[useCachedData] Failed to clear cache:', error);
   }
@@ -183,7 +183,7 @@ export function clearAllCache(): void {
   try {
     const keys = Object.keys(localStorage);
     keys.forEach(key => {
-      if (key.startsWith('whoap_cache_')) {
+      if (key.startsWith('yashin_cache_')) {
         localStorage.removeItem(key);
       }
     });

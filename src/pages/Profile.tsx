@@ -45,8 +45,8 @@ interface ProfileProps {
     setUser?: (updater: any) => void;
 }
 
-const PRESETS_KEY = 'whoap_skin_presets';
-const ACTIVE_PRESET_KEY = 'whoap_active_preset';
+const PRESETS_KEY = 'yashin_skin_presets';
+const ACTIVE_PRESET_KEY = 'yashin_active_preset';
 
 function loadPresets(defaultName: string): string[] {
     try {
@@ -104,14 +104,14 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
 
     const [presetNames, setPresetNames] = React.useState<string[]>(() => {
         try {
-            const stored = localStorage.getItem('whoap_skin_preset_names');
+            const stored = localStorage.getItem('yashin_skin_preset_names');
             return stored ? JSON.parse(stored) : ['', '', ''];
         } catch { return ['', '', '']; }
     });
 
     // --- CAPES STATE ---
-    const CAPE_PRESETS_KEY = 'whoap_cape_presets';
-    const ACTIVE_CAPE_PRESET_KEY = 'whoap_active_cape_preset';
+    const CAPE_PRESETS_KEY = 'yashin_cape_presets';
+    const ACTIVE_CAPE_PRESET_KEY = 'yashin_active_cape_preset';
 
     const [capePresets, setCapePresets] = React.useState<string[]>(() => {
         try {
@@ -123,7 +123,7 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
     const [editingCape, setEditingCape] = React.useState<number | null>(null);
     const [capePresetNames, setCapePresetNames] = React.useState<string[]>(() => {
         try {
-            const stored = localStorage.getItem('whoap_cape_preset_names');
+            const stored = localStorage.getItem('yashin_cape_preset_names');
             return stored ? JSON.parse(stored) : ['', '', ''];
         } catch { return ['', '', '']; }
     });
@@ -147,22 +147,22 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
         if (activePreset >= 0 && presetNames[activePreset]) {
             return presetNames[activePreset];
         }
-        
+
         // If no active skin, show "Steve" (default)
         if (!activeSkinName) {
             return 'Steve';
         }
-        
+
         // If it's the user's preferred skin (not from a preset), show username
         if (activeSkinName === user.preferredSkin) {
             return user.name || 'My Skin';
         }
-        
+
         // If it's a URL (uploaded skin), show something nicer
         if (activeSkinName?.startsWith('http')) {
             return user.name || 'My Skin';
         }
-        
+
         return SkinUtils.getDisplayName(activeSkinName, user.name);
     };
 
@@ -211,7 +211,7 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
     // Load badges/profile
     React.useEffect(() => {
         const load = async () => {
-            if (user.type === 'whoap' && navigator.onLine) {
+            if (user.type === 'yashin' && navigator.onLine) {
                 setIsLoadingProfile(true);
                 try {
                     const [fetchedBadges, fetchedProfile] = await Promise.all([
@@ -220,8 +220,8 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
                     ]);
                     setBadges(fetchedBadges);
                     setProfile(fetchedProfile);
-                } catch (e) { 
-                    console.warn('[Profile] Failed to load data', e); 
+                } catch (e) {
+                    console.warn('[Profile] Failed to load data', e);
                 } finally {
                     // Add a small delay for better UX (prevents flickering)
                     setTimeout(() => {
@@ -284,8 +284,8 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
     // Persist presets
     React.useEffect(() => { savePresets(presets); }, [presets]);
     React.useEffect(() => { localStorage.setItem(CAPE_PRESETS_KEY, JSON.stringify(capePresets)); }, [capePresets]);
-    React.useEffect(() => { localStorage.setItem('whoap_skin_preset_names', JSON.stringify(presetNames)); }, [presetNames]);
-    React.useEffect(() => { localStorage.setItem('whoap_cape_preset_names', JSON.stringify(capePresetNames)); }, [capePresetNames]);
+    React.useEffect(() => { localStorage.setItem('yashin_skin_preset_names', JSON.stringify(presetNames)); }, [presetNames]);
+    React.useEffect(() => { localStorage.setItem('yashin_cape_preset_names', JSON.stringify(capePresetNames)); }, [capePresetNames]);
 
     // --- HANDLERS (SKINS) ---
 
@@ -304,7 +304,7 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
 
             // Revert to default
             try {
-                if (user.type === 'whoap' && navigator.onLine) {
+                if (user.type === 'yashin' && navigator.onLine) {
                     await ProfileService.updateProfile(user.uuid, { preferred_skin: undefined });
                 }
                 const { AccountManager } = await import('../utils/AccountManager');
@@ -380,13 +380,13 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
         const newPresets = [...presets];
         newPresets[index] = '';
         setPresets(newPresets);
-        
+
         // Clear the preset name too
         const newNames = [...presetNames];
         newNames[index] = '';
         setPresetNames(newNames);
-        localStorage.setItem('whoap_skin_preset_names', JSON.stringify(newNames));
-        
+        localStorage.setItem('yashin_skin_preset_names', JSON.stringify(newNames));
+
         // If we cleared the active preset, reset to default (undefined)
         if (activePreset === index) {
             setActivePreset(-1); // None selected
@@ -428,7 +428,7 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
 
         try {
             const finalCapeUrl = capeName;
-            
+
             const { AccountManager } = await import('../utils/AccountManager');
             AccountManager.updateAccount(user.uuid, { preferredCape: finalCapeUrl });
             if (setUser) setUser((prev: any) => ({ ...prev, preferredCape: finalCapeUrl }));
@@ -466,13 +466,13 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
         const newPresets = [...capePresets];
         newPresets[index] = '';
         setCapePresets(newPresets);
-        
+
         // Clear the preset name too
         const newNames = [...capePresetNames];
         newNames[index] = '';
         setCapePresetNames(newNames);
-        localStorage.setItem('whoap_cape_preset_names', JSON.stringify(newNames));
-        
+        localStorage.setItem('yashin_cape_preset_names', JSON.stringify(newNames));
+
         if (activeCapePreset === index) {
             setActiveCapePreset(-1);
             localStorage.setItem(ACTIVE_CAPE_PRESET_KEY, '-1');
@@ -555,7 +555,7 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
                         <div className={styles.infoCard}>
                             <span className={styles.infoLabel}>Account Type</span>
                             <span className={styles.infoValue}>
-                                {user.type === 'whoap' ? 'Whoap' : user.type === 'microsoft' ? 'Microsoft' : 'Offline'}
+                                {user.type === 'yashin' ? 'Yashin' : user.type === 'microsoft' ? 'Microsoft' : 'Offline'}
                             </span>
                         </div>
                         <div className={styles.infoCard}>

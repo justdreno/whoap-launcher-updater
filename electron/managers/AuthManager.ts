@@ -82,9 +82,9 @@ export class AuthManager {
             };
         });
 
-        ipcMain.handle('auth:save-whoap-session', async (_, sessionData: { name: string; uuid: string; token: string; refreshToken?: string }) => {
+        ipcMain.handle('auth:save-yashin-session', async (_, sessionData: { name: string; uuid: string; token: string; refreshToken?: string }) => {
             const session: StoredSession = {
-                type: 'whoap',
+                type: 'yashin',
                 name: sessionData.name,
                 uuid: sessionData.uuid,
                 token: sessionData.token,

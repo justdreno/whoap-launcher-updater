@@ -3,7 +3,7 @@ import { ModpackInstaller } from '../utils/ModpackInstaller';
 import axios from 'axios';
 
 const MODRINTH_API = 'https://api.modrinth.com/v2';
-const USER_AGENT = 'WhoapLauncher/1.0.0 (contact@whoap.app)';
+const USER_AGENT = 'YashinLauncher/1.0.0 (contact@yashin.app)';
 
 export class ModpackManager {
     constructor() {

@@ -9,7 +9,7 @@ interface CachedData<T> {
     expiresAt: number;
 }
 
-const CACHE_PREFIX = 'whoap_cache_';
+const CACHE_PREFIX = 'yashin_cache_';
 const DEFAULT_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
 export const OfflineApi = {
@@ -29,7 +29,7 @@ export const OfflineApi = {
                 const response = await fetch(url, options);
                 if (response.ok) {
                     const data = await response.json();
-                    
+
                     // Cache successful response
                     if (fullCacheKey) {
                         const cacheData: CachedData<T> = {
@@ -39,7 +39,7 @@ export const OfflineApi = {
                         };
                         localStorage.setItem(fullCacheKey, JSON.stringify(cacheData));
                     }
-                    
+
                     return { data, fromCache: false };
                 }
             } catch (error) {
@@ -64,9 +64,9 @@ export const OfflineApi = {
         }
 
         // No data available
-        return { 
+        return {
             error: isOffline ? 'You are offline' : 'Failed to fetch data',
-            fromCache: false 
+            fromCache: false
         };
     },
 
@@ -86,7 +86,7 @@ export const OfflineApi = {
     isCached: (cacheKey: string): boolean => {
         const cached = localStorage.getItem(`${CACHE_PREFIX}${cacheKey}`);
         if (!cached) return false;
-        
+
         try {
             const parsed: CachedData<any> = JSON.parse(cached);
             return parsed.expiresAt > Date.now();

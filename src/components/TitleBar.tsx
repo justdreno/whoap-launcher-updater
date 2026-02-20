@@ -24,8 +24,8 @@ export const TitleBar: React.FC = () => {
         };
     }, []);
 
-    const openDiscord = () => window.open('https://dsc.gg/whoap', '_blank');
-    const openGithub = () => window.open('https://github.com/justdreno/Whoap-Launcer', '_blank');
+    const openDiscord = () => window.open('https://dsc.gg/yashin', '_blank');
+    const openGithub = () => window.open('https://github.com/justdreno/Yashin-Launcer', '_blank');
 
     return (
         <div className={`${styles.container} draggable`}>
@@ -49,7 +49,7 @@ export const TitleBar: React.FC = () => {
 
             <div className={`${styles.right} no-drag`}>
                 <SmartSyncIndicator minimal />
-                
+
                 <div className={styles.separator} />
 
                 <div className={styles.socialButtons}>

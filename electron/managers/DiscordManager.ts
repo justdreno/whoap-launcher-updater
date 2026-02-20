@@ -48,9 +48,9 @@ export class DiscordManager {
     private buttons: { label: string; url: string }[] = [];
 
     private loadButtons() {
-        const downloadUrl = process.env.VITE_DISCORD_BUTTON_DOWNLOAD || 'https://whoap.net';
-        const githubUrl = process.env.VITE_DISCORD_BUTTON_GITHUB || 'https://github.com/whoap';
-        
+        const downloadUrl = process.env.VITE_DISCORD_BUTTON_DOWNLOAD || 'https://yashin.net';
+        const githubUrl = process.env.VITE_DISCORD_BUTTON_GITHUB || 'https://github.com/yashin';
+
         this.buttons = [
             { label: 'Download Launcher', url: downloadUrl },
             { label: 'View on GitHub', url: githubUrl }
@@ -113,7 +113,7 @@ export class DiscordManager {
         }
 
         this.attemptConnection();
-        
+
         // Retry connection every 15 seconds if not ready
         this.reconnectInterval = setInterval(() => {
             if (!this.isReady && this.isEnabled) {
@@ -182,7 +182,7 @@ export class DiscordManager {
         ipcMain.handle('discord:toggle', async (_: any, enabled: boolean) => {
             this.isEnabled = enabled;
             this.saveSettings();
-            
+
             if (enabled) {
                 if (!this.isReady) {
                     this.attemptConnection();
@@ -197,7 +197,7 @@ export class DiscordManager {
                     this.isReady = false;
                 }
             }
-            
+
             return { success: true, enabled: this.isEnabled };
         });
 
@@ -243,7 +243,7 @@ export class DiscordManager {
             details: 'Browsing Launcher',
             state: 'Ready to play',
             largeImageKey: 'logo',
-            largeImageText: 'Whoap Launcher',
+            largeImageText: 'Yashin Launcher',
             smallImageKey: undefined,
             smallImageText: undefined,
             startTimestamp: this.presenceStartTime,
@@ -259,7 +259,7 @@ export class DiscordManager {
             largeImageKey: this.getVersionImageKey(versionId),
             largeImageText: `Minecraft ${versionId}`,
             smallImageKey: 'logo',
-            smallImageText: 'Whoap Launcher',
+            smallImageText: 'Yashin Launcher',
             startTimestamp: Date.now()
         });
     }
@@ -273,17 +273,17 @@ export class DiscordManager {
             largeImageKey: 'download',
             largeImageText: 'Downloading',
             smallImageKey: 'logo',
-            smallImageText: 'Whoap Launcher',
+            smallImageText: 'Yashin Launcher',
             startTimestamp: Date.now()
         });
     }
 
     public setPlayingPresence(instanceId: string, versionId: string, loader?: string, isMultiplayer?: boolean, serverName?: string, playerCount?: number, maxPlayers?: number, username?: string, customIconUrl?: string) {
         const instanceName = this.formatInstanceName(instanceId);
-        
+
         // Details: Playing as Username
         const detailsText = username ? `Playing as ${username}` : 'Playing Minecraft';
-        
+
         // State: Instance name or server
         let stateText = instanceName;
         if (isMultiplayer && serverName) {
@@ -313,7 +313,7 @@ export class DiscordManager {
         if (!this.currentPresence || this.currentPresence.presenceState !== PresenceState.PLAYING) {
             return;
         }
-        
+
         // Update with party information
         this.updatePresence({
             ...this.currentPresence,
@@ -327,10 +327,10 @@ export class DiscordManager {
     public setIdlePresence() {
         this.updatePresence({
             presenceState: PresenceState.IDLE,
-            details: 'Whoap Launcher',
+            details: 'Yashin Launcher',
             state: 'AFK',
             largeImageKey: 'logo',
-            largeImageText: 'Whoap Launcher',
+            largeImageText: 'Yashin Launcher',
             startTimestamp: this.presenceStartTime,
             buttons: this.buttons
         });
@@ -347,7 +347,7 @@ export class DiscordManager {
                 details: data.details,
                 state: data.state,
                 largeImageKey: data.largeImageKey || 'logo',
-                largeImageText: data.largeImageText || 'Whoap Launcher',
+                largeImageText: data.largeImageText || 'Yashin Launcher',
                 smallImageKey: data.smallImageKey,
                 smallImageText: data.smallImageText,
                 startTimestamp: data.startTimestamp,
@@ -408,7 +408,7 @@ export class DiscordManager {
             clearInterval(this.reconnectInterval);
             this.reconnectInterval = null;
         }
-        
+
         if (this.rpc) {
             try {
                 this.rpc.destroy().catch((err: any) => {

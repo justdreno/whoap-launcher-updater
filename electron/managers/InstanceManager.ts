@@ -320,7 +320,7 @@ export class InstanceManager {
 
     private resolveInstancePath(instanceId: string): string | null {
         console.log(`Resolving path for ID: ${instanceId}`);
-        // 1. Check local instances (Whoap/instances)
+        // 1. Check local instances (Yashin/instances)
         let p = path.join(this.instancesPath, instanceId);
         if (existsSync(p)) {
             // For imported instances, check if useExternalPath flag is set
@@ -565,7 +565,7 @@ export class InstanceManager {
             const data = JSON.parse(content);
 
             // Remove old cached icon if exists
-            if (data.iconLocal && (data.iconLocal.startsWith('file://') || data.iconLocal.startsWith('whoap-icon://'))) {
+            if (data.iconLocal && (data.iconLocal.startsWith('file://') || data.iconLocal.startsWith('yashin-icon://'))) {
                 try {
                     let oldIconPath = data.iconLocal;
                     try {
@@ -573,14 +573,14 @@ export class InstanceManager {
                         if (url.searchParams.has('path')) {
                             oldIconPath = url.searchParams.get('path') || '';
                         } else {
-                            oldIconPath = oldIconPath.replace('file://', '').replace(/^whoap-icon:\/\/*/, '').split('?')[0];
+                            oldIconPath = oldIconPath.replace('file://', '').replace(/^yashin-icon:\/\/*/, '').split('?')[0];
                             oldIconPath = decodeURIComponent(oldIconPath);
                             if (process.platform === 'win32' && /^[a-zA-Z]\//.test(oldIconPath)) {
                                 oldIconPath = oldIconPath.charAt(0) + ':' + oldIconPath.slice(1);
                             }
                         }
                     } catch {
-                        oldIconPath = oldIconPath.replace('file://', '').replace(/^whoap-icon:\/\/*/, '').split('?')[0];
+                        oldIconPath = oldIconPath.replace('file://', '').replace(/^yashin-icon:\/\/*/, '').split('?')[0];
                         oldIconPath = decodeURIComponent(oldIconPath);
                     }
                     if (oldIconPath && existsSync(oldIconPath)) {
@@ -599,7 +599,7 @@ export class InstanceManager {
                         await this.downloadFile(iconUrl, iconPath);
                         // Store both URL (for Discord) and local path (for UI)
                         data.icon = iconUrl;
-                        data.iconLocal = `whoap-icon://icon/?path=${encodeURIComponent(iconPath)}&t=${Date.now()}`;
+                        data.iconLocal = `yashin-icon://icon/?path=${encodeURIComponent(iconPath)}&t=${Date.now()}`;
                     } else {
                         // Local file or data URL
                         data.icon = iconUrl;
@@ -653,7 +653,7 @@ export class InstanceManager {
         const externalVersions: Instance[] = [];
         const favorites = await this.loadFavorites();
 
-        // 1. Scan Native Instances (Whoap Created)
+        // 1. Scan Native Instances (Yashin Created)
         if (existsSync(this.instancesPath)) {
             const entries = await fs.readdir(this.instancesPath, { withFileTypes: true });
             for (const entry of entries) {
@@ -782,7 +782,7 @@ export class InstanceManager {
             await fs.writeFile(configPath, JSON.stringify(data, null, 4));
         } else {
             // No instance.json (likely external/vanilla version)
-            // We need to generate one so it shows up in Whoap
+            // We need to generate one so it shows up in Yashin
             let version = 'unknown';
             let loader = 'vanilla';
 
@@ -917,7 +917,7 @@ export class InstanceManager {
             }
         }
 
-        // 2. Fallback to Native Whoap Instance Import
+        // 2. Fallback to Native Yashin Instance Import
         const configEntry = zipEntries.find(entry => entry.entryName === 'instance.json');
 
         if (!configEntry) {

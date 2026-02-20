@@ -280,17 +280,17 @@ export const Settings = () => {
                     <div className={styles.sectionHeader}>
                         <h3><FolderOpen size={18} /> Launcher Paths</h3>
                     </div>
-                    
+
                     {/* Data Path - Main Storage Location */}
                     <div className={styles.settingRow + ' ' + styles.importantRow}>
                         <div className={styles.labelCol}>
-                            <span className={styles.label}>Whoap Data Folder</span>
+                            <span className={styles.label}>Yashin Data Folder</span>
                             <span className={styles.hint}>Main storage for instances, game data, skins, and settings. Changing this requires a restart.</span>
                         </div>
                         <div className={styles.controlCol}>
                             <div className={`${styles.pathBox} ${styles.importantPath}`}>
                                 {config.dataPath || 'Not set'}
-                                {config.dataPath?.includes('.whoap') && (
+                                {config.dataPath?.includes('.yashin') && (
                                     <span className={styles.defaultBadge}>Default</span>
                                 )}
                             </div>
@@ -299,8 +299,8 @@ export const Settings = () => {
                                 if (result.success) {
                                     const changeResult = await window.ipcRenderer.invoke('config:change-data-path', result.path);
                                     if (changeResult.success) {
-                                        const newConfig = { 
-                                            ...config, 
+                                        const newConfig = {
+                                            ...config,
                                             dataPath: result.path,
                                             gamePath: result.path + '/gamedata',
                                             instancesPath: result.path + '/instances'
@@ -312,20 +312,20 @@ export const Settings = () => {
                             }}>
                                 <FolderOpen size={16} /> Change
                             </button>
-                            {!config.dataPath?.includes('.whoap') && (
-                                <button 
-                                    className={styles.secondaryBtn} 
+                            {!config.dataPath?.includes('.yashin') && (
+                                <button
+                                    className={styles.secondaryBtn}
                                     onClick={async () => {
                                         const result = await window.ipcRenderer.invoke('config:reset-data-path');
                                         if (result.success) {
-                                            const newConfig = { 
-                                                ...config, 
+                                            const newConfig = {
+                                                ...config,
                                                 dataPath: result.path,
                                                 gamePath: result.path + '/gamedata',
                                                 instancesPath: result.path + '/instances'
                                             };
                                             setConfig(newConfig);
-                                            showToast('Reset to default (.whoap). Please restart.', 'warning');
+                                            showToast('Reset to default (.yashin). Please restart.', 'warning');
                                         }
                                     }}
                                     title="Reset to default"
@@ -544,10 +544,10 @@ export const Settings = () => {
                             <span className={styles.hint}>Toggle page animations and transitions.</span>
                         </div>
                         <label className={styles.toggle}>
-                            <input 
-                                type="checkbox" 
-                                checked={animationsEnabled} 
-                                onChange={(e) => setAnimationsEnabled(e.target.checked)} 
+                            <input
+                                type="checkbox"
+                                checked={animationsEnabled}
+                                onChange={(e) => setAnimationsEnabled(e.target.checked)}
                             />
                             <span className={styles.toggleSlider}></span>
                         </label>
@@ -567,14 +567,14 @@ export const Settings = () => {
                             <span className={styles.toggleSlider}></span>
                         </label>
                     </div>
-                    
+
                     <div className={styles.settingRow}>
                         <div className={styles.labelCol}>
                             <span className={styles.label}>Status</span>
                             <span className={styles.hint}>
-                                {discordEnabled 
-                                    ? (discordStatus.connected 
-                                        ? `Connected - ${discordStatus.currentState}` 
+                                {discordEnabled
+                                    ? (discordStatus.connected
+                                        ? `Connected - ${discordStatus.currentState}`
                                         : 'Connecting to Discord...')
                                     : 'Discord Rich Presence is disabled'}
                             </span>
@@ -583,7 +583,7 @@ export const Settings = () => {
                             {discordStatus.connected ? 'Connected' : discordEnabled ? 'Connecting...' : 'Disabled'}
                         </div>
                     </div>
-                    
+
                     <div className={styles.hintText}>
                         Show your Minecraft activity on Discord. Displays current game, version, and launcher status.
                     </div>

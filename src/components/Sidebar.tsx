@@ -63,9 +63,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, user, 
     return (
         <div className={styles.sidebar}>
             <div className={styles.logoArea}>
-                <img src={logo} alt="Whoap" className={styles.logoImg} />
+                <img src={logo} alt="Yashin" className={styles.logoImg} />
                 <div>
-                    <div className={styles.logoText}>Whoap</div>
+                    <div className={styles.logoText}>Yashin</div>
                     <div className={styles.logoRank} style={{ color: currentRole.color }}>{currentRole.label}</div>
                 </div>
             </div>

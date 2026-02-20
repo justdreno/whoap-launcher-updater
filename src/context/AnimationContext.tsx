@@ -8,18 +8,18 @@ interface AnimationContextType {
 
 const AnimationContext = createContext<AnimationContextType>({
   animationsEnabled: true,
-  setAnimationsEnabled: () => {},
+  setAnimationsEnabled: () => { },
   animationClass: '',
 });
 
 export const AnimationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [animationsEnabled, setAnimationsEnabled] = useState(() => {
-    const saved = localStorage.getItem('whoap-animations');
+    const saved = localStorage.getItem('yashin-animations');
     return saved !== null ? saved === 'true' : true;
   });
 
   useEffect(() => {
-    localStorage.setItem('whoap-animations', animationsEnabled.toString());
+    localStorage.setItem('yashin-animations', animationsEnabled.toString());
   }, [animationsEnabled]);
 
   const animationClass = animationsEnabled ? '' : 'animations-disabled';

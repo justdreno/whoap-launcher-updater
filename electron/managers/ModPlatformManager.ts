@@ -9,7 +9,7 @@ import { ConfigManager } from './ConfigManager';
 import { ModMetadataManager } from './ModMetadataManager';
 
 const API_BASE = 'https://api.modrinth.com/v2';
-const USER_AGENT = 'WhoapLauncher/2.3.1 (contact@whoap.gg)'; // Replace with real contact if available
+const USER_AGENT = 'YashinLauncher/2.3.1 (contact@yashin.gg)'; // Replace with real contact if available
 
 interface ModrinthProject {
     id: string; // Correct field name from API
@@ -245,7 +245,7 @@ export class ModPlatformManager {
 
         // 2. Install Phase
         const results: InstallStatus[] = [];
-        
+
         for (const ver of installQueue) {
             const primaryFile = ver.files.find(f => f.primary) || ver.files[0];
             const destPath = path.join(targetDir, primaryFile.filename);
@@ -259,7 +259,7 @@ export class ModPlatformManager {
                 try {
                     const response = await axios.get(primaryFile.url, { responseType: 'stream' });
                     await pipeline(response.data, createWriteStream(destPath));
-                    
+
                     // Save metadata for tracking
                     await ModMetadataManager.saveMetadata(instanceId, type, {
                         projectId: ver.project_id,
@@ -270,7 +270,7 @@ export class ModPlatformManager {
                         gameVersion: ver.game_versions[0],
                         loaders: ver.loaders
                     });
-                    
+
                     results.push({ modName: ver.name, status: 'installed' });
                     progressCallback({ modName: ver.name, status: 'installed' });
                 } catch (e: any) {

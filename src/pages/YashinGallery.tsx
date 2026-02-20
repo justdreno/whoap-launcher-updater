@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import styles from './WhoapGallery.module.css';
+import styles from './YashinGallery.module.css';
 import { CloudManager } from '../utils/CloudManager';
 import { SkinCard } from '../components/SkinCard';
 import { PublicProfile } from '../types/profile';
 import { Search, ChevronLeft, ChevronRight, RefreshCw, Users } from 'lucide-react';
 
-interface WhoapGalleryProps {
+interface YashinGalleryProps {
     onViewProfile: (username: string) => void;
     user?: {
         type?: string;
     };
 }
 
-export const WhoapGallery: React.FC<WhoapGalleryProps> = ({ onViewProfile, user }) => {
-    const isWhoapUser = user?.type === 'whoap';
+export const YashinGallery: React.FC<YashinGalleryProps> = ({ onViewProfile, user }) => {
+    const isYashinUser = user?.type === 'yashin';
     const [profiles, setProfiles] = useState<PublicProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -36,7 +36,7 @@ export const WhoapGallery: React.FC<WhoapGalleryProps> = ({ onViewProfile, user 
             // Always replace the list (page-replace mode)
             setProfiles(data);
         } catch (error) {
-            console.error('[WhoapGallery] Failed to load profiles:', error);
+            console.error('[YashinGallery] Failed to load profiles:', error);
         } finally {
             setLoading(false);
         }
@@ -84,10 +84,10 @@ export const WhoapGallery: React.FC<WhoapGalleryProps> = ({ onViewProfile, user 
 
     return (
         <div className={styles.container}>
-            {!isWhoapUser && (
+            {!isYashinUser && (
                 <div className={styles.noticeBanner}>
                     <span className={styles.noticeText}>
-                        Sign in with a Whoap account to upload your own skins to the gallery
+                        Sign in with a Yashin account to upload your own skins to the gallery
                     </span>
                 </div>
             )}
@@ -98,7 +98,7 @@ export const WhoapGallery: React.FC<WhoapGalleryProps> = ({ onViewProfile, user 
                         Skin Gallery
                     </h1>
                     <p className={styles.subtitle}>
-                        Browse Whoap users and their skins
+                        Browse Yashin users and their skins
                     </p>
                 </div>
 

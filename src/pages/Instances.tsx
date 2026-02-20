@@ -39,7 +39,7 @@ export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNaviga
         setLoading(true);
         try {
             const localList = await InstanceApi.list();
-            
+
             // Only show local instances
             // Cloud instances are synced when created, but if deleted locally, 
             // they should stay deleted. Users can re-import from cloud if needed.
@@ -53,9 +53,9 @@ export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNaviga
 
     const handleCreated = async (instance: Instance) => {
         await loadInstances();
-        
+
         // Queue cloud sync if user is logged in
-        if (user?.type === 'whoap' && user?.uuid) {
+        if (user?.type === 'yashin' && user?.uuid) {
             SyncQueue.enqueue('instance:create', {
                 instance,
                 userId: user.uuid,
@@ -81,7 +81,7 @@ export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNaviga
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             // Don't trigger shortcuts when typing in input fields
-            if (e.target instanceof HTMLInputElement || 
+            if (e.target instanceof HTMLInputElement ||
                 e.target instanceof HTMLTextAreaElement ||
                 (e.target as HTMLElement).isContentEditable) {
                 return;
@@ -131,9 +131,9 @@ export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNaviga
 
             <div className={styles.header}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
-                    {user?.type === 'whoap' && (
-                        <button 
-                            className={styles.refreshBtn} 
+                    {user?.type === 'yashin' && (
+                        <button
+                            className={styles.refreshBtn}
                             onClick={() => setShowConflictResolver(true)}
                             title="Resolve Sync Conflicts"
                         >
@@ -228,8 +228,8 @@ export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNaviga
                                         : undefined
                                 }}>
                                     {(instance.iconLocal || instance.icon) ? (
-                                        <img 
-                                            src={instance.iconLocal || instance.icon} 
+                                        <img
+                                            src={instance.iconLocal || instance.icon}
                                             alt={instance.name}
                                             style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }}
                                             onError={(e) => {

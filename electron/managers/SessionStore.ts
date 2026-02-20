@@ -1,7 +1,7 @@
 import Store from 'electron-store';
 
 export interface StoredSession {
-    type: 'microsoft' | 'offline' | 'whoap';
+    type: 'microsoft' | 'offline' | 'yashin';
     name: string;
     uuid: string;
     token: string;
@@ -16,8 +16,8 @@ interface StoreSchema {
 }
 
 const store = new Store<StoreSchema>({
-    name: 'whoap-session',
-    encryptionKey: 'whoap-secure-key-2026',
+    name: 'yashin-session',
+    encryptionKey: 'yashin-secure-key-2026',
     defaults: {
         session: null
     }

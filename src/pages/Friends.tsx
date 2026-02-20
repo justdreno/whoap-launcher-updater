@@ -28,7 +28,7 @@ export const Friends: React.FC<FriendsProps> = ({ isOnline = true }) => {
     const user = AccountManager.getActive();
 
     useEffect(() => {
-        if (user?.type === 'whoap') {
+        if (user?.type === 'yashin') {
             loadFriends();
             loadRequests();
             if (activeTab === 'shared') loadSharedInstances();
@@ -152,15 +152,15 @@ export const Friends: React.FC<FriendsProps> = ({ isOnline = true }) => {
         }
     };
 
-    if (user?.type !== 'whoap') {
+    if (user?.type !== 'yashin') {
         return (
             <div className={styles.container}>
                 <div className={styles.header}>
                     <h1><Users size={32} /> Friends</h1>
                 </div>
                 <div style={{ padding: 40, textAlign: 'center', color: '#a1a1aa' }}>
-                    <h2>Whoap Account Required</h2>
-                    <p>Please login with a Whoap account to use social features.</p>
+                    <h2>Yashin Account Required</h2>
+                    <p>Please login with a Yashin account to use social features.</p>
                 </div>
             </div>
         );

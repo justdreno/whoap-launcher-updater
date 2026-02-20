@@ -3,15 +3,15 @@ import styles from './Home.module.css';
 import { InstanceApi, Instance } from '../api/instances';
 import { LaunchApi } from '../api/launch';
 import { NetworkApi, ServerStatus } from '../api/network';
-import { 
-    Rocket, 
-    Clock, 
-    Layers, 
-    Star, 
-    Globe, 
-    Wifi, 
-    Users, 
-    Copy, 
+import {
+    Rocket,
+    Clock,
+    Layers,
+    Star,
+    Globe,
+    Wifi,
+    Users,
+    Copy,
     Check,
     ChevronRight,
     ChevronDown,
@@ -80,13 +80,13 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
             if (data.total > 0) {
                 setLaunchProgress((data.progress / data.total) * 100);
             }
-            
+
             // Track download stats for display
             if (data.totalBytes > 0) {
                 setDownloadStats(prev => {
                     const currentBytes = data.currentBytes || data.progress;
                     const totalBytes = data.totalBytes || data.total;
-                    
+
                     // Calculate speed
                     let speed = 0;
                     if (prev && data.timestamp) {
@@ -96,14 +96,14 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
                             speed = bytesDelta / timeDelta;
                         }
                     }
-                    
+
                     // Calculate ETA
                     let eta = 0;
                     if (speed > 0) {
                         const remainingBytes = totalBytes - currentBytes;
                         eta = Math.max(0, Math.round(remainingBytes / speed));
                     }
-                    
+
                     return {
                         currentBytes,
                         totalBytes,
@@ -139,7 +139,7 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
     const loadData = async () => {
         const list = await InstanceApi.list();
         setInstances(list);
-        
+
         if (list.length > 0 && !selectedInstance) {
             const mostRecent = [...list].sort((a, b) => (b.lastPlayed || 0) - (a.lastPlayed || 0))[0];
             setSelectedInstance(mostRecent);
@@ -223,9 +223,9 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
             setSelectedInstance(list[0]);
         }
         setShowCreateModal(false);
-        
+
         // Queue cloud sync if user is logged in
-        if (instance && (user as any)?.type === 'whoap' && (user as any)?.uuid) {
+        if (instance && (user as any)?.type === 'yashin' && (user as any)?.uuid) {
             SyncQueue.enqueue('instance:create', {
                 instance,
                 userId: (user as any).uuid,
@@ -261,7 +261,7 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
         return `${hours}h ${minutes}m`;
     };
 
-    const filteredInstances = instances.filter(inst => 
+    const filteredInstances = instances.filter(inst =>
         inst.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         inst.version.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -272,9 +272,9 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
 
     return (
         <div className={styles.container}>
-            <PageHeader 
-                title="Home" 
-                description={`${getGreeting()}, ${user.name}. Ready to play?`} 
+            <PageHeader
+                title="Home"
+                description={`${getGreeting()}, ${user.name}. Ready to play?`}
             />
 
             {/* Hero Section */}
@@ -287,7 +287,7 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
                     <div className={styles.instanceSelector} ref={dropdownRef}>
                         <div className={styles.selectorWrapper}>
                             {/* Selected Profile Card */}
-                            <div 
+                            <div
                                 className={`${styles.selectedProfile} ${showInstanceDropdown ? styles.hidden : ''}`}
                                 onClick={() => instances.length > 0 && setShowInstanceDropdown(true)}
                             >
@@ -319,14 +319,14 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
                             <div className={`${styles.dropdown} ${showInstanceDropdown ? styles.visible : ''}`}>
                                 <div className={styles.dropdownHeader}>
                                     <span>Select Profile</span>
-                                    <button 
+                                    <button
                                         className={styles.closeDropdownBtn}
                                         onClick={() => setShowInstanceDropdown(false)}
                                     >
                                         <ChevronDown size={18} style={{ transform: 'rotate(180deg)' }} />
                                     </button>
                                 </div>
-                                
+
                                 {/* Search */}
                                 <div className={styles.dropdownSearch}>
                                     <Search size={14} />
@@ -373,7 +373,7 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
 
                                 {/* Create New Button */}
                                 <div className={styles.dropdownFooter}>
-                                    <button 
+                                    <button
                                         className={styles.createNewBtn}
                                         onClick={() => {
                                             setShowInstanceDropdown(false);
@@ -406,8 +406,8 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
                                     </div>
                                 )}
                                 <div className={styles.progressBarBg}>
-                                    <div 
-                                        className={styles.progressBarFill} 
+                                    <div
+                                        className={styles.progressBarFill}
                                         style={{ width: `${launchProgress}%` }}
                                     />
                                 </div>
@@ -430,7 +430,7 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
                         lastUpdated={lastUpdated}
                     />
                     <div className={styles.skinControls}>
-                        <button 
+                        <button
                             className={styles.skinControlBtn}
                             onClick={() => setShowSkinModal(true)}
                         >
@@ -489,7 +489,7 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
                                         {inst.loader} • {inst.version} • {formatPlayTime(inst.playTime)}
                                     </div>
                                 </div>
-                                <button 
+                                <button
                                     className={`${styles.favoriteBtn} ${inst.isFavorite ? styles.active : ''}`}
                                     onClick={(e) => handleToggleFavorite(e, inst)}
                                 >
@@ -506,7 +506,7 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
                 <div className={styles.section}>
                     <div className={styles.sectionTitle}>
                         <h3><FolderOpen size={18} /> Recent Profiles</h3>
-                        <button 
+                        <button
                             className={styles.viewAllBtn}
                             onClick={() => onNavigate?.('library')}
                         >
@@ -529,7 +529,7 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
                                         {inst.loader} • {inst.version} • {formatPlayTime(inst.playTime)}
                                     </div>
                                 </div>
-                                <button 
+                                <button
                                     className={`${styles.favoriteBtn} ${inst.isFavorite ? styles.active : ''}`}
                                     onClick={(e) => handleToggleFavorite(e, inst)}
                                 >
@@ -571,7 +571,7 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
                                             </div>
                                         )}
                                     </div>
-                                    <button 
+                                    <button
                                         className={styles.copyBtn}
                                         onClick={() => handleCopyIp(server.address, server.id)}
                                     >
@@ -599,7 +599,7 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
                         onChange={(e) => setServerIp(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleCheckStatus()}
                     />
-                    <button 
+                    <button
                         className={styles.statusCheckBtn}
                         onClick={handleCheckStatus}
                         disabled={statusLoading}
@@ -647,13 +647,13 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
                             autoFocus
                         />
                         <div className={styles.modalActions}>
-                            <button 
+                            <button
                                 className={styles.modalCancel}
                                 onClick={() => setShowSkinModal(false)}
                             >
                                 Cancel
                             </button>
-                            <button 
+                            <button
                                 className={styles.modalConfirm}
                                 onClick={async () => {
                                     if (tempSkin && setUser) {

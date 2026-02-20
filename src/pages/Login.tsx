@@ -11,7 +11,7 @@ interface LoginProps {
     onOfflineLogin: (username: string) => void;
 }
 
-type AuthMode = 'whoap' | 'microsoft' | 'offline';
+type AuthMode = 'yashin' | 'microsoft' | 'offline';
 
 export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) => {
     const [authMode, setAuthMode] = useState<AuthMode>('microsoft');
@@ -21,13 +21,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
     const [selectedAccount, setSelectedAccount] = useState<StoredAccount | null>(null);
     const [showAccountDropdown, setShowAccountDropdown] = useState(false);
 
-    // Whoap Auth State
+    // Yashin Auth State
     const [isRegistering, setIsRegistering] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');
     const [verificationSent, setVerificationSent] = useState(false);
-    
+
     const [isCheckingPremium, setIsCheckingPremium] = useState(false);
     const [isPremiumUsername, setIsPremiumUsername] = useState(false);
     const [showPremiumWarning, setShowPremiumWarning] = useState(false);
@@ -143,7 +143,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
         }
     };
 
-    const handleWhoapAuth = async (e: React.FormEvent) => {
+    const handleYashinAuth = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoggingIn(true);
         setError(null);
@@ -180,18 +180,18 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
                 if (data.user) {
                     const displayName = username || data.user.user_metadata.display_name || email.split('@')[0];
 
-                    await window.ipcRenderer.invoke('auth:save-whoap-session', {
+                    await window.ipcRenderer.invoke('auth:save-yashin-session', {
                         name: displayName,
                         uuid: data.user.id,
-                        token: data.session?.access_token || 'whoap-token',
+                        token: data.session?.access_token || 'yashin-token',
                         refreshToken: data.session?.refresh_token
                     });
 
                     handleSuccess({
                         name: displayName,
                         uuid: data.user.id,
-                        token: data.session?.access_token || 'whoap-token'
-                    }, 'whoap');
+                        token: data.session?.access_token || 'yashin-token'
+                    }, 'yashin');
                 }
             } else {
                 const { data, error } = await supabase.auth.signInWithPassword({
@@ -207,7 +207,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
                 }
 
                 if (data.user) {
-                    await window.ipcRenderer.invoke('auth:save-whoap-session', {
+                    await window.ipcRenderer.invoke('auth:save-yashin-session', {
                         name: data.user.user_metadata.display_name || email.split('@')[0],
                         uuid: data.user.id,
                         token: data.session?.access_token,
@@ -218,7 +218,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
                         name: data.user.user_metadata.display_name || email.split('@')[0],
                         uuid: data.user.id,
                         token: data.session?.access_token
-                    }, 'whoap');
+                    }, 'yashin');
                 }
             }
         } catch (err: any) {
@@ -244,8 +244,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
                 preferredSkin: account.preferredSkin
             });
 
-            // Sync Supabase session if it's a whoap account (only when online)
-            if (account.type === 'whoap' && account.token && navigator.onLine) {
+            // Sync Supabase session if it's a yashin account (only when online)
+            if (account.type === 'yashin' && account.token && navigator.onLine) {
                 try {
                     const { CloudManager } = await import('../utils/CloudManager');
                     const syncResult = await CloudManager.syncSession(account.token, account.refreshToken);
@@ -284,7 +284,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
             }
 
             // Only reach here if: 
-            // - Not a whoap account
+            // - Not a yashin account
             // - Offline mode
             // - Session sync failed but we still want to proceed
             onLoginSuccess({
@@ -322,7 +322,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
             <div className={styles.sidebar}>
                 <div className={styles.logoArea}>
                     <h1 className={styles.logoTitle}>
-                        <span className={styles.logoBold}>Whoap</span>
+                        <span className={styles.logoBold}>Yashin</span>
                         <span className={styles.logoLight}>Launcher</span>
                     </h1>
                 </div>
@@ -335,10 +335,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
                         Microsoft
                     </button>
                     <button
-                        className={`${styles.authTab} ${authMode === 'whoap' ? styles.active : ''}`}
-                        onClick={() => setAuthMode('whoap')}
+                        className={`${styles.authTab} ${authMode === 'yashin' ? styles.active : ''}`}
+                        onClick={() => setAuthMode('yashin')}
                     >
-                        Whoap
+                        Yashin
                     </button>
                     <button
                         className={`${styles.authTab} ${authMode === 'offline' ? styles.active : ''}`}
@@ -369,8 +369,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
                     </div>
                 )}
 
-                {authMode === 'whoap' && (
-                    <form onSubmit={handleWhoapAuth} className={styles.authForm}>
+                {authMode === 'yashin' && (
+                    <form onSubmit={handleYashinAuth} className={styles.authForm}>
                         {verificationSent ? (
                             <div style={{ textAlign: 'center', padding: '40px 0' }}>
                                 <div style={{ fontSize: 48, marginBottom: 16 }}>✉️</div>
@@ -527,7 +527,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
                                     <div>
                                         <div style={{ fontWeight: 600, fontSize: 14 }}>{selectedAccount?.name || 'Select Account'}</div>
                                         <div style={{ fontSize: 11, color: '#666' }}>
-                                            {selectedAccount?.type === 'offline' ? 'Offline' : (selectedAccount?.type === 'whoap' ? 'Whoap Cloud' : 'Microsoft')}
+                                            {selectedAccount?.type === 'offline' ? 'Offline' : (selectedAccount?.type === 'yashin' ? 'Yashin Cloud' : 'Microsoft')}
                                         </div>
                                     </div>
                                 </div>
@@ -557,7 +557,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
                                             <div style={{ flex: 1 }}>
                                                 <div style={{ fontSize: 13, fontWeight: 500 }}>{acc.name}</div>
                                                 <div style={{ fontSize: 11, color: '#666' }}>
-                                                    {acc.type === 'offline' ? 'Offline' : (acc.type === 'whoap' ? 'Whoap Cloud' : 'Microsoft')}
+                                                    {acc.type === 'offline' ? 'Offline' : (acc.type === 'yashin' ? 'Yashin Cloud' : 'Microsoft')}
                                                 </div>
                                             </div>
                                             {selectedAccount?.uuid === acc.uuid && <CheckCircle size={14} color="#fff" />}

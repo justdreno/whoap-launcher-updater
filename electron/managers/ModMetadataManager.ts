@@ -90,12 +90,12 @@ export class ModMetadataManager {
   private static getMetadataPath(instanceId: string): string {
     const instancesPath = ConfigManager.getInstancesPath();
     const instancePath = path.join(instancesPath, instanceId);
-    return path.join(instancePath, '.whoap-mods.json');
+    return path.join(instancePath, '.yashin-mods.json');
   }
 
   private static async loadMetadata(instanceId: string): Promise<ModsMetadata> {
     const metadataPath = ModMetadataManager.getMetadataPath(instanceId);
-    
+
     if (!existsSync(metadataPath)) {
       return { mods: {}, resourcepacks: {}, shaderpacks: {} };
     }
@@ -117,7 +117,7 @@ export class ModMetadataManager {
   static async saveMetadata(instanceId: string, type: 'mod' | 'resourcepack' | 'shader', metadata: ModMetadata): Promise<void> {
     const allMetadata = await ModMetadataManager.loadMetadata(instanceId);
     const category = type === 'mod' ? 'mods' : type === 'resourcepack' ? 'resourcepacks' : 'shaderpacks';
-    
+
     allMetadata[category][metadata.filename] = metadata;
     await ModMetadataManager.saveMetadataFile(instanceId, allMetadata);
   }
@@ -125,7 +125,7 @@ export class ModMetadataManager {
   static async getMetadata(instanceId: string, type: 'mod' | 'resourcepack' | 'shader', filename: string): Promise<ModMetadata | null> {
     const allMetadata = await ModMetadataManager.loadMetadata(instanceId);
     const category = type === 'mod' ? 'mods' : type === 'resourcepack' ? 'resourcepacks' : 'shaderpacks';
-    
+
     return allMetadata[category][filename] || null;
   }
 
@@ -136,30 +136,30 @@ export class ModMetadataManager {
   static async findModByProjectId(instanceId: string, type: 'mod' | 'resourcepack' | 'shader', projectId: string): Promise<{ found: boolean; filename?: string; metadata?: ModMetadata }> {
     const allMetadata = await ModMetadataManager.loadMetadata(instanceId);
     const category = type === 'mod' ? 'mods' : type === 'resourcepack' ? 'resourcepacks' : 'shaderpacks';
-    
+
     for (const [filename, metadata] of Object.entries(allMetadata[category])) {
       if (metadata.projectId === projectId) {
         return { found: true, filename, metadata };
       }
     }
-    
+
     return { found: false };
   }
 
-  static async checkForUpdate(instanceId: string, type: 'mod' | 'resourcepack' | 'shader', projectId: string, latestVersionId: string): Promise<{ 
-    hasUpdate: boolean; 
-    currentVersionId?: string; 
+  static async checkForUpdate(instanceId: string, type: 'mod' | 'resourcepack' | 'shader', projectId: string, latestVersionId: string): Promise<{
+    hasUpdate: boolean;
+    currentVersionId?: string;
     currentFilename?: string;
-    metadata?: ModMetadata 
+    metadata?: ModMetadata
   }> {
     const modInfo = await ModMetadataManager.findModByProjectId(instanceId, type, projectId);
-    
+
     if (!modInfo.found) {
       return { hasUpdate: false };
     }
 
     const hasUpdate = modInfo.metadata!.versionId !== latestVersionId;
-    
+
     return {
       hasUpdate,
       currentVersionId: modInfo.metadata!.versionId,
@@ -171,7 +171,7 @@ export class ModMetadataManager {
   static async removeMetadata(instanceId: string, type: 'mod' | 'resourcepack' | 'shader', filename: string): Promise<void> {
     const allMetadata = await ModMetadataManager.loadMetadata(instanceId);
     const category = type === 'mod' ? 'mods' : type === 'resourcepack' ? 'resourcepacks' : 'shaderpacks';
-    
+
     delete allMetadata[category][filename];
     await ModMetadataManager.saveMetadataFile(instanceId, allMetadata);
   }

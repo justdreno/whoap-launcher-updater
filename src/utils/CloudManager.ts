@@ -342,7 +342,7 @@ export const CloudManager = {
             const blob = await response.blob();
 
             const { error } = await supabase.storage
-                .from('whoap-skins')
+                .from('yashin-skins')
                 .upload(fileName, blob, {
                     upsert: true,
                     contentType: 'image/png'
@@ -354,7 +354,7 @@ export const CloudManager = {
             }
 
             const { data: urlData } = supabase.storage
-                .from('whoap-skins')
+                .from('yashin-skins')
                 .getPublicUrl(fileName);
 
             await supabase
@@ -382,7 +382,7 @@ export const CloudManager = {
             const blob = await response.blob();
 
             const { error } = await supabase.storage
-                .from('whoap-skins')
+                .from('yashin-skins')
                 .upload(fileName, blob, {
                     upsert: true,
                     contentType: 'image/png'
@@ -394,7 +394,7 @@ export const CloudManager = {
             }
 
             const { data: urlData } = supabase.storage
-                .from('whoap-skins')
+                .from('yashin-skins')
                 .getPublicUrl(fileName);
 
             await supabase
@@ -418,13 +418,13 @@ export const CloudManager = {
                 .single();
 
             const history: SkinHistoryEntry[] = data?.skin_history || [];
-            
+
             // Check if this skin URL already exists in history
             const alreadyExists = history.some(entry => entry.url === skinUrl);
             if (alreadyExists) {
                 return; // Don't add duplicates
             }
-            
+
             const newEntry: SkinHistoryEntry = {
                 url: skinUrl,
                 uploaded_at: new Date().toISOString()

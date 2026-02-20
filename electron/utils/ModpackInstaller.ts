@@ -22,7 +22,7 @@ export class ModpackInstaller {
         try {
             onProgress("Fetching version details...", 0, 100);
             const versionData = await axios.get(`https://api.modrinth.com/v2/version/${versionId}`, {
-                headers: { 'User-Agent': 'WhoapLauncher/1.0' }
+                headers: { 'User-Agent': 'YashinLauncher/1.0' }
             });
             const files = versionData.data.files;
             const primary = files.find((f: any) => f.primary) || files[0];
@@ -292,7 +292,7 @@ export class ModpackInstaller {
             method: 'GET',
             responseType: 'stream',
             headers: {
-                'User-Agent': 'WhoapLauncher/1.0'
+                'User-Agent': 'YashinLauncher/1.0'
             }
         });
         response.data.pipe(writer);

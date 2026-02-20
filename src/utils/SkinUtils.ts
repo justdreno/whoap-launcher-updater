@@ -7,8 +7,8 @@ export const SkinUtils = {
         if (!name) return false;
         const lower = name.toLowerCase();
         return lower.startsWith('file:') ||
-            lower.startsWith('whoap-skin://') ||
-            lower.startsWith('whoap-cape://') ||
+            lower.startsWith('yashin-skin://') ||
+            lower.startsWith('yashin-cape://') ||
             (lower.endsWith('.png') && !lower.startsWith('http'));
     },
 
@@ -19,8 +19,8 @@ export const SkinUtils = {
         if (!name) return '';
         return name
             .replace('file:', '')
-            .replace('whoap-skin://', '')
-            .replace('whoap-cape://', '')
+            .replace('yashin-skin://', '')
+            .replace('yashin-cape://', '')
             .split('?')[0] // Remove query params
             .replace(/[\\/]+$/, ''); // Remove trailing slashes
     },
@@ -49,18 +49,18 @@ export const SkinUtils = {
 
         if (this.isCustom(name)) {
             const fileName = this.getFileName(name);
-            const base = `whoap-skin://${fileName}`;
+            const base = `yashin-skin://${fileName}`;
             return cacheBuster ? `${base}?t=${cacheBuster}` : base;
         }
 
         // For username-based skins
         const isOffline = this.isOffline();
-        
+
         if (isOffline && preferCache) {
             // When offline, try to use cached version via IPC
             // Return a placeholder that will be resolved by the protocol handler
             const type = variant === 'body' ? 'skin' : 'avatar';
-            return `whoap-skin://cached/${name}/${type}`;
+            return `yashin-skin://cached/${name}/${type}`;
         }
 
         // Default to mc-heads.net for usernames
@@ -77,7 +77,7 @@ export const SkinUtils = {
 
         if (this.isCustom(name)) {
             const fileName = this.getFileName(name);
-            const base = `whoap-cape://${fileName}`;
+            const base = `yashin-cape://${fileName}`;
             return cacheBuster ? `${base}?t=${cacheBuster}` : base;
         }
 
@@ -107,7 +107,7 @@ export const SkinUtils = {
 
         if (this.isCustom(name)) {
             const fileName = this.getFileName(name).replace('.png', '');
-            
+
             // Check if it's a skin_ prefix with timestamp (our auto-generated files)
             if (fileName.startsWith('skin_') && fileName.length > 10) {
                 // Return just the user's name if available
@@ -117,12 +117,12 @@ export const SkinUtils = {
                 // Otherwise show "Custom Skin"
                 return 'Custom Skin';
             }
-            
+
             // Check if it's a cape_ prefix
             if (fileName.startsWith('cape_') && fileName.length > 10) {
                 return 'Custom Cape';
             }
-            
+
             // If filename is long (likely a UUID), format it nicely
             if (fileName.length > 12 && fallback) {
                 return `${fallback} (${fileName.substring(0, 5)})`;
@@ -138,7 +138,7 @@ export const SkinUtils = {
      */
     async preloadSkin(username: string, type: 'skin' | 'avatar' = 'avatar'): Promise<void> {
         if (this.isOffline()) return;
-        
+
         try {
             // Trigger cache via IPC
             await window.ipcRenderer.invoke('skin:cache', username, type);

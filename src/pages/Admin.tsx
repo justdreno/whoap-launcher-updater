@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { PageHeader } from '../components/PageHeader';
 import styles from './Admin.module.css';
-import { 
-    Shield, Users, Newspaper, Award, Plus, Trash2, Ban, UserCheck, Save, 
-    LayoutDashboard, Settings, GitBranch, Server, Globe, Edit2, Zap, 
+import {
+    Shield, Users, Newspaper, Award, Plus, Trash2, Ban, UserCheck, Save,
+    LayoutDashboard, Settings, GitBranch, Server, Globe, Edit2, Zap,
     User, FileText, Medal, Clock, Star, Heart, Code, Bug, Gift, Crown, Trophy
 } from 'lucide-react';
 import { ProfileService, UserProfile, Badge as BadgeType } from '../services/ProfileService';
@@ -320,7 +320,7 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
                 return (
                     <>
                         <PageHeader title="Dashboard Overview" description="Welcome to the control center." />
-                        
+
                         {/* Quick Stats */}
                         <div className={styles.overviewGrid}>
                             <div className={styles.statCard}>
@@ -408,7 +408,7 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
                 return (
                     <>
                         <PageHeader title="User Management" description="Manage user roles, bans, and permissions." />
-                        
+
                         <div className={styles.grid}>
                             {users.map(u => (
                                 <div key={u.id} className={`${styles.userCard} ${u.banned ? styles.banned : ''}`}>
@@ -416,7 +416,7 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
                                         <UserAvatar
                                             username={u.username}
                                             uuid={u.id}
-                                            accountType="whoap"
+                                            accountType="yashin"
                                             className={styles.avatarImg}
                                         />
                                     </div>
@@ -742,17 +742,17 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
                 return (
                     <>
                         <PageHeader title="System Configuration" description="Manage global settings and view system information." />
-                        
+
                         <div className={styles.systemSection}>
                             <div className={styles.sectionTitle}>
                                 <Settings size={20} style={{ color: '#ff8800' }} />
                                 Application Version
                             </div>
                             <div className={styles.versionDisplay}>
-                                <div style={{ 
-                                    width: 64, 
-                                    height: 64, 
-                                    borderRadius: 16, 
+                                <div style={{
+                                    width: 64,
+                                    height: 64,
+                                    borderRadius: 16,
                                     background: 'linear-gradient(135deg, rgba(255, 136, 0, 0.2), rgba(255, 170, 0, 0.1))',
                                     border: '1px solid rgba(255, 136, 0, 0.3)',
                                     display: 'flex',
@@ -767,7 +767,7 @@ export const Admin: React.FC<AdminProps> = ({ user: propUser }) => {
                                 </div>
                             </div>
                             <p style={{ color: '#888', fontSize: '14px', marginTop: 20, lineHeight: 1.6 }}>
-                                The application version is managed through package.json and GitHub releases. 
+                                The application version is managed through package.json and GitHub releases.
                                 Updates are distributed through the auto-updater system.
                             </p>
                         </div>

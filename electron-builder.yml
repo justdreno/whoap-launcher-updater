@@ -1,5 +1,5 @@
-appId: com.whoap.launcher
-productName: Whoap Launcher
+appId: com.yashin.launcher
+productName: Yashin Launcher
 directories:
   output: release
   buildResources: resources
@@ -86,7 +86,7 @@ linux:
 publish:
   provider: github
   owner: justdreno
-  repo: whoap-launcher-updater
+  repo: yashin-launcher-updater
   releaseType: release
   # Token is set via GH_TOKEN environment variable
 

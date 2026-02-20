@@ -64,9 +64,9 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST! : path.join(process.env.
 
 // --- 0.5 Register Protocols as Privileged ---
 protocol.registerSchemesAsPrivileged([
-    { scheme: 'whoap-skin', privileges: { secure: true, standard: true, supportFetchAPI: true } },
-    { scheme: 'whoap-cape', privileges: { secure: true, standard: true, supportFetchAPI: true } },
-    { scheme: 'whoap-icon', privileges: { secure: true, standard: true, supportFetchAPI: true } }
+    { scheme: 'yashin-skin', privileges: { secure: true, standard: true, supportFetchAPI: true } },
+    { scheme: 'yashin-cape', privileges: { secure: true, standard: true, supportFetchAPI: true } },
+    { scheme: 'yashin-icon', privileges: { secure: true, standard: true, supportFetchAPI: true } }
 ]);
 
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL'];
@@ -237,7 +237,7 @@ function createTray() {
         tray?.setContextMenu(contextMenu);
     };
 
-    tray.setToolTip('Whoap Launcher');
+    tray.setToolTip('Yashin Launcher');
     updateTrayMenu();
 
     // Update menu periodically to reflect game status
@@ -383,9 +383,9 @@ function registerProtocolHandlers() {
     console.log('[Main] Registering protocol handlers...');
 
     try {
-        protocol.handle('whoap-skin', async (request: Request) => {
+        protocol.handle('yashin-skin', async (request: Request) => {
             console.log(`[Protocol] Request URL: ${request.url}`);
-            let fileName = request.url.replace('whoap-skin://', '');
+            let fileName = request.url.replace('yashin-skin://', '');
             fileName = fileName.split('?')[0];
             fileName = fileName.replace(/\/+$/, '');
             fileName = decodeURIComponent(fileName);
@@ -428,8 +428,8 @@ function registerProtocolHandlers() {
             }
         });
 
-        protocol.handle('whoap-cape', async (request: Request) => {
-            let fileName = request.url.replace('whoap-cape://', '');
+        protocol.handle('yashin-cape', async (request: Request) => {
+            let fileName = request.url.replace('yashin-cape://', '');
             fileName = fileName.split('?')[0];
             if (fileName.endsWith('/')) fileName = fileName.slice(0, -1);
             fileName = decodeURIComponent(fileName);
@@ -449,14 +449,14 @@ function registerProtocolHandlers() {
         });
 
         // Handler for instance icons
-        protocol.handle('whoap-icon', async (request: Request) => {
+        protocol.handle('yashin-icon', async (request: Request) => {
             let filePath = '';
             try {
                 const url = new URL(request.url);
                 filePath = url.searchParams.get('path') || '';
 
                 if (!filePath) {
-                    filePath = request.url.replace(/^whoap-icon:\/\/*/, '');
+                    filePath = request.url.replace(/^yashin-icon:\/\/*/, '');
                     filePath = filePath.split('?')[0];
                     filePath = decodeURIComponent(filePath);
                     // Handle legacy paths where drive colon was stripped
@@ -465,7 +465,7 @@ function registerProtocolHandlers() {
                     }
                 }
             } catch {
-                filePath = request.url.replace(/^whoap-icon:\/\/*/, '');
+                filePath = request.url.replace(/^yashin-icon:\/\/*/, '');
                 filePath = filePath.split('?')[0];
                 filePath = decodeURIComponent(filePath);
             }
@@ -522,7 +522,7 @@ function registerIpcHandlers() {
         const userDataPath = ConfigManager.getDataPath();
 
         try {
-            ['auth.json', 'config.json', 'favorites.json', 'whoap-config.json'].forEach(file => {
+            ['auth.json', 'config.json', 'favorites.json', 'yashin-config.json'].forEach(file => {
                 const f = path.join(userDataPath, file);
                 if (fs.existsSync(f)) fs.unlinkSync(f);
             });

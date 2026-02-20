@@ -243,7 +243,7 @@ export class LaunchProcess {
                 } else {
                     const sharedJarPath = path.join(gamePath, 'versions', versionId, `${versionId}.jar`);
                     const instanceJarPath = path.join(instancesRoot, instanceId, 'client.jar');
-                    
+
                     clientJarPath = isNativeInstance ? instanceJarPath : sharedJarPath;
 
                     // If utilizing shared JAR and it exists, prefer it
@@ -303,18 +303,18 @@ export class LaunchProcess {
                 // Libraries match
                 const cpLibraries: string[] = [];
                 const nativesToExtract: { path: string; exclude: string[] }[] = [];
-                
+
                 // Helper to get current platform name
                 const getPlatformName = () => {
                     if (process.platform === 'win32') return 'windows';
                     if (process.platform === 'darwin') return 'osx';
                     return 'linux';
                 };
-                
+
                 const getPlatformArch = () => {
                     return process.arch === 'x64' ? '64' : '32';
                 };
-                
+
                 if (versionData.libraries) {
                     versionData.libraries.forEach((lib: any) => {
                         // Rules Check
@@ -339,23 +339,23 @@ export class LaunchProcess {
                         if (lib.natives) {
                             const platform = getPlatformName();
                             const arch = getPlatformArch();
-                            
+
                             // natives[platform] gives us the classifier pattern (e.g., "natives-windows" or "natives-windows-${arch}")
                             // We need to look up the actual URL in classifies using the resolved classifier name
                             const classifierPattern = lib.natives[platform];
-                            
+
                             if (classifierPattern && lib.classifies) {
                                 // The pattern might be just "natives-windows" or have arch placeholder like "natives-windows-${arch}"
                                 // First try without arch suffix
                                 let classifierKey = classifierPattern.replace('natives-', '');
                                 let classifierData = lib.classifies[classifierKey];
-                                
+
                                 // If not found and pattern has ${arch}, try with arch
                                 if (!classifierData && classifierPattern.includes('${arch}')) {
                                     classifierKey = classifierPattern.replace('natives-', '').replace('-${arch}', `-${arch}`);
                                     classifierData = lib.classifies[classifierKey];
                                 }
-                                
+
                                 if (classifierData) {
                                     isNative = true;
                                     libPath = path.join(nativesDir, path.basename(classifierData.url));
@@ -366,7 +366,7 @@ export class LaunchProcess {
                                 }
                             }
                         }
-                        
+
                         // Standard artifact
                         if (!isNative && lib.downloads && lib.downloads.artifact) {
                             libPath = path.join(librariesDir, lib.downloads.artifact.path);
@@ -468,19 +468,19 @@ export class LaunchProcess {
                         console.error("[Launch] Download failed:", e);
                         throw new Error(`Failed to download required files: ${e.message}. Please check your connection.`);
                     }
-                    
+
                     // 3.1 Extract native libraries
                     if (nativesToExtract.length > 0) {
                         event.sender.send('launch:progress', { status: 'Extracting natives...', progress: 95, total: 100 });
                         console.log(`[Launch] Extracting ${nativesToExtract.length} native libraries...`);
-                        
+
                         for (const native of nativesToExtract) {
                             if (fs.existsSync(native.path)) {
                                 try {
                                     const AdmZip = require('adm-zip');
                                     const zip = new AdmZip(native.path);
                                     const entries = zip.getEntries();
-                                    
+
                                     for (const entry of entries) {
                                         // Check if entry should be excluded
                                         const shouldExclude = native.exclude.some((pattern: string) => {
@@ -489,7 +489,7 @@ export class LaunchProcess {
                                             }
                                             return entry.entryName === pattern;
                                         });
-                                        
+
                                         if (!shouldExclude && !entry.isDirectory) {
                                             zip.extractEntryTo(entry, nativesDir, false, true);
                                         }
@@ -639,14 +639,14 @@ export class LaunchProcess {
 
                 // Check for custom Java path (instance-specific first, then global config)
                 let javaPath: string;
-                
+
                 if (instanceConfig?.javaPath && fs.existsSync(instanceConfig.javaPath)) {
                     // Use instance-specific Java path
                     console.log(`[Launch] Using instance-specific Java: ${instanceConfig.javaPath}`);
                     javaPath = instanceConfig.javaPath;
                 } else {
                     const configJavaPath = ConfigManager.getJavaPath(requiredJavaVersion);
-                    
+
                     if (configJavaPath && configJavaPath !== 'auto') {
                         javaPath = configJavaPath;
                     } else {
@@ -777,7 +777,7 @@ export class LaunchProcess {
                     ...(presetFlags[jvmPreset] || []),
                     ...customJvmArgs,
                     `-Djava.library.path=${nativesDir}`,
-                    '-Dminecraft.launcher.brand=whoap',
+                    '-Dminecraft.launcher.brand=yashin',
                     '-Dminecraft.launcher.version=2.0.0',
                     '-Dminecraft.client.jar=' + clientJarPath,
                     '-cp', classpath,
@@ -846,7 +846,7 @@ export class LaunchProcess {
 
                 // Mark game as running
                 LaunchProcess._gameIsRunning = true;
-                
+
                 const gameProcess = spawn(javaPath, jvmArgs, {
                     cwd: instancePath,
                     detached: false, // Keep attached to main process to avoid new terminal window
@@ -875,10 +875,10 @@ export class LaunchProcess {
                             currentServer = serverName;
                             isMultiplayer = true;
                             DiscordManager.getInstance().setPlayingPresence(
-                                instanceId, 
-                                versionId, 
-                                instanceLoader, 
-                                true, 
+                                instanceId,
+                                versionId,
+                                instanceLoader,
+                                true,
                                 currentServer,
                                 undefined,
                                 undefined,
@@ -887,7 +887,7 @@ export class LaunchProcess {
                             );
                         }
                     }
-                    
+
                     // Detect player count in multiplayer
                     // Patterns: "Player count: X/Y", "X/Y players online", etc.
                     const playerCountMatch = str.match(/(?:Player count|Players|Online)[:\s]+(\d+)\s*[/:]?\s*(\d*)/i);
@@ -901,7 +901,7 @@ export class LaunchProcess {
                             currentServer
                         );
                     }
-                    
+
                     // Detect leaving server
                     if (str.match(/Disconnected|Left server|Connection lost/i) && currentServer) {
                         currentServer = undefined;
@@ -959,7 +959,7 @@ export class LaunchProcess {
                 gameProcess.on('close', async (code) => {
                     // Mark game as no longer running
                     LaunchProcess._gameIsRunning = false;
-                    
+
                     // Calculate and save playtime
                     sessionPlayTime = Math.floor((Date.now() - startTime) / 1000);
                     if (sessionPlayTime > 0) {
@@ -1051,15 +1051,15 @@ export class LaunchProcess {
             // Determine if it's a custom/local file
             const lower = normalizedSource.toLowerCase();
             const isCustom = lower.startsWith('file:') ||
-                lower.startsWith('whoap-skin://') ||
-                lower.startsWith('whoap-cape://') ||
+                lower.startsWith('yashin-skin://') ||
+                lower.startsWith('yashin-cape://') ||
                 (lower.endsWith('.png') && !lower.startsWith('http'));
 
             if (isCustom) {
                 const fileName = normalizedSource
                     .replace('file:', '')
-                    .replace('whoap-skin://', '')
-                    .replace('whoap-cape://', '');
+                    .replace('yashin-skin://', '')
+                    .replace('yashin-cape://', '');
 
                 const subDir = type === 'skin' ? 'skins' : 'capes';
                 const srcPath = path.join(ConfigManager.getDataPath(), subDir, fileName);
@@ -1159,10 +1159,10 @@ export class LaunchProcess {
 
                 const configPath = path.join(configDir, 'CustomSkinLoader.json');
 
-                const whoapServer = {
-                    "name": "Whoap Skin Server",
+                const yashinServer = {
+                    "name": "Yashin Skin Server",
                     "type": "CustomSkinAPI",
-                    "root": "https://skins.whoap.gg/"
+                    "root": "https://skins.yashin.gg/"
                 };
 
                 const localSkinEntry = {
@@ -1180,7 +1180,7 @@ export class LaunchProcess {
                     "enable": true,
                     "loadlist": [
                         localSkinEntry,
-                        whoapServer,
+                        yashinServer,
                         {
                             "name": "Mojang",
                             "type": "MojangAPI"
@@ -1192,11 +1192,11 @@ export class LaunchProcess {
                     try {
                         const existing = JSON.parse(fs.readFileSync(configPath, 'utf8'));
                         if (existing.loadlist && Array.isArray(existing.loadlist)) {
-                            // Remove stale LocalSkin and Whoap entries, then re-add at top
+                            // Remove stale LocalSkin and Yashin entries, then re-add at top
                             const filtered = existing.loadlist.filter(
-                                (e: any) => e.name !== "LocalSkin" && e.name !== "Whoap Skin Server"
+                                (e: any) => e.name !== "LocalSkin" && e.name !== "Yashin Skin Server"
                             );
-                            existing.loadlist = [localSkinEntry, whoapServer, ...filtered];
+                            existing.loadlist = [localSkinEntry, yashinServer, ...filtered];
                             config = existing;
                         }
                     } catch (e) {
@@ -1206,7 +1206,7 @@ export class LaunchProcess {
                 }
 
                 await fs.promises.writeFile(configPath, JSON.stringify(config, null, 4));
-                console.log("[Launch] Configured CustomSkinLoader with LocalSkin + Whoap Server.");
+                console.log("[Launch] Configured CustomSkinLoader with LocalSkin + Yashin Server.");
             }
         } catch (e) {
             console.warn("[Launch] Failed to configure skin loader", e);

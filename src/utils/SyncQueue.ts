@@ -1,8 +1,8 @@
 import { OfflineManager } from './OfflineManager';
 
-export type SyncActionType = 
-  | 'instance:create' 
-  | 'instance:update' 
+export type SyncActionType =
+  | 'instance:create'
+  | 'instance:update'
   | 'instance:delete'
   | 'settings:update'
   | 'skin:update'
@@ -11,12 +11,12 @@ export type SyncActionType =
   | 'friend:accept'
   | 'friend:remove';
 
-export type SyncErrorType = 
-  | 'network' 
-  | 'timeout' 
-  | 'server' 
-  | 'auth' 
-  | 'conflict' 
+export type SyncErrorType =
+  | 'network'
+  | 'timeout'
+  | 'server'
+  | 'auth'
+  | 'conflict'
   | 'unknown';
 
 export interface SyncAction {
@@ -50,8 +50,8 @@ export interface SyncStats {
   oldestAction: number | null;
 }
 
-const QUEUE_STORAGE_KEY = 'whoap_sync_queue';
-const QUEUE_BACKUP_KEY = 'whoap_sync_queue_backup';
+const QUEUE_STORAGE_KEY = 'yashin_sync_queue';
+const QUEUE_BACKUP_KEY = 'yashin_sync_queue_backup';
 const MAX_RETRY_COUNT = 5;
 const PROCESSING_DELAY = 1000;
 const BATCH_SIZE = 50; // Process max 50 items at a time
@@ -92,17 +92,17 @@ class SyncQueueManager {
       window.ipcRenderer.on('sync:process-request', async () => {
         console.log('[SyncQueue] Background sync requested from main process');
         const pendingCount = this.getPendingCount();
-        
+
         if (pendingCount > 0 && !OfflineManager.isOffline()) {
           await this.processQueue();
-          window.ipcRenderer.send('sync:process-response', { 
-            success: true, 
-            processed: pendingCount 
+          window.ipcRenderer.send('sync:process-response', {
+            success: true,
+            processed: pendingCount
           });
         } else {
-          window.ipcRenderer.send('sync:process-response', { 
-            success: true, 
-            processed: 0 
+          window.ipcRenderer.send('sync:process-response', {
+            success: true,
+            processed: 0
           });
         }
       });
@@ -157,7 +157,7 @@ class SyncQueueManager {
       // Keep only pending and failed actions, remove oldest completed
       const completedActions = this.queue.filter(a => a.status === 'completed');
       const actionsToKeep = this.queue.filter(a => a.status !== 'completed');
-      
+
       if (completedActions.length > 0) {
         // Remove oldest completed actions
         const sortedCompleted = completedActions.sort((a, b) => b.timestamp - a.timestamp);
@@ -179,15 +179,15 @@ class SyncQueueManager {
       const stored = localStorage.getItem(QUEUE_STORAGE_KEY);
       if (stored) {
         const data = JSON.parse(stored);
-        
+
         // Validate data structure
         if (!this.isValidQueueData(data)) {
           throw new Error('Invalid queue data structure');
         }
-        
+
         this.queue = data.actions || [];
         this.lastSyncTime = data.lastSyncTime || null;
-        
+
         // Reset processing status for any actions that were interrupted
         this.queue.forEach(action => {
           if (action.status === 'processing') {
@@ -196,12 +196,12 @@ class SyncQueueManager {
             action.errorType = 'unknown';
           }
         });
-        
+
         this.isCorrupted = false;
         this.storageError = null;
-        
+
         console.log(`[SyncQueue] Loaded ${this.queue.length} actions from storage`);
-        
+
         // Create backup
         this.createBackup();
       }
@@ -209,7 +209,7 @@ class SyncQueueManager {
       console.error('[SyncQueue] Failed to load from storage:', e);
       this.isCorrupted = true;
       this.storageError = String(e);
-      
+
       // Try to restore from backup
       this.restoreFromBackup();
     }
@@ -218,7 +218,7 @@ class SyncQueueManager {
   private isValidQueueData(data: any): boolean {
     if (!data || typeof data !== 'object') return false;
     if (!Array.isArray(data.actions)) return false;
-    
+
     // Validate each action
     return data.actions.every((action: any) => {
       return (
@@ -277,39 +277,39 @@ class SyncQueueManager {
         isProcessing: this.isProcessing
       };
       localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(data));
-      
+
       // Also update backup periodically (every 10 saves)
       if (Math.random() < 0.1) {
         this.createBackup();
       }
-      
+
       this.isCorrupted = false;
       this.storageError = null;
       return true;
     } catch (e) {
       console.error('[SyncQueue] Failed to save to storage:', e);
       this.storageError = String(e);
-      
+
       // Check if it's a quota exceeded error
       if (e instanceof Error && e.name === 'QuotaExceededError') {
         this.handleStorageQuotaExceeded();
       }
-      
+
       return false;
     }
   }
 
   private handleStorageQuotaExceeded(): void {
     console.warn('[SyncQueue] Storage quota exceeded, cleaning up...');
-    
+
     // Remove completed actions
     const completedCount = this.queue.filter(a => a.status === 'completed').length;
     this.queue = this.queue.filter(a => a.status !== 'completed');
-    
+
     if (completedCount > 0) {
       console.log(`[SyncQueue] Removed ${completedCount} completed actions to free space`);
     }
-    
+
     // If still too big, remove oldest failed actions
     if (this.queue.length > 100) {
       const failedActions = this.queue.filter(a => a.status === 'failed');
@@ -318,7 +318,7 @@ class SyncQueueManager {
       this.queue = this.queue.filter(a => !toRemove.includes(a));
       console.log(`[SyncQueue] Removed ${toRemove.length} old failed actions`);
     }
-    
+
     // Try saving again
     try {
       const data: SyncQueueState = {
@@ -352,7 +352,7 @@ class SyncQueueManager {
     if (this.queue.length >= QUEUE_MAX_SIZE) {
       console.warn(`[SyncQueue] Queue full (${QUEUE_MAX_SIZE}), removing oldest completed actions`);
       this.cleanupCompletedActions();
-      
+
       if (this.queue.length >= QUEUE_MAX_SIZE) {
         console.error('[SyncQueue] Cannot enqueue: queue is full');
         throw new Error('Sync queue is full. Please wait for current sync to complete.');
@@ -387,7 +387,7 @@ class SyncQueueManager {
     if ((this as any).processTimeout) {
       clearTimeout((this as any).processTimeout);
     }
-    
+
     // Set new timeout
     (this as any).processTimeout = setTimeout(() => {
       this.processQueue();
@@ -439,11 +439,11 @@ class SyncQueueManager {
     const processing = this.queue.filter(a => a.status === 'processing').length;
     const failed = this.queue.filter(a => a.status === 'failed').length;
     const completed = this.queue.filter(a => a.status === 'completed').length;
-    
+
     const totalRetries = this.queue.reduce((sum, a) => sum + a.retryCount, 0);
     const avgRetryCount = this.queue.length > 0 ? totalRetries / this.queue.length : 0;
-    
-    const oldestAction = this.queue.length > 0 
+
+    const oldestAction = this.queue.length > 0
       ? Math.min(...this.queue.map(a => a.timestamp))
       : null;
 
@@ -518,7 +518,7 @@ class SyncQueueManager {
 
       for (let i = 0; i < pendingActions.length; i++) {
         const action = pendingActions[i];
-        
+
         if (OfflineManager.isOffline()) {
           console.log('[SyncQueue] Went offline during processing, pausing...');
           break;
@@ -531,7 +531,7 @@ class SyncQueueManager {
         }
 
         await this.processAction(action);
-        
+
         // Add delay between actions, but check for timeout
         if (i < pendingActions.length - 1) {
           const elapsed = Date.now() - this.processingStartTime;
@@ -570,13 +570,13 @@ class SyncQueueManager {
 
     try {
       const success = await this.executeActionWithTimeout(action);
-      
+
       if (success) {
         action.status = 'completed';
         action.error = undefined;
         action.errorType = undefined;
         console.log(`[SyncQueue] Action ${action.id} completed: ${action.type}`);
-        
+
         // Remove completed actions after a delay
         setTimeout(() => {
           this.dequeue(action.id);
@@ -605,14 +605,14 @@ class SyncQueueManager {
     action.retryCount++;
     action.error = error instanceof Error ? error.message : String(error);
     action.errorType = this.categorizeError(error);
-    
+
     // Calculate next retry time with exponential backoff
     if (action.retryCount < MAX_RETRY_COUNT) {
       const delayIndex = Math.min(action.retryCount - 1, RETRY_DELAYS.length - 1);
       const delay = RETRY_DELAYS[delayIndex];
       action.nextRetryAt = Date.now() + delay;
       action.status = 'pending';
-      
+
       console.warn(
         `[SyncQueue] Action ${action.id} failed (${action.errorType}), ` +
         `will retry in ${delay}ms (${action.retryCount}/${MAX_RETRY_COUNT})`
@@ -624,9 +624,9 @@ class SyncQueueManager {
         `[SyncQueue] Action ${action.id} failed permanently after ${MAX_RETRY_COUNT} retries:`,
         action.error
       );
-      
+
       // Notify about permanent failure
-      this.backgroundSyncListeners.forEach(listener => 
+      this.backgroundSyncListeners.forEach(listener =>
         listener('action-failed', { action, error: action.error })
       );
     }
@@ -635,7 +635,7 @@ class SyncQueueManager {
   private categorizeError(error: any): SyncErrorType {
     const message = error instanceof Error ? error.message : String(error);
     const lowerMessage = message.toLowerCase();
-    
+
     if (lowerMessage.includes('timeout') || lowerMessage.includes('etimedout')) {
       return 'timeout';
     }
@@ -651,7 +651,7 @@ class SyncQueueManager {
     if (lowerMessage.includes('server') || lowerMessage.includes('500') || lowerMessage.includes('502') || lowerMessage.includes('503')) {
       return 'server';
     }
-    
+
     return 'unknown';
   }
 
@@ -682,12 +682,12 @@ class SyncQueueManager {
       action.nextRetryAt = undefined;
       this.saveToStorage();
       this.notifyListeners();
-      
+
       // Trigger processing
       if (!OfflineManager.isOffline()) {
         this.processQueue();
       }
-      
+
       return true;
     }
     return false;
@@ -705,14 +705,14 @@ class SyncQueueManager {
       action.errorType = undefined;
       action.nextRetryAt = undefined;
     });
-    
+
     this.saveToStorage();
     this.notifyListeners();
-    
+
     if (failedActions.length > 0 && !OfflineManager.isOffline()) {
       this.processQueue();
     }
-    
+
     return failedActions.length;
   }
 
@@ -722,7 +722,7 @@ class SyncQueueManager {
   subscribe(callback: (state: SyncQueueState) => void): () => void {
     this.listeners.add(callback);
     callback(this.getQueue());
-    
+
     return () => {
       this.listeners.delete(callback);
     };
