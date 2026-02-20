@@ -6,7 +6,6 @@ export * from './ModpackBrowser';
 export * from './InstanceMods';
 export * from './ModsManager';
 export * from './News';
-export * from './Friends';
 export * from './Admin';
 export * from './Screenshots';
 export * from './ResourcePacksManager';

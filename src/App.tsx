@@ -24,7 +24,6 @@ import { Login } from './pages/Login';
 const Library = lazy(() => import('./pages/Library').then(m => ({ default: m.Library })));
 const Screenshots = lazy(() => import('./pages/Screenshots').then(m => ({ default: m.Screenshots })));
 const News = lazy(() => import('./pages/News').then(m => ({ default: m.News })));
-const Friends = lazy(() => import('./pages/Friends').then(m => ({ default: m.Friends })));
 const Admin = lazy(() => import('./pages/Admin').then(m => ({ default: m.Admin })));
 const Instances = lazy(() => import('./pages/Instances').then(m => ({ default: m.Instances })));
 const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
@@ -319,7 +318,6 @@ function App() {
                                     {activeTab === 'modpacks' && <ModpackBrowser />}
                                     {activeTab === 'worlds' && <WorldManagement />}
                                     {activeTab === 'screenshots' && <Screenshots user={user} />}
-                                    {activeTab === 'friends' && <Friends isOnline={isOnline} />}
                                     {activeTab === 'news' && <News />}
                                     {activeTab === 'admin' && <Admin user={user} />}
                                     {activeTab === 'profile' && <Profile user={user} setUser={setUser} />}
