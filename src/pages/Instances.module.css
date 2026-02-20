@@ -122,34 +122,198 @@
 }
 
 .emptyState {
-    text-align: center;
     grid-column: 1 / -1;
-    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 500px;
+    position: relative;
+    overflow: hidden;
+}
+
+.emptyGlow {
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(255, 136, 0, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: pulse 4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+.emptyContent {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 60px;
-    background: #141414;
-    border: 1px dashed #333;
-    border-radius: 24px;
+    max-width: 800px;
+    text-align: center;
 }
 
-.emptyIcon {
-    font-size: 48px;
-    margin-bottom: 24px;
-    opacity: 0.5;
-}
-
-.emptyState h3 {
-    margin: 0 0 12px 0;
-    color: #fff;
-    font-size: 24px;
-    font-weight: 700;
-}
-
-.emptyState p {
-    color: #888;
+.emptyIconWrapper {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 32px;
+}
+
+.emptyIconBg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255, 136, 0, 0.1), rgba(255, 68, 0, 0.1));
+    border-radius: 50%;
+    border: 2px solid rgba(255, 136, 0, 0.2);
+}
+
+.emptyIconWrapper svg {
+    position: relative;
+    z-index: 1;
+    color: rgba(255, 136, 0, 0.8);
+}
+
+.emptyTitle {
+    font-size: 32px;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 16px 0;
+    letter-spacing: -0.5px;
+}
+
+.emptyDescription {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.6;
+    margin: 0 0 48px 0;
+    max-width: 500px;
+}
+
+.emptyActions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    width: 100%;
+    margin-bottom: 32px;
+}
+
+.emptyActionCard {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.emptyActionCard::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255, 136, 0, 0.05) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.emptyActionCard:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 136, 0, 0.3);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 24px rgba(255, 136, 0, 0.15);
+}
+
+.emptyActionCard:hover::before {
+    opacity: 1;
+}
+
+.actionIconWrapper {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, rgba(255, 136, 0, 0.15), rgba(255, 68, 0, 0.15));
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ff8800;
+    transition: all 0.3s;
+    position: relative;
+    z-index: 1;
+}
+
+.emptyActionCard:hover .actionIconWrapper {
+    transform: scale(1.1) rotate(-5deg);
+    box-shadow: 0 4px 16px rgba(255, 136, 0, 0.3);
+}
+
+.actionContent {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    position: relative;
+    z-index: 1;
+}
+
+.actionContent h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.3px;
+}
+
+.actionContent p {
+    margin: 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.4;
+}
+
+.emptyTip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.tipIcon {
+    font-size: 18px;
+}
+
+.emptyTip kbd {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-family: monospace;
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .instanceCard {

@@ -18,9 +18,10 @@ interface SidebarProps {
     };
     onLogout?: () => void;
     isNavLocked?: boolean;
+    isOnline?: boolean;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, user, onLogout, isNavLocked }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, user, onLogout, isNavLocked, isOnline = true }) => {
     const { role: realtimeRole } = useAuth();
     const role = (realtimeRole || user.role || 'user') as string;
 
@@ -61,7 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, user, 
     ];
 
     return (
-        <div className={styles.sidebar}>
+        <div className={`${styles.sidebar} ${!isOnline ? styles.withOfflineBanner : ''}`}>
             <div className={styles.logoArea}>
                 <img src={logo} alt="Yashin" className={styles.logoImg} />
                 <div>

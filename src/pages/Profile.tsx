@@ -5,7 +5,7 @@ import { UserAvatar } from '../components/UserAvatar';
 import { ProfileService, Badge } from '../services/ProfileService';
 import { useToast } from '../context/ToastContext';
 import { SkinUtils } from '../utils/SkinUtils';
-import { Edit3, Upload, Trash2, Shield, Type, Clock, Gamepad2, Trophy, Calendar, Globe, Award, Star, Heart, Code, Bug, Gift, Crown, LucideIcon } from 'lucide-react';
+import { Edit3, Upload, Trash2, Shield, Type, Clock, Gamepad2, Trophy, Calendar, Globe, Award, Star, Heart, Code, Bug, Gift, Crown, LucideIcon, WifiOff, Cloud } from 'lucide-react';
 
 // Icon mapping for badges
 const iconMap: Record<string, LucideIcon> = {
@@ -211,22 +211,27 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
     // Load badges/profile
     React.useEffect(() => {
         const load = async () => {
-            if (user.type === 'yashin' && navigator.onLine) {
-                setIsLoadingProfile(true);
-                try {
-                    const [fetchedBadges, fetchedProfile] = await Promise.all([
-                        ProfileService.getUserBadges(user.uuid),
-                        ProfileService.getProfile(user.uuid)
-                    ]);
-                    setBadges(fetchedBadges);
-                    setProfile(fetchedProfile);
-                } catch (e) {
-                    console.warn('[Profile] Failed to load data', e);
-                } finally {
-                    // Add a small delay for better UX (prevents flickering)
-                    setTimeout(() => {
-                        setIsLoadingProfile(false);
-                    }, 500);
+            if (user.type === 'yashin') {
+                if (navigator.onLine) {
+                    setIsLoadingProfile(true);
+                    try {
+                        const [fetchedBadges, fetchedProfile] = await Promise.all([
+                            ProfileService.getUserBadges(user.uuid),
+                            ProfileService.getProfile(user.uuid)
+                        ]);
+                        setBadges(fetchedBadges);
+                        setProfile(fetchedProfile);
+                    } catch (e) {
+                        console.warn('[Profile] Failed to load data', e);
+                    } finally {
+                        // Add a small delay for better UX (prevents flickering)
+                        setTimeout(() => {
+                            setIsLoadingProfile(false);
+                        }, 500);
+                    }
+                } else {
+                    // Offline - try to load cached data or show offline message
+                    setIsLoadingProfile(false);
                 }
             }
         };
@@ -506,6 +511,14 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
 
     return (
         <div className={styles.profilePage}>
+            {/* Offline Notice Banner */}
+            {!navigator.onLine && user.type === 'yashin' && (
+                <div className={styles.offlineBanner}>
+                    <WifiOff size={16} />
+                    <span>You're offline. Some profile features like badges and account info require an internet connection.</span>
+                </div>
+            )}
+            
             {/* Left Panel */}
             <div className={styles.leftPanel}>
                 {/* Header */}
@@ -551,28 +564,40 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
                 {/* Account Info */}
                 <div className={styles.section}>
                     <div className={styles.sectionTitle}>Account Info</div>
-                    <div className={styles.infoGrid}>
-                        <div className={styles.infoCard}>
-                            <span className={styles.infoLabel}>Account Type</span>
-                            <span className={styles.infoValue}>
-                                {user.type === 'yashin' ? 'Yashin' : user.type === 'microsoft' ? 'Microsoft' : 'Offline'}
-                            </span>
+                    {!navigator.onLine && user.type === 'yashin' ? (
+                        <div className={styles.offlineNotice}>
+                            <Cloud size={16} />
+                            <span>Connect to the internet to view account details</span>
                         </div>
-                        <div className={styles.infoCard}>
-                            <span className={styles.infoLabel}>Joined</span>
-                            <span className={styles.infoValue}>
-                                {profile?.joined_at
-                                    ? new Date(profile.joined_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                                    : '—'}
-                            </span>
+                    ) : (
+                        <div className={styles.infoGrid}>
+                            <div className={styles.infoCard}>
+                                <span className={styles.infoLabel}>Account Type</span>
+                                <span className={styles.infoValue}>
+                                    {user.type === 'yashin' ? 'Yashin' : user.type === 'microsoft' ? 'Microsoft' : 'Offline'}
+                                </span>
+                            </div>
+                            <div className={styles.infoCard}>
+                                <span className={styles.infoLabel}>Joined</span>
+                                <span className={styles.infoValue}>
+                                    {profile?.joined_at
+                                        ? new Date(profile.joined_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                        : '—'}
+                                </span>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Badges */}
                 <div className={styles.section}>
                     <div className={styles.sectionTitle}>Badges</div>
-                    {badges.length > 0 ? (
+                    {!navigator.onLine && user.type === 'yashin' ? (
+                        <div className={styles.offlineNotice}>
+                            <Cloud size={16} />
+                            <span>Connect to the internet to view your badges</span>
+                        </div>
+                    ) : badges.length > 0 ? (
                         <div className={styles.badgeGrid}>
                             {badges.map(badge => (
                                 <div

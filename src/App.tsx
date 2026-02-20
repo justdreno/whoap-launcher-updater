@@ -297,6 +297,7 @@ function App() {
                                 user={user}
                                 onLogout={handleLogout}
                                 isNavLocked={isNavLocked}
+                                isOnline={isOnline}
                             >
                                 {activeTab === 'home' && <Home
                                     user={user}

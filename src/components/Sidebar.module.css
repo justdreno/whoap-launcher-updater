@@ -12,6 +12,11 @@
     z-index: 100;
 }
 
+/* Adjust sidebar when offline banner is present */
+.sidebar.withOfflineBanner {
+    height: calc(100% - 36px);
+}
+
 /* Logo Area */
 .logoArea {
     display: flex;

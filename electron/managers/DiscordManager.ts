@@ -41,6 +41,8 @@ export class DiscordManager {
     private rpc: Client | null = null;
     private clientId: string = '1465139441457827972';
     private isReady: boolean = false;
+    // Controls whether Discord Presence should reveal the user's identity (username)
+    private showIdentity: boolean = true;
     private currentPresence: EnhancedPresenceData | null = null;
     private reconnectInterval: NodeJS.Timeout | null = null;
     private isEnabled: boolean = true;
@@ -208,6 +210,16 @@ export class DiscordManager {
                 currentState: this.currentPresence?.presenceState || 'none'
             };
         });
+
+        // Toggle whether to show identity (username) in Discord Rich Presence
+        ipcMain.handle('discord:set-show-identity', async (_: any, show: boolean) => {
+            this.showIdentity = !!show;
+            return { success: true, showIdentity: this.showIdentity };
+        });
+
+        ipcMain.handle('discord:get-show-identity', async () => {
+            return { showIdentity: this.showIdentity };
+        });
     }
 
     private getVersionImageKey(versionId: string): string {
@@ -281,8 +293,13 @@ export class DiscordManager {
     public setPlayingPresence(instanceId: string, versionId: string, loader?: string, isMultiplayer?: boolean, serverName?: string, playerCount?: number, maxPlayers?: number, username?: string, customIconUrl?: string) {
         const instanceName = this.formatInstanceName(instanceId);
 
-        // Details: Playing as Username
-        const detailsText = username ? `Playing as ${username}` : 'Playing Minecraft';
+        // Details: optionally show username depending on user preference
+        let detailsText: string;
+        if (this.showIdentity && username) {
+            detailsText = `Playing as ${username}`;
+        } else {
+            detailsText = isMultiplayer && serverName ? `On ${serverName}` : `Playing ${instanceName}`;
+        }
 
         // State: Instance name or server
         let stateText = instanceName;

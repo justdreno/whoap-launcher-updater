@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PageHeader } from '../components/PageHeader';
-import { Settings, RefreshCw, FolderOpen, Clock, Star, Library, Plus, ArrowLeftRight } from 'lucide-react';
+import { Settings, RefreshCw, FolderOpen, Clock, Star, Library, Plus, ArrowLeftRight, Box } from 'lucide-react';
 import { Instance, InstanceApi } from '../api/instances';
 import { CreateInstanceModal } from '../components/CreateInstanceModal';
 import { InstanceSettingsModal } from '../components/InstanceSettingsModal';
@@ -196,12 +196,78 @@ export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNaviga
                     ))
                 ) : instances.length === 0 ? (
                     <div className={styles.emptyState}>
-                        <div className={styles.emptyIcon}><FolderOpen size={64} color="#666" /></div>
-                        <h3>No profiles found</h3>
-                        <p>Create a new profile or import one to start playing.</p>
-                        <button className={styles.createBtnBig} onClick={() => setShowCreateModal(true)}>
-                            Create Profile
-                        </button>
+                        <div className={styles.emptyGlow}></div>
+                        <div className={styles.emptyContent}>
+                            <div className={styles.emptyIconWrapper}>
+                                <div className={styles.emptyIconBg}></div>
+                                <FolderOpen size={56} strokeWidth={1.5} />
+                            </div>
+                            <h2 className={styles.emptyTitle}>No Profiles Yet</h2>
+                            <p className={styles.emptyDescription}>
+                                Profiles are your personalized Minecraft instances. Create one to start playing with your favorite mods, resource packs, and settings.
+                            </p>
+                            
+                            <div className={styles.emptyActions}>
+                                <div className={styles.emptyActionCard} onClick={() => setShowCreateModal(true)}>
+                                    <div className={styles.actionIconWrapper}>
+                                        <Plus size={24} />
+                                    </div>
+                                    <div className={styles.actionContent}>
+                                        <h4>Create New Profile</h4>
+                                        <p>Start fresh with a new Minecraft instance</p>
+                                    </div>
+                                </div>
+                                
+                                <div className={styles.emptyActionCard} onClick={async () => {
+                                    setProcessing({ message: 'Importing Instance...', subMessage: 'Initializing...', progress: 0 });
+                                    try {
+                                        const res = await InstanceApi.import();
+                                        if (res.success) {
+                                            showToast('Instance imported successfully!', 'success');
+                                            loadInstances();
+                                        }
+                                        else if (res.error) showToast(res.error, 'error');
+                                    } finally {
+                                        setProcessing(null);
+                                    }
+                                }}>
+                                    <div className={styles.actionIconWrapper}>
+                                        <FolderOpen size={24} />
+                                    </div>
+                                    <div className={styles.actionContent}>
+                                        <h4>Import Profile</h4>
+                                        <p>Bring in an existing Minecraft instance</p>
+                                    </div>
+                                </div>
+                                
+                                <div className={styles.emptyActionCard} onClick={async () => {
+                                    setProcessing({ message: 'Importing Custom Client...', subMessage: 'Reading archive...', progress: 0 });
+                                    try {
+                                        const res = await InstanceApi.importCustomClient();
+                                        if (res.success) {
+                                            showToast('Custom client imported successfully!', 'success');
+                                            loadInstances();
+                                        }
+                                        else if (res.error) showToast(res.error, 'error');
+                                    } finally {
+                                        setProcessing(null);
+                                    }
+                                }}>
+                                    <div className={styles.actionIconWrapper}>
+                                        <Box size={24} />
+                                    </div>
+                                    <div className={styles.actionContent}>
+                                        <h4>Import Custom Client</h4>
+                                        <p>Add a pre-configured modded client</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className={styles.emptyTip}>
+                                <span className={styles.tipIcon}>💡</span>
+                                <span>Tip: Use <kbd>Ctrl+N</kbd> to quickly create a new profile anytime</span>
+                            </div>
+                        </div>
                     </div>
                 ) : (
                     instances.map(instance => {

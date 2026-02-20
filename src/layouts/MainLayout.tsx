@@ -20,9 +20,10 @@ interface MainLayoutProps {
     };
     onLogout?: () => void;
     isNavLocked?: boolean;
+    isOnline?: boolean;
 }
 
-export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeTab, onTabChange, user, onLogout, isNavLocked }) => {
+export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeTab, onTabChange, user, onLogout, isNavLocked, isOnline = true }) => {
     const [crashReport, setCrashReport] = useState<any>(null);
     const [crashLog, setCrashLog] = useState('');
 
@@ -60,6 +61,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeTab, onT
                     user={user}
                     onLogout={onLogout}
                     isNavLocked={isNavLocked}
+                    isOnline={isOnline}
                 />
 
                 <main className={styles.content}>
