@@ -1,0 +1,109 @@
+.container {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: 20px;
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 500;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.icon {
+  width: 14px;
+  height: 14px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.label {
+  font-size: 12px;
+}
+
+/* Size variants */
+.small {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.small .icon {
+  width: 12px;
+  height: 12px;
+}
+
+.medium {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.medium .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.large {
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.large .icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Dot variant */
+.offlineDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+  cursor: help;
+}
+
+/* Border container */
+.borderContainer {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.borderContainer.offline {
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.02);
+}
+
+.borderContainer.offline::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}

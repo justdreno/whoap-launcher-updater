@@ -4,10 +4,11 @@ import { VersionsApi, MinecraftVersion } from '../api/versions';
 import styles from './CreateInstanceModal.module.css';
 import { X, ChevronRight, ChevronLeft, Search, Download, Check, Package, Loader2, Box, WifiOff } from 'lucide-react';
 import { useOfflineStatus } from '../hooks/useOfflineStatus';
+import { OfflineButton } from './OfflineButton';
 
 interface CreateInstanceModalProps {
     onClose: () => void;
-    onCreated: () => void;
+    onCreated: (instance?: any) => void;
 }
 
 type LoaderType = 'vanilla' | 'fabric' | 'forge' | 'neoforge' | 'quilt';
@@ -160,10 +161,22 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
         setCreateStatus('Creating instance...');
         setError(null);
 
+        const handleProgress = (_: any, status: any) => {
+            if (status.status === 'downloading') {
+                setCreateStatus(`Downloading ${status.modName}...`);
+            } else if (status.status === 'installed') {
+                setCreateStatus(`Installed ${status.modName}`);
+            } else if (status.status === 'failed') {
+                setCreateStatus(`Failed to install ${status.modName}`);
+            }
+        };
+
+        window.ipcRenderer.on('platform:install-progress', handleProgress);
+
         try {
             setCreateProgress(10);
             const result = await InstanceApi.create(name, version, loader, selectedLoaderVersion);
-            
+
             if (!result.success) {
                 setError(result.error || 'Failed to create instance.');
                 setCreating(false);
@@ -178,7 +191,7 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
                 try {
                     const skinVersions = await window.ipcRenderer.invoke('platform:get-versions', 'customskinloader', 'mod', { version, loader });
                     if (skinVersions.length > 0) {
-                        await window.ipcRenderer.invoke('mods:install', result.instance.id, skinVersions[0].id);
+                        await window.ipcRenderer.invoke('platform:install', result.instance.id, skinVersions[0].id, 'mod');
                     }
                 } catch (e) {
                     console.error("Failed to auto-install skin loader:", e);
@@ -192,11 +205,11 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
                     const mod = selectedMods[i];
                     const progress = 40 + ((i + 1) / selectedMods.length) * 50;
                     setCreateProgress(progress);
-                    setCreateStatus(`Installing ${mod.title} (${i + 1}/${selectedMods.length})...`);
+                    setCreateStatus(`Preparing ${mod.title}...`);
                     try {
                         const modVersions = await window.ipcRenderer.invoke('platform:get-versions', mod.project_id, 'mod', { version, loader });
                         if (modVersions.length > 0) {
-                            await window.ipcRenderer.invoke('mods:install', result.instance.id, modVersions[0].id);
+                            await window.ipcRenderer.invoke('platform:install', result.instance.id, modVersions[0].id, 'mod');
                         }
                     } catch (e) {
                         console.error(`Failed to install mod ${mod.title}:`, e);
@@ -206,11 +219,12 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
 
             setCreateProgress(100);
             setCreateStatus('Complete!');
-            onCreated();
+            onCreated(result.instance);
             onClose();
         } catch (e) {
             setError('An unexpected error occurred.');
         } finally {
+            window.ipcRenderer.off('platform:install-progress', handleProgress);
             setCreating(false);
         }
     };
@@ -300,7 +314,7 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
                             <div className={styles.formRow}>
                                 <div className={styles.formGroup}>
                                     <label>Mod Loader</label>
-                                    <select 
+                                    <select
                                         className={styles.select}
                                         value={loader}
                                         onChange={(e) => setLoader(e.target.value as LoaderType)}
@@ -317,7 +331,7 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
                                     {fetchingVersions ? (
                                         <div className={styles.loadingText}>Loading...</div>
                                     ) : (
-                                        <select 
+                                        <select
                                             className={styles.select}
                                             value={version}
                                             onChange={(e) => setVersion(e.target.value)}
@@ -336,7 +350,7 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
                                     {loadingLoaders ? (
                                         <div className={styles.loadingText}>Fetching...</div>
                                     ) : (
-                                        <select 
+                                        <select
                                             className={styles.select}
                                             value={selectedLoaderVersion}
                                             onChange={(e) => setSelectedLoaderVersion(e.target.value)}
@@ -520,17 +534,19 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({ onClos
                             <ChevronRight size={16} />
                         </button>
                     ) : (
-                        <button
+                        <OfflineButton
                             className={styles.createBtn}
                             onClick={handleCreate}
                             disabled={creating || !name || !version}
+                            offlineDisabled={selectedMods.length > 0}
+                            offlineTooltip="Internet connection required to download mods"
                         >
                             {creating ? (
                                 <><Loader2 size={16} className={styles.spinner} /> Creating...</>
                             ) : (
                                 'Create Profile'
                             )}
-                        </button>
+                        </OfflineButton>
                     )}
                 </div>
             </div>

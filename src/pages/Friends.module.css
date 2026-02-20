@@ -213,6 +213,15 @@
     background: #16a34a;
 }
 
+.viewBtn {
+    background: rgba(88, 166, 255, 0.2);
+    color: #58a6ff;
+}
+
+.viewBtn:hover {
+    background: rgba(88, 166, 255, 0.3);
+}
+
 .shareCard {
     background: rgba(255, 170, 0, 0.05);
     border: 1px solid rgba(255, 170, 0, 0.1);

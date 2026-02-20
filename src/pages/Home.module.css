@@ -4,22 +4,24 @@
     overflow-y: auto;
     overflow-x: hidden;
     box-sizing: border-box;
-    background: #000;
+    background: #030303;
 }
 
-/* Hero Section */
 .hero {
     display: grid;
     grid-template-columns: 1fr 300px;
     gap: 40px;
     margin-bottom: 40px;
     min-height: 400px;
+    position: relative;
 }
 
 .heroContent {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    position: relative;
+    z-index: 1;
 }
 
 .greeting {
@@ -38,20 +40,7 @@
     letter-spacing: -1px;
 }
 
-.selectedProfile {
-    background: #0a0a0a;
-    border: 1px solid #1a1a1a;
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 24px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
 
-.selectedProfile:hover {
-    border-color: #333;
-    background: #111;
-}
 
 .profileLabel {
     font-size: 11px;
@@ -89,6 +78,7 @@
 .instanceSelector {
     position: relative;
     margin-bottom: 24px;
+    z-index: 100;
 }
 
 .selectorWrapper {
@@ -99,9 +89,11 @@
 
 /* Selected Profile Card */
 .selectedProfile {
-    background: #0a0a0a;
-    border: 1px solid #1a1a1a;
-    border-radius: 16px;
+    background: rgba(10, 10, 10, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
     padding: 24px;
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -109,13 +101,14 @@
     backface-visibility: hidden;
     position: relative;
     z-index: 1;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .selectedProfile:hover {
-    border-color: #333;
-    background: #111;
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(15, 15, 15, 0.8);
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 20px rgba(255, 255, 255, 0.02);
 }
 
 .selectedProfile.hidden {
@@ -154,19 +147,20 @@
     top: 0;
     left: 0;
     right: 0;
-    background: #0a0a0a;
-    border: 1px solid #333;
-    border-radius: 16px;
+    background: rgba(10, 10, 10, 0.95);
+    backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
     padding: 16px;
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 255, 255, 0.02);
     max-height: 450px;
     display: flex;
     flex-direction: column;
     opacity: 0;
     transform: scale(0.95) translateY(-10px);
     pointer-events: none;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 10;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 150;
 }
 
 .dropdown.visible {
@@ -299,14 +293,37 @@
     animation: slideIn 0.3s ease-out forwards;
 }
 
-.dropdown.visible .dropdownItem:nth-child(1) { animation-delay: 0.05s; }
-.dropdown.visible .dropdownItem:nth-child(2) { animation-delay: 0.1s; }
-.dropdown.visible .dropdownItem:nth-child(3) { animation-delay: 0.15s; }
-.dropdown.visible .dropdownItem:nth-child(4) { animation-delay: 0.2s; }
-.dropdown.visible .dropdownItem:nth-child(5) { animation-delay: 0.25s; }
-.dropdown.visible .dropdownItem:nth-child(6) { animation-delay: 0.3s; }
-.dropdown.visible .dropdownItem:nth-child(7) { animation-delay: 0.35s; }
-.dropdown.visible .dropdownItem:nth-child(8) { animation-delay: 0.4s; }
+.dropdown.visible .dropdownItem:nth-child(1) {
+    animation-delay: 0.05s;
+}
+
+.dropdown.visible .dropdownItem:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.dropdown.visible .dropdownItem:nth-child(3) {
+    animation-delay: 0.15s;
+}
+
+.dropdown.visible .dropdownItem:nth-child(4) {
+    animation-delay: 0.2s;
+}
+
+.dropdown.visible .dropdownItem:nth-child(5) {
+    animation-delay: 0.25s;
+}
+
+.dropdown.visible .dropdownItem:nth-child(6) {
+    animation-delay: 0.3s;
+}
+
+.dropdown.visible .dropdownItem:nth-child(7) {
+    animation-delay: 0.35s;
+}
+
+.dropdown.visible .dropdownItem:nth-child(8) {
+    animation-delay: 0.4s;
+}
 
 @keyframes slideIn {
     to {
@@ -429,10 +446,10 @@
 .launchBtn {
     width: 100%;
     padding: 20px 32px;
-    background: #fff;
+    background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
     color: #000;
     border: none;
-    border-radius: 12px;
+    border-radius: 16px;
     font-size: 16px;
     font-weight: 700;
     cursor: pointer;
@@ -440,12 +457,29 @@
     align-items: center;
     justify-content: center;
     gap: 12px;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(255, 255, 255, 0.15);
+}
+
+.launchBtn::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.5s ease;
 }
 
 .launchBtn:hover:not(:disabled) {
-    background: #e5e5e5;
     transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(255, 255, 255, 0.25);
+    background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
+}
+
+.launchBtn:hover:not(:disabled)::before {
+    transform: translateX(100%);
 }
 
 .launchBtn:disabled {
@@ -551,13 +585,35 @@
 }
 
 .statCard {
-    background: #0a0a0a;
-    border: 1px solid #1a1a1a;
-    border-radius: 12px;
+    background: rgba(10, 10, 10, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
     padding: 20px;
     display: flex;
     align-items: center;
     gap: 16px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.statCard::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, transparent 100%);
+    pointer-events: none;
+}
+
+.statCard:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .statIcon {
@@ -631,20 +687,40 @@
 }
 
 .profileCard {
-    background: #0a0a0a;
-    border: 1px solid #1a1a1a;
-    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(15, 15, 15, 0.8), rgba(5, 5, 5, 0.8));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 16px;
     padding: 16px;
     display: flex;
     align-items: center;
     gap: 14px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.profileCard::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
 }
 
 .profileCard:hover {
-    border-color: #333;
-    background: #111;
+    border-color: rgba(255, 255, 255, 0.12);
+    background: linear-gradient(135deg, rgba(25, 25, 25, 0.8), rgba(15, 15, 15, 0.8));
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 255, 255, 0.03);
 }
 
 .profileCard.active {
@@ -718,18 +794,39 @@
 }
 
 .serverCard {
-    background: #0a0a0a;
-    border: 1px solid #1a1a1a;
-    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(15, 15, 15, 0.8), rgba(5, 5, 5, 0.8));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 16px;
     padding: 16px;
     display: flex;
     align-items: center;
     gap: 14px;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.serverCard::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
 }
 
 .serverCard:hover {
-    border-color: #333;
+    border-color: rgba(255, 255, 255, 0.12);
+    background: linear-gradient(135deg, rgba(25, 25, 25, 0.8), rgba(15, 15, 15, 0.8));
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 255, 255, 0.03);
 }
 
 .serverIcon {
@@ -1059,7 +1156,7 @@
     .hero {
         grid-template-columns: 1fr;
     }
-    
+
     .skinContainer {
         display: none;
     }
@@ -1069,15 +1166,15 @@
     .container {
         padding: 20px;
     }
-    
+
     .username {
         font-size: 32px;
     }
-    
+
     .statsRow {
         grid-template-columns: 1fr;
     }
-    
+
     .profilesGrid,
     .serversGrid {
         grid-template-columns: 1fr;

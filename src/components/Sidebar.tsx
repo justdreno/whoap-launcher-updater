@@ -23,13 +23,13 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, user, onLogout, isNavLocked }) => {
     const { role: realtimeRole } = useAuth();
     const role = (realtimeRole || user.role || 'user') as string;
-    
+
     const roleConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
         developer: { label: 'Developer', color: '#666', icon: Code },
         admin: { label: 'Admin', color: '#666', icon: ShieldAlert },
         user: { label: 'User', color: '#666', icon: User }
     };
-    
+
     const currentRole = roleConfig[role] || { label: 'User', color: '#666', icon: User };
     const RankIcon = currentRole.icon;
 
@@ -104,24 +104,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, user, 
             >
                 <div className={styles.avatarHead}>
                     <UserAvatar
-                        username={user.name || (user as any).preferredSkin}
-                        preferredSkin={(user as any).preferredSkin}
+                        username={user.name}
+                        preferredSkin={user.preferredSkin}
                         uuid={user.uuid}
-                        accountType={(user as any).type}
+                        accountType={user.type as any}
                         className={styles.sidebarAvatar}
                     />
                 </div>
                 <div className={styles.userInfo}>
                     <div className={styles.userName}>{user.name}</div>
                     <div className={styles.userRole}>
-                        <RankIcon size={10} strokeWidth={2.5} />
-                        {currentRole.label}
+                        <RankIcon size={12} strokeWidth={2.5} color={currentRole.color} />
+                        <span style={{ color: currentRole.color }}>{currentRole.label}</span>
                     </div>
                 </div>
                 {onLogout && (
-                    <button 
-                        className={styles.logoutBtn} 
-                        onClick={(e) => { e.stopPropagation(); onLogout(); }} 
+                    <button
+                        className={styles.logoutBtn}
+                        onClick={(e) => { e.stopPropagation(); onLogout(); }}
                         title="Logout"
                     >
                         <LogOut size={16} />

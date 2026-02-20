@@ -61,8 +61,13 @@ export const SkinViewer3D: React.FC<SkinViewer3DProps> = ({
         viewer.animation.speed = 1.5;
 
         // Load initial skin/cape
-        const resolvedSkin = SkinUtils.getSkinUrl(skinUrl, 'body', lastUpdated);
-        const resolvedCape = capeUrl ? SkinUtils.getCapeUrl(capeUrl, lastUpdated) : null;
+        // If skinUrl is a direct https:// URL (e.g. from Supabase), use it directly
+        const resolvedSkin = skinUrl?.startsWith('http')
+            ? skinUrl
+            : SkinUtils.getSkinUrl(skinUrl, 'body', lastUpdated);
+        const resolvedCape = capeUrl?.startsWith('http')
+            ? capeUrl
+            : (capeUrl ? SkinUtils.getCapeUrl(capeUrl, lastUpdated) : null);
 
         if (resolvedSkin) viewer.loadSkin(resolvedSkin);
         if (resolvedCape) viewer.loadCape(resolvedCape);
@@ -80,8 +85,12 @@ export const SkinViewer3D: React.FC<SkinViewer3DProps> = ({
         const viewer = viewerRef.current;
         if (!viewer) return;
 
-        const resolvedSkin = SkinUtils.getSkinUrl(skinUrl, 'body', lastUpdated);
-        const resolvedCape = capeUrl ? SkinUtils.getCapeUrl(capeUrl, lastUpdated) : null;
+        const resolvedSkin = skinUrl?.startsWith('http')
+            ? skinUrl
+            : SkinUtils.getSkinUrl(skinUrl, 'body', lastUpdated);
+        const resolvedCape = capeUrl?.startsWith('http')
+            ? capeUrl
+            : (capeUrl ? SkinUtils.getCapeUrl(capeUrl, lastUpdated) : null);
 
         if (resolvedSkin) viewer.loadSkin(resolvedSkin);
         if (resolvedCape) {

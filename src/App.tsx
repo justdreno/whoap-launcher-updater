@@ -9,7 +9,9 @@ import { Skeleton } from './components/Skeleton';
 import { perf } from './utils/PerformanceProfiler';
 import { JavaInstallModal } from './components/JavaInstallModal';
 import { OfflineManager } from './utils/OfflineManager';
+import { SyncQueue } from './utils/SyncQueue';
 import { WifiOff } from 'lucide-react';
+import { OnboardingTour } from './components/OnboardingTour';
 
 // Mark app module load time
 perf.mark('App module loaded');
@@ -214,6 +216,13 @@ function App() {
             }
         }
 
+        // Check for pending sync actions before logout
+        const pendingCount = SyncQueue.getPendingCount();
+        if (pendingCount > 0) {
+            // Sync queue is persisted, so actions will remain
+            console.log(`[App] User logging out with ${pendingCount} pending sync actions - queue will be preserved`);
+        }
+        
         await window.ipcRenderer.invoke('auth:logout');
         await supabase.auth.signOut();
         setUser(null);
@@ -320,6 +329,9 @@ function App() {
                     </ConfirmProvider>
                 </ToastProvider >
             </AnimationProvider>
+            
+            {/* Onboarding Tour for first-time users */}
+            <OnboardingTour />
         </ErrorBoundary >
     );
 }

@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './ModBrowser.module.css';
-import { 
-    Search, Download, Check, AlertTriangle, Package, CheckCircle, X, Sparkles, 
-    Layers, WifiOff, RefreshCw, Filter, ChevronRight
+import {
+    Search, Download, Check, AlertTriangle, Package, CheckCircle, X, Sparkles,
+    Layers, RefreshCw, Filter, ChevronRight
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import { OfflineButton } from './OfflineButton';
 import ReactMarkdown from 'react-markdown';
 
 export type ContentType = 'mod' | 'resourcepack' | 'shader';
@@ -46,9 +47,10 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
     const [installedItems, setInstalledItems] = useState<Set<string>>(new Set());
     const [loadingVersion, setLoadingVersion] = useState(false);
     const [dependencyNames, setDependencyNames] = useState<{ [key: string]: string }>({});
-    const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [updateStatus, setUpdateStatus] = useState<{ [projectId: string]: { hasUpdate: boolean; currentVersion?: string; currentFilename?: string } }>({});
     const [showFilters, setShowFilters] = useState(false);
+    const [confirmInstall, setConfirmInstall] = useState(false);
+    const [installDetails, setInstallDetails] = useState<{ size: number, missingDeps: string[] }>({ size: 0, missingDeps: [] });
     const { showToast } = useToast();
     const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -58,23 +60,11 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
         shader: { title: 'Shader Browser', icon: Sparkles, subtitle: 'Discover shaders', ipcPrefix: 'shaderpacks' }
     }[type];
 
-    const categories = type === 'mod' 
+    const categories = type === 'mod'
         ? ['Performance', 'Utility', 'Adventure', 'Magic', 'Tech', 'Decoration', 'Library']
         : type === 'resourcepack'
-        ? ['Faithful', 'PvP', 'Low-res', 'HD', 'Fantasy', 'Realistic']
-        : ['Performance', 'Cinematic', 'Realistic', 'Fantasy', 'Light'];
-
-    // Internet check
-    useEffect(() => {
-        const handleOnline = () => setIsOnline(true);
-        const handleOffline = () => setIsOnline(false);
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-        };
-    }, []);
+            ? ['Faithful', 'PvP', 'Low-res', 'HD', 'Fantasy', 'Realistic']
+            : ['Performance', 'Cinematic', 'Realistic', 'Fantasy', 'Light'];
 
     // Load installed items
     useEffect(() => {
@@ -89,7 +79,7 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
             const list = await window.ipcRenderer.invoke(`${config.ipcPrefix}:list`, instanceId);
             const names = new Set<string>(list.map((m: any) => m.name.toLowerCase()));
             setInstalledItems(names);
-            
+
             // Also check for project IDs in metadata
             const projectIds = new Set<string>();
             for (const item of list) {
@@ -114,7 +104,7 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
         if (installedProjectIds.has(project.project_id)) {
             return true;
         }
-        
+
         // Fallback to filename matching
         const titleLower = project.title.toLowerCase().replace(/[^a-z0-9]/g, '');
         for (const name of installedItems) {
@@ -129,14 +119,14 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
     // Check for updates
     const checkForUpdates = async (projectsList: Project[]) => {
         const updates: { [projectId: string]: { hasUpdate: boolean; currentVersion?: string; currentFilename?: string } } = {};
-        
+
         for (const project of projectsList) {
             try {
                 const versions = await window.ipcRenderer.invoke('platform:get-versions', project.project_id, type, { version, loader });
                 if (versions.length > 0) {
                     const latestVersion = versions[0];
                     const result = await window.ipcRenderer.invoke('mods:find-by-project', instanceId, type, project.project_id);
-                    
+
                     if (result.found) {
                         const hasUpdate = result.metadata.versionId !== latestVersion.id;
                         updates[project.project_id] = {
@@ -150,7 +140,7 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
                 console.error(`Failed to check updates for ${project.title}:`, e);
             }
         }
-        
+
         setUpdateStatus(updates);
     };
 
@@ -190,7 +180,7 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
             const res = await window.ipcRenderer.invoke('platform:search', q, type, { version, loader });
             const hits = res.hits || [];
             setProjects(hits);
-            
+
             if (hits.length > 0) {
                 checkForUpdates(hits);
             }
@@ -240,8 +230,32 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
         }
     };
 
-    const handleInstall = async () => {
+    const handleInstallClick = () => {
         if (!activeVersion || !selectedProject) return;
+
+        // Calculate size
+        const primaryFile = activeVersion.files?.find((f: any) => f.primary) || activeVersion.files?.[0];
+        const size = primaryFile ? primaryFile.size : 0;
+
+        // Calculate missing required dependencies
+        const missingDeps: string[] = [];
+        if (activeVersion.dependencies) {
+            activeVersion.dependencies.forEach((d: any) => {
+                if (d.dependency_type === 'required' && d.project_id) {
+                    if (!installedProjectIds.has(d.project_id)) {
+                        missingDeps.push(dependencyNames[d.project_id] || d.project_id);
+                    }
+                }
+            });
+        }
+
+        setInstallDetails({ size, missingDeps });
+        setConfirmInstall(true);
+    };
+
+    const handleConfirmInstall = async () => {
+        if (!activeVersion || !selectedProject) return;
+        setConfirmInstall(false);
         setInstalling(true);
         setProgress('Preparing installation...');
 
@@ -259,14 +273,14 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
             if (res.success) {
                 const action = isUpdate ? 'Updated' : 'Installed';
                 showToast(`${action} ${selectedProject?.title}!`, 'success');
-                
+
                 if (isUpdate) {
                     setUpdateStatus(prev => ({
                         ...prev,
                         [selectedProject.project_id]: { hasUpdate: false }
                     }));
                 }
-                
+
                 setSelectedProject(null);
             } else {
                 showToast(res.error || 'Install failed', 'error');
@@ -278,6 +292,15 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
             setProgress('');
             loadInstalledItems();
         }
+    };
+
+    const formatBytes = (bytes: number) => {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const dm = 2;
+        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     };
 
     const formatDownloads = (n: number) => {
@@ -313,45 +336,19 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
 
                 {/* Main Content */}
                 <div className={styles.body}>
-                    {!isOnline && (
-                        <div className={styles.offlineOverlay}>
-                            <WifiOff size={48} />
-                            <h3>No Internet Connection</h3>
-                            <p>Connect to the internet to browse content</p>
-                            <button onClick={onClose}>Close</button>
-                        </div>
-                    )}
 
                     {/* Left Panel - Search & List */}
                     <div className={styles.leftPanel}>
                         {/* Search Bar */}
                         <div className={styles.searchSection}>
-                            {!isOnline && (
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    padding: '8px 12px',
-                                    background: 'rgba(255, 193, 7, 0.1)',
-                                    border: '1px solid rgba(255, 193, 7, 0.2)',
-                                    borderRadius: '8px',
-                                    marginBottom: '12px',
-                                    color: '#ffc107',
-                                    fontSize: '12px'
-                                }}>
-                                    <WifiOff size={14} />
-                                    <span>Search requires internet connection</span>
-                                </div>
-                            )}
                             <div className={styles.searchWrapper}>
                                 <Search size={18} />
                                 <input
                                     ref={searchInputRef}
-                                    placeholder={!isOnline ? `Internet required...` : `Search ${type}s...`}
+                                    placeholder={`Search ${type}s...`}
                                     value={query}
                                     onChange={e => setQuery(e.target.value)}
                                     autoFocus
-                                    disabled={!isOnline}
                                 />
                                 {query && (
                                     <button className={styles.clearSearch} onClick={() => { setQuery(''); searchInputRef.current?.focus(); }}>
@@ -359,17 +356,17 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
                                     </button>
                                 )}
                             </div>
-                            
+
                             {/* Filters */}
                             <div className={styles.filtersRow}>
-                                <button 
+                                <button
                                     className={`${styles.filterBtn} ${showFilters ? styles.active : ''}`}
                                     onClick={() => setShowFilters(!showFilters)}
                                 >
                                     <Filter size={14} />
                                     Filter
                                 </button>
-                                
+
                                 <span className={styles.resultsCount}>
                                     {loading ? 'Searching...' : `${projects.length} results`}
                                 </span>
@@ -407,7 +404,7 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
                                     const installed = isInstalled(project);
                                     const hasUpdate = updateStatus[project.project_id]?.hasUpdate;
                                     const isSelected = selectedProject?.project_id === project.project_id;
-                                    
+
                                     return (
                                         <div
                                             key={project.project_id}
@@ -518,26 +515,25 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
                                             </div>
                                             <span>{progress}</span>
                                         </button>
-                                    ) : !isOnline ? (
-                                        <button className={styles.installBtn} disabled title="Internet connection required to download">
-                                            <WifiOff size={18} />
-                                            Offline
-                                        </button>
-                                    ) : updateStatus[selectedProject.project_id]?.hasUpdate ? (
-                                        <button className={styles.installBtn} onClick={handleInstall} disabled={!activeVersion}>
-                                            <RefreshCw size={18} />
-                                            Update
-                                        </button>
                                     ) : isInstalled(selectedProject) ? (
                                         <button className={styles.installBtn} disabled>
                                             <CheckCircle size={18} />
                                             Installed
                                         </button>
                                     ) : (
-                                        <button className={styles.installBtn} onClick={handleInstall} disabled={!activeVersion}>
-                                            <Download size={18} />
-                                            Install
-                                        </button>
+                                        <OfflineButton
+                                            className={styles.installBtn}
+                                            onClick={handleInstallClick}
+                                            disabled={!activeVersion}
+                                            offlineDisabled={true}
+                                            offlineTooltip="Internet connection required to download"
+                                        >
+                                            {updateStatus[selectedProject.project_id]?.hasUpdate ? (
+                                                <><RefreshCw size={18} /> Update</>
+                                            ) : (
+                                                <><Download size={18} /> Install</>
+                                            )}
+                                        </OfflineButton>
                                     )}
                                 </div>
                             </div>
@@ -550,6 +546,29 @@ export const ContentBrowser: React.FC<ContentBrowserProps> = ({ instanceId, vers
                     </div>
                 </div>
             </div>
+
+            {confirmInstall && (
+                <div className={styles.confirmOverlay} onClick={() => setConfirmInstall(false)}>
+                    <div className={styles.confirmModal} onClick={e => e.stopPropagation()}>
+                        <h3>Confirm Installation</h3>
+                        <p><strong>{selectedProject?.title}</strong> ({formatBytes(installDetails.size)})</p>
+
+                        {installDetails.missingDeps.length > 0 && (
+                            <div className={styles.missingDeps}>
+                                <p>This {type} requires additional dependencies that will be installed automatically:</p>
+                                <ul>
+                                    {installDetails.missingDeps.map((dep, i) => <li key={i}>{dep}</li>)}
+                                </ul>
+                            </div>
+                        )}
+
+                        <div className={styles.confirmActions}>
+                            <button onClick={() => setConfirmInstall(false)}>Cancel</button>
+                            <button onClick={handleConfirmInstall}>Install All</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

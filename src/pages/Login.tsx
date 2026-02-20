@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from './Login.module.css';
 import { AccountManager, StoredAccount } from '../utils/AccountManager';
-import { LogOut, ChevronDown, Play, ChevronUp, CheckCircle } from 'lucide-react';
+import { LogOut, ChevronDown, Play, ChevronUp, CheckCircle, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import loginBg from '../assets/login_bg.png';
 import { UserAvatar } from '../components/UserAvatar';
@@ -27,6 +27,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');
     const [verificationSent, setVerificationSent] = useState(false);
+    
+    const [isCheckingPremium, setIsCheckingPremium] = useState(false);
+    const [isPremiumUsername, setIsPremiumUsername] = useState(false);
+    const [showPremiumWarning, setShowPremiumWarning] = useState(false);
+    const premiumCheckTimeout = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         const stored = AccountManager.getAccounts();
@@ -35,6 +40,59 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
         if (active) setSelectedAccount(active);
         else if (stored.length > 0) setSelectedAccount(stored[0]);
     }, []);
+
+    const checkPremiumUsername = async (name: string): Promise<boolean> => {
+        if (!name || name.length < 3) return false;
+        try {
+            const response = await fetch(`https://api.ashcon.app/mojang/v2/user/${encodeURIComponent(name)}`);
+            if (response.ok) {
+                const data = await response.json();
+                return !!data.uuid;
+            }
+        } catch {
+            try {
+                const mojangResponse = await fetch(`https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(name)}`);
+                if (mojangResponse.ok) {
+                    return true;
+                }
+            } catch {
+                return false;
+            }
+        }
+        return false;
+    };
+
+    useEffect(() => {
+        if (!isRegistering || !username.trim()) {
+            setIsPremiumUsername(false);
+            setShowPremiumWarning(false);
+            setIsCheckingPremium(false);
+            return;
+        }
+
+        if (premiumCheckTimeout.current) {
+            clearTimeout(premiumCheckTimeout.current);
+        }
+
+        setIsCheckingPremium(true);
+        setIsPremiumUsername(false);
+        setShowPremiumWarning(false);
+
+        premiumCheckTimeout.current = setTimeout(async () => {
+            const isPremium = await checkPremiumUsername(username.trim());
+            setIsPremiumUsername(isPremium);
+            if (isPremium) {
+                setShowPremiumWarning(true);
+            }
+            setIsCheckingPremium(false);
+        }, 500);
+
+        return () => {
+            if (premiumCheckTimeout.current) {
+                clearTimeout(premiumCheckTimeout.current);
+            }
+        };
+    }, [username, isRegistering]);
 
     const handleSuccess = (profile: any, type: any) => {
         const account: StoredAccount = {
@@ -334,13 +392,59 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
                                     <div className={styles.inputGroup}>
                                         <label className={styles.label}>Display Name</label>
                                         <input
-                                            className={styles.input}
+                                            className={`${styles.input} ${isPremiumUsername ? styles.inputWarning : ''}`}
                                             type="text"
                                             value={username}
                                             onChange={e => setUsername(e.target.value)}
                                             placeholder="Username"
                                             required
                                         />
+                                        {isCheckingPremium && (
+                                            <span className={styles.checkingText}>Checking username...</span>
+                                        )}
+                                        {showPremiumWarning && isPremiumUsername && (
+                                            <div className={styles.premiumWarning}>
+                                                <div className={styles.premiumWarningHeader}>
+                                                    <AlertTriangle size={16} />
+                                                    <span>Premium Username Detected</span>
+                                                </div>
+                                                <p className={styles.premiumWarningText}>
+                                                    "<strong>{username}</strong>" belongs to a premium Minecraft account.
+                                                </p>
+                                                <p className={styles.premiumWarningSubtext}>
+                                                    To use this name, please verify ownership by logging in with Microsoft.
+                                                </p>
+                                                <div className={styles.premiumWarningActions}>
+                                                    <button
+                                                        type="button"
+                                                        className={styles.microsoftSmallBtn}
+                                                        onClick={() => setAuthMode('microsoft')}
+                                                    >
+                                                        <svg viewBox="0 0 21 21" width="14" height="14">
+                                                            <rect x="1" y="1" width="9" height="9" fill="#f25022" />
+                                                            <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
+                                                            <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
+                                                            <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
+                                                        </svg>
+                                                        Login with Microsoft
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className={styles.offlineSmallBtn}
+                                                        onClick={() => setAuthMode('offline')}
+                                                    >
+                                                        Use Offline Mode
+                                                    </button>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    className={styles.dismissBtn}
+                                                    onClick={() => setShowPremiumWarning(false)}
+                                                >
+                                                    Choose a different name
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                                 <div className={styles.inputGroup}>
@@ -365,8 +469,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onOfflineLogin }) 
                                         required
                                     />
                                 </div>
-                                <button type="submit" className={styles.primaryBtn} disabled={isLoggingIn}>
-                                    {isLoggingIn ? 'Processing...' : (isRegistering ? 'Create Account' : 'Sign In')}
+                                <button type="submit" className={styles.primaryBtn} disabled={isLoggingIn || isCheckingPremium || (isRegistering && showPremiumWarning)}>
+                                    {isLoggingIn ? 'Processing...' : isCheckingPremium ? 'Checking username...' : (isRegistering ? 'Create Account' : 'Sign In')}
                                 </button>
 
                                 <div className={styles.toggleMeta}>

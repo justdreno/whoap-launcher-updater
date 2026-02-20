@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { Instance } from '../api/instances';
+import { PublicProfile, SkinHistoryEntry } from '../types/profile';
 
 export const CloudManager = {
     /**
@@ -326,6 +327,199 @@ export const CloudManager = {
 
         if (error) {
             console.error("[CloudManager] Accept Shared Instance Failed:", error);
+            return false;
+        }
+        return true;
+    },
+
+    // --- Skin/Cape Cloud Storage ---
+
+    async uploadSkinToCloud(userId: string, skinData: string): Promise<string | null> {
+        try {
+            const fileName = `${userId}/skin_${Date.now()}.png`;
+
+            const response = await fetch(skinData);
+            const blob = await response.blob();
+
+            const { error } = await supabase.storage
+                .from('whoap-skins')
+                .upload(fileName, blob, {
+                    upsert: true,
+                    contentType: 'image/png'
+                });
+
+            if (error) {
+                console.error('[CloudManager] Upload skin failed:', error);
+                return null;
+            }
+
+            const { data: urlData } = supabase.storage
+                .from('whoap-skins')
+                .getPublicUrl(fileName);
+
+            await supabase
+                .from('profiles')
+                .update({
+                    skin_url: urlData.publicUrl,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', userId);
+
+            await CloudManager.addSkinToHistory(userId, urlData.publicUrl);
+
+            return urlData.publicUrl;
+        } catch (error) {
+            console.error('[CloudManager] Upload skin error:', error);
+            return null;
+        }
+    },
+
+    async uploadCapeToCloud(userId: string, capeData: string): Promise<string | null> {
+        try {
+            const fileName = `${userId}/cape_${Date.now()}.png`;
+
+            const response = await fetch(capeData);
+            const blob = await response.blob();
+
+            const { error } = await supabase.storage
+                .from('whoap-skins')
+                .upload(fileName, blob, {
+                    upsert: true,
+                    contentType: 'image/png'
+                });
+
+            if (error) {
+                console.error('[CloudManager] Upload cape failed:', error);
+                return null;
+            }
+
+            const { data: urlData } = supabase.storage
+                .from('whoap-skins')
+                .getPublicUrl(fileName);
+
+            await supabase
+                .from('profiles')
+                .update({ cape_url: urlData.publicUrl })
+                .eq('id', userId);
+
+            return urlData.publicUrl;
+        } catch (error) {
+            console.error('[CloudManager] Upload cape error:', error);
+            return null;
+        }
+    },
+
+    async addSkinToHistory(userId: string, skinUrl: string): Promise<void> {
+        try {
+            const { data } = await supabase
+                .from('profiles')
+                .select('skin_history')
+                .eq('id', userId)
+                .single();
+
+            const history: SkinHistoryEntry[] = data?.skin_history || [];
+            
+            // Check if this skin URL already exists in history
+            const alreadyExists = history.some(entry => entry.url === skinUrl);
+            if (alreadyExists) {
+                return; // Don't add duplicates
+            }
+            
+            const newEntry: SkinHistoryEntry = {
+                url: skinUrl,
+                uploaded_at: new Date().toISOString()
+            };
+            const updatedHistory = [newEntry, ...history].slice(0, 10);
+
+            await supabase
+                .from('profiles')
+                .update({ skin_history: updatedHistory })
+                .eq('id', userId);
+        } catch (error) {
+            console.error('[CloudManager] Add skin to history error:', error);
+        }
+    },
+
+    async getPublicProfile(username: string): Promise<PublicProfile | null> {
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id, username, skin_url, cape_url, bio, social_links, skin_history, joined_at, role, is_public, banner_url, updated_at')
+                .ilike('username', username)
+                .single();
+
+            if (error) {
+                console.error('[CloudManager] Get public profile failed:', error);
+                return null;
+            }
+            return data as PublicProfile;
+        } catch {
+            return null;
+        }
+    },
+
+    async getPublicProfiles(page: number = 1, limit: number = 24): Promise<PublicProfile[]> {
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id, username, skin_url, cape_url, joined_at, role')
+                .eq('is_public', true)
+                .not('skin_url', 'is', null)
+                .order('updated_at', { ascending: false })
+                .range((page - 1) * limit, page * limit - 1);
+
+            if (error) return [];
+            return data as PublicProfile[];
+        } catch {
+            return [];
+        }
+    },
+
+    async searchPublicProfiles(query: string): Promise<PublicProfile[]> {
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id, username, skin_url, cape_url, joined_at, role')
+                .eq('is_public', true)
+                .not('skin_url', 'is', null)
+                .ilike('username', `%${query}%`)
+                .limit(24);
+
+            if (error) return [];
+            return data as PublicProfile[];
+        } catch {
+            return [];
+        }
+    },
+
+    async updateSkinAndCape(userId: string, skinUrl: string, capeUrl?: string | null): Promise<boolean> {
+        const updates: any = {
+            skin_url: skinUrl,
+            updated_at: new Date().toISOString()
+        };
+        if (capeUrl !== undefined) {
+            updates.cape_url = capeUrl || null;
+        }
+        const { error } = await supabase
+            .from('profiles')
+            .update(updates)
+            .eq('id', userId);
+
+        if (error) {
+            console.error('[CloudManager] Update skin/cape failed:', error);
+            return false;
+        }
+        return true;
+    },
+
+    async updatePublicProfile(userId: string, updates: { bio?: string; social_links?: any; is_public?: boolean }): Promise<boolean> {
+        const { error } = await supabase
+            .from('profiles')
+            .update(updates)
+            .eq('id', userId);
+
+        if (error) {
+            console.error('[CloudManager] Update public profile failed:', error);
             return false;
         }
         return true;

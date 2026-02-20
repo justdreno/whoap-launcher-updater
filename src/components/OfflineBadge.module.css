@@ -1,0 +1,111 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+.badge.small {
+  padding: 2px 6px;
+  font-size: 9px;
+}
+
+.badge.medium {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+/* Offline state */
+.offline {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.offline svg {
+  animation: pulse 2s infinite;
+}
+
+/* Syncing state */
+.syncing {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.syncingIcon {
+  animation: spin 1.5s linear infinite;
+}
+
+/* Ready state */
+.ready {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+/* Dot variants */
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.offlineDot {
+  background: #ef4444;
+  animation: pulse 2s infinite;
+}
+
+.syncingDot {
+  background: #3b82f6;
+  animation: pulse 1.5s infinite;
+}
+
+.readyDot {
+  background: #22c55e;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Hover effects */
+.badge:hover {
+  transform: translateY(-1px);
+}
+
+.offline:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.syncing:hover {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.ready:hover {
+  background: rgba(34, 197, 94, 0.15);
+}

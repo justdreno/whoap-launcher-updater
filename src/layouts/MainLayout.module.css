@@ -39,7 +39,7 @@
 .content {
     flex: 1;
     padding: calc(var(--titlebar-height) + 24px) 32px 32px 32px;
-    overflow: hidden;
+    overflow-y: auto;
     position: relative;
     display: flex;
     flex-direction: column;

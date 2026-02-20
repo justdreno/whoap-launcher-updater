@@ -6,6 +6,7 @@ import { InstanceApi } from '../api/instances';
 import { ProcessingModal } from '../components/ProcessingModal';
 import { useToast } from '../context/ToastContext';
 import { Skeleton } from '../components/Skeleton';
+import { OfflineButton } from '../components/OfflineButton';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
@@ -375,21 +376,20 @@ export const ModpackBrowser: React.FC = () => {
                                             )}
                                         </div>
 
-                                        <button
+                                        <OfflineButton
                                             className={styles.installButton}
-                                            disabled={!selectedVersion || installing || !isOnline}
+                                            disabled={!selectedVersion || installing}
                                             onClick={handleInstall}
-                                            title={!isOnline ? 'Internet connection required to install modpacks' : ''}
+                                            offlineDisabled={true}
+                                            offlineTooltip="Internet connection required to install modpacks"
                                         >
-                                            {!isOnline ? (
-                                                <WifiOff size={18} />
-                                            ) : installing ? (
+                                            {installing ? (
                                                 <Loader2 className={styles.spinner} size={18} />
                                             ) : (
                                                 <Download size={18} />
                                             )}
-                                            <span>{!isOnline ? 'Offline' : installing ? 'Installing...' : 'Install'}</span>
-                                        </button>
+                                            <span>{installing ? 'Installing...' : 'Install'}</span>
+                                        </OfflineButton>
                                     </div>
                                 </div>
 

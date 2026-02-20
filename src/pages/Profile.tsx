@@ -9,26 +9,26 @@ import { Edit3, Upload, Trash2, Shield, Type, Clock, Gamepad2, Trophy, Calendar,
 
 // Icon mapping for badges
 const iconMap: Record<string, LucideIcon> = {
-  Shield,
-  Award,
-  Star,
-  Heart,
-  Code,
-  Bug,
-  Gift,
-  Crown,
-  Trophy,
-  Globe,
-  Clock,
-  Gamepad2,
-  Edit3,
-  Type
+    Shield,
+    Award,
+    Star,
+    Heart,
+    Code,
+    Bug,
+    Gift,
+    Crown,
+    Trophy,
+    Globe,
+    Clock,
+    Gamepad2,
+    Edit3,
+    Type
 };
 
 // Helper component to render badge icon
 const BadgeIcon: React.FC<{ iconName: string; size?: number; color?: string }> = ({ iconName, size = 14, color }) => {
-  const IconComponent = iconMap[iconName] || Shield;
-  return <IconComponent size={size} color={color} />;
+    const IconComponent = iconMap[iconName] || Shield;
+    return <IconComponent size={size} color={color} />;
 };
 
 interface ProfileProps {
@@ -39,6 +39,8 @@ interface ProfileProps {
         type?: string;
         role?: string;
         preferredSkin?: string;
+        skin_url?: string;
+        cape_url?: string;
     };
     setUser?: (updater: any) => void;
 }
@@ -86,6 +88,7 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
     const [badges, setBadges] = React.useState<Badge[]>([]);
     const [copied, setCopied] = React.useState(false);
     const [profile, setProfile] = React.useState<any>(null);
+    const [isLoadingProfile, setIsLoadingProfile] = React.useState(false);
 
     // --- STATISTICS STATE ---
     const [statistics, setStatistics] = React.useState({
@@ -95,6 +98,9 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
         lastPlayed: null as string | null,
         favoriteInstance: ''
     });
+
+    // --- FAVORITES STATE ---
+    const [favoriteInstances, setFavoriteInstances] = React.useState<any[]>([]);
 
     const [presetNames, setPresetNames] = React.useState<string[]>(() => {
         try {
@@ -126,13 +132,39 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
 
 
     // --- DERIVED STATE ---
+    // Show selected preset skin, or fall back to user's preferred skin
     const activeSkinName = activePreset >= 0 && presets[activePreset]
         ? presets[activePreset]
-        : user.preferredSkin || user.name;
+        : user.preferredSkin || undefined;
 
     const activeCapeName = activeCapePreset >= 0 && capePresets[activeCapePreset]
         ? capePresets[activeCapePreset]
-        : (user as any).preferredCape;
+        : (user as any).preferredCape || undefined;
+
+    // --- DISPLAY HELPERS ---
+    const getViewerSkinDisplayName = (): string => {
+        // If we have a preset name saved, use that
+        if (activePreset >= 0 && presetNames[activePreset]) {
+            return presetNames[activePreset];
+        }
+        
+        // If no active skin, show "Steve" (default)
+        if (!activeSkinName) {
+            return 'Steve';
+        }
+        
+        // If it's the user's preferred skin (not from a preset), show username
+        if (activeSkinName === user.preferredSkin) {
+            return user.name || 'My Skin';
+        }
+        
+        // If it's a URL (uploaded skin), show something nicer
+        if (activeSkinName?.startsWith('http')) {
+            return user.name || 'My Skin';
+        }
+        
+        return SkinUtils.getDisplayName(activeSkinName, user.name);
+    };
 
     // --- EFFECTS ---
 
@@ -180,6 +212,7 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
     React.useEffect(() => {
         const load = async () => {
             if (user.type === 'whoap' && navigator.onLine) {
+                setIsLoadingProfile(true);
                 try {
                     const [fetchedBadges, fetchedProfile] = await Promise.all([
                         ProfileService.getUserBadges(user.uuid),
@@ -187,7 +220,14 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
                     ]);
                     setBadges(fetchedBadges);
                     setProfile(fetchedProfile);
-                } catch (e) { console.warn('[Profile] Failed to load data', e); }
+                } catch (e) { 
+                    console.warn('[Profile] Failed to load data', e); 
+                } finally {
+                    // Add a small delay for better UX (prevents flickering)
+                    setTimeout(() => {
+                        setIsLoadingProfile(false);
+                    }, 500);
+                }
             }
         };
         load();
@@ -199,7 +239,7 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
             try {
                 const instances = await window.ipcRenderer.invoke('instance:list');
                 const worlds = await window.ipcRenderer.invoke('worlds:list-all');
-                
+
                 // Calculate total play time from instances
                 let totalPlayTime = 0;
                 let lastPlayedDate: string | null = null;
@@ -209,12 +249,12 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
                 instances.forEach((inst: any) => {
                     const playTime = inst.playTime || 0;
                     totalPlayTime += playTime;
-                    
+
                     if (playTime > maxPlayTime) {
                         maxPlayTime = playTime;
                         favoriteInstance = inst.name;
                     }
-                    
+
                     if (inst.lastPlayed) {
                         const lastDate = new Date(inst.lastPlayed);
                         if (!lastPlayedDate || lastDate > new Date(lastPlayedDate)) {
@@ -230,6 +270,10 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
                     lastPlayed: lastPlayedDate,
                     favoriteInstance
                 });
+
+                // Load favorite instances
+                const favorites = instances.filter((inst: any) => inst.isFavorite);
+                setFavoriteInstances(favorites);
             } catch (e) {
                 console.warn('[Profile] Failed to load statistics', e);
             }
@@ -274,15 +318,14 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
         setActivePreset(index);
         saveActivePreset(index);
 
-        const storeName = SkinUtils.getFileName(skinName);
         try {
-            if (user.type === 'whoap' && navigator.onLine) {
-                await ProfileService.updateProfile(user.uuid, { preferred_skin: storeName });
-            }
+            const finalSkinUrl = skinName;
+
             const { AccountManager } = await import('../utils/AccountManager');
-            AccountManager.updateAccount(user.uuid, { preferredSkin: skinName });
-            if (setUser) setUser((prev: any) => ({ ...prev, preferredSkin: skinName }));
-            showToast(`Skin switched to ${SkinUtils.getDisplayName(skinName, user.name)}`, 'success');
+            AccountManager.updateAccount(user.uuid, { preferredSkin: finalSkinUrl });
+            if (setUser) setUser((prev: any) => ({ ...prev, preferredSkin: finalSkinUrl }));
+
+            showToast('Skin switched', 'success');
         } catch (e) {
             console.error('[Profile] Failed to update skin', e);
         }
@@ -302,12 +345,9 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
         newPresets[editingPreset] = trimmed;
         setPresets(newPresets);
         setEditingPreset(null);
+        // If we just edited the active preset, re-select it to trigger update
         if (activePreset === editingPreset) {
-            (async () => {
-                const { AccountManager } = await import('../utils/AccountManager');
-                AccountManager.updateAccount(user.uuid, { preferredSkin: trimmed });
-                if (setUser) setUser((prev: any) => ({ ...prev, preferredSkin: trimmed }));
-            })();
+            handleSelectPreset(editingPreset);
         }
     };
 
@@ -340,15 +380,18 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
         const newPresets = [...presets];
         newPresets[index] = '';
         setPresets(newPresets);
-
+        
+        // Clear the preset name too
+        const newNames = [...presetNames];
+        newNames[index] = '';
+        setPresetNames(newNames);
+        localStorage.setItem('whoap_skin_preset_names', JSON.stringify(newNames));
+        
         // If we cleared the active preset, reset to default (undefined)
         if (activePreset === index) {
             setActivePreset(-1); // None selected
             saveActivePreset(-1);
             try {
-                if (user.type === 'whoap' && navigator.onLine) {
-                    await ProfileService.updateProfile(user.uuid, { preferred_skin: undefined });
-                }
                 const { AccountManager } = await import('../utils/AccountManager');
                 AccountManager.updateAccount(user.uuid, { preferredSkin: undefined });
                 if (setUser) setUser((prev: any) => ({ ...prev, preferredSkin: undefined }));
@@ -384,14 +427,12 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
         localStorage.setItem(ACTIVE_CAPE_PRESET_KEY, String(index));
 
         try {
-            if (user.type === 'whoap' && navigator.onLine) {
-                const storeName = SkinUtils.getFileName(capeName);
-                await ProfileService.updateProfile(user.uuid, { preferred_cape: storeName } as any);
-            }
+            const finalCapeUrl = capeName;
+            
             const { AccountManager } = await import('../utils/AccountManager');
-            AccountManager.updateAccount(user.uuid, { preferredCape: capeName });
-            if (setUser) setUser((prev: any) => ({ ...prev, preferredCape: capeName }));
-            showToast(`Cape switched to ${SkinUtils.getDisplayName(capeName, user.name)}`, 'success');
+            AccountManager.updateAccount(user.uuid, { preferredCape: finalCapeUrl });
+            if (setUser) setUser((prev: any) => ({ ...prev, preferredCape: finalCapeUrl }));
+            showToast('Cape switched', 'success');
         } catch (e) {
             console.error('[Profile] Failed to update cape', e);
         }
@@ -425,13 +466,17 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
         const newPresets = [...capePresets];
         newPresets[index] = '';
         setCapePresets(newPresets);
+        
+        // Clear the preset name too
+        const newNames = [...capePresetNames];
+        newNames[index] = '';
+        setCapePresetNames(newNames);
+        localStorage.setItem('whoap_cape_preset_names', JSON.stringify(newNames));
+        
         if (activeCapePreset === index) {
             setActiveCapePreset(-1);
             localStorage.setItem(ACTIVE_CAPE_PRESET_KEY, '-1');
             try {
-                if (user.type === 'whoap' && navigator.onLine) {
-                    await ProfileService.updateProfile(user.uuid, { preferred_cape: undefined } as any);
-                }
                 const { AccountManager } = await import('../utils/AccountManager');
                 AccountManager.updateAccount(user.uuid, { preferredCape: undefined });
                 if (setUser) setUser((prev: any) => ({ ...prev, preferredCape: undefined }));
@@ -456,7 +501,8 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
         admin: 'Admin',
         user: 'Member'
     };
-    const role = user.role || 'user';
+    // Use profile.role from database if available, fallback to user.role
+    const role = profile?.role || user.role || 'user';
 
     return (
         <div className={styles.profilePage}>
@@ -464,26 +510,38 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
             <div className={styles.leftPanel}>
                 {/* Header */}
                 <div className={styles.profileHeader}>
-                    <UserAvatar
-                        username={SkinUtils.getDisplayName(activeSkinName)}
-                        preferredSkin={activeSkinName}
-                        uuid={user.uuid}
-                        accountType={user.type as any}
-                        className={styles.avatarLarge}
-                        lastUpdated={lastUpdated}
-                    />
+                    {isLoadingProfile ? (
+                        <div className={styles.avatarLoading}>
+                            <div className={styles.spinner} />
+                        </div>
+                    ) : (
+                        <UserAvatar
+                            username={SkinUtils.getDisplayName(activeSkinName)}
+                            preferredSkin={activeSkinName}
+                            uuid={user.uuid}
+                            accountType={user.type as any}
+                            className={styles.avatarLarge}
+                            lastUpdated={lastUpdated}
+                        />
+                    )}
                     <div className={styles.headerInfo}>
                         <div className={styles.displayName}>{user.name}</div>
-                        <div
-                            className={styles.roleBadge}
-                            style={{
-                                background: `${roleColors[role]}15`,
-                                color: roleColors[role],
-                                border: `1px solid ${roleColors[role]}30`
-                            }}
-                        >
-                            {roleLabel[role] || 'Member'}
-                        </div>
+                        {isLoadingProfile ? (
+                            <div className={styles.roleBadgeLoading}>
+                                <div className={styles.roleLoadingSpinner} />
+                            </div>
+                        ) : (
+                            <div
+                                className={styles.roleBadge}
+                                style={{
+                                    background: `${roleColors[role]}15`,
+                                    color: roleColors[role],
+                                    border: `1px solid ${roleColors[role]}30`
+                                }}
+                            >
+                                {roleLabel[role] || 'Member'}
+                            </div>
+                        )}
                         <div className={styles.uuidText} onClick={handleCopyUuid} title="Click to copy">
                             {copied ? '✓ Copied!' : user.uuid.slice(0, 8) + '...'}
                         </div>
@@ -569,7 +627,7 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
                             <Calendar size={20} className={styles.statIcon} />
                             <div className={styles.statInfo}>
                                 <span className={styles.statValue}>
-                                    {statistics.lastPlayed 
+                                    {statistics.lastPlayed
                                         ? new Date(statistics.lastPlayed).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                                         : 'Never'}
                                 </span>
@@ -584,6 +642,24 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
                         </div>
                     )}
                 </div>
+
+                {/* Favorite Instances */}
+                {favoriteInstances.length > 0 && (
+                    <div className={styles.section}>
+                        <div className={styles.sectionTitle}>
+                            <Heart size={16} style={{ marginRight: 8 }} />
+                            Favorite Clients
+                        </div>
+                        <div className={styles.favoritesList}>
+                            {favoriteInstances.map((inst) => (
+                                <div key={inst.id} className={styles.favoriteItem}>
+                                    <span className={styles.favoriteName}>{inst.name}</span>
+                                    <span className={styles.favoriteVersion}>{inst.version}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Skin Presets */}
                 <div className={styles.section}>
@@ -761,7 +837,7 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
                         className={styles.viewerCanvas}
                         lastUpdated={lastUpdated}
                     />
-                    <span className={styles.viewerSkinName}>{SkinUtils.getDisplayName(activeSkinName, user.name)}</span>
+                    <span className={styles.viewerSkinName}>{getViewerSkinDisplayName()}</span>
                     <span className={styles.viewerLabel}>Drag to rotate · Scroll to zoom</span>
                 </div>
             </div>

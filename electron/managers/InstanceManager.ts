@@ -275,12 +275,12 @@ export class InstanceManager {
             try {
                 const allWorlds: any[] = [];
                 const instances = await this.getInstances();
-                
+
                 for (const instance of instances) {
                     const worlds = await this.listWorlds(instance.id);
                     allWorlds.push(...worlds);
                 }
-                
+
                 return allWorlds;
             } catch (error) {
                 console.error("Failed to list all worlds:", error);
@@ -563,19 +563,34 @@ export class InstanceManager {
         if (existsSync(configPath)) {
             const content = await fs.readFile(configPath, 'utf-8');
             const data = JSON.parse(content);
-            
+
             // Remove old cached icon if exists
-            if (data.icon && data.icon.startsWith('file://')) {
+            if (data.iconLocal && (data.iconLocal.startsWith('file://') || data.iconLocal.startsWith('whoap-icon://'))) {
                 try {
-                    const oldIconPath = data.icon.replace('file://', '');
-                    if (existsSync(oldIconPath)) {
+                    let oldIconPath = data.iconLocal;
+                    try {
+                        const url = new URL(oldIconPath);
+                        if (url.searchParams.has('path')) {
+                            oldIconPath = url.searchParams.get('path') || '';
+                        } else {
+                            oldIconPath = oldIconPath.replace('file://', '').replace(/^whoap-icon:\/\/*/, '').split('?')[0];
+                            oldIconPath = decodeURIComponent(oldIconPath);
+                            if (process.platform === 'win32' && /^[a-zA-Z]\//.test(oldIconPath)) {
+                                oldIconPath = oldIconPath.charAt(0) + ':' + oldIconPath.slice(1);
+                            }
+                        }
+                    } catch {
+                        oldIconPath = oldIconPath.replace('file://', '').replace(/^whoap-icon:\/\/*/, '').split('?')[0];
+                        oldIconPath = decodeURIComponent(oldIconPath);
+                    }
+                    if (oldIconPath && existsSync(oldIconPath)) {
                         await fs.unlink(oldIconPath);
                     }
                 } catch (e) {
                     console.warn("Failed to remove old icon:", e);
                 }
             }
-            
+
             if (iconUrl) {
                 // Download and cache the icon locally
                 try {
@@ -584,15 +599,17 @@ export class InstanceManager {
                         await this.downloadFile(iconUrl, iconPath);
                         // Store both URL (for Discord) and local path (for UI)
                         data.icon = iconUrl;
-                        data.iconLocal = `file://${iconPath}`;
+                        data.iconLocal = `whoap-icon://icon/?path=${encodeURIComponent(iconPath)}&t=${Date.now()}`;
                     } else {
                         // Local file or data URL
                         data.icon = iconUrl;
+                        delete data.iconLocal;
                     }
                 } catch (e) {
                     console.error("Failed to download icon:", e);
                     // Still save the URL even if download failed
                     data.icon = iconUrl;
+                    delete data.iconLocal; // Clear local path to fallback to generic URL
                 }
             } else {
                 delete data.icon;
@@ -613,7 +630,7 @@ export class InstanceManager {
         return new Promise((resolve, reject) => {
             const mod = url.startsWith('https') ? https : http;
             const file = fs.createWriteStream(dest);
-            
+
             mod.get(url, (response: any) => {
                 if (response.statusCode !== 200) {
                     reject(new Error(`Failed to download: ${response.statusCode}`));
@@ -625,7 +642,7 @@ export class InstanceManager {
                     resolve();
                 });
             }).on('error', (err: any) => {
-                fs.unlink(dest, () => {});
+                fs.unlink(dest, () => { });
                 reject(err);
             });
         });
@@ -1039,13 +1056,13 @@ export class InstanceManager {
             if (entry.isDirectory()) {
                 const worldPath = path.join(savesPath, entry.name);
                 const levelDatPath = path.join(worldPath, 'level.dat');
-                
+
                 if (existsSync(levelDatPath)) {
                     try {
                         // Get world info from level.dat if possible
                         const stats = await fs.stat(worldPath);
                         const iconPath = path.join(worldPath, 'icon.png');
-                        
+
                         let iconDataUrl: string | undefined;
                         if (existsSync(iconPath)) {
                             try {
@@ -1055,7 +1072,7 @@ export class InstanceManager {
                                 console.warn(`Failed to read icon for world ${entry.name}:`, e);
                             }
                         }
-                        
+
                         worlds.push({
                             id: entry.name,
                             name: entry.name,
@@ -1139,7 +1156,7 @@ export class InstanceManager {
         try {
             const sourcePath = this.resolveInstancePath(instanceId);
             const targetPath = this.resolveInstancePath(targetInstanceId);
-            
+
             if (!sourcePath) {
                 return { success: false, error: 'Source instance not found' };
             }
@@ -1205,21 +1222,21 @@ export class InstanceManager {
             const backups: any[] = [];
 
             const entries = await fs.readdir(backupsPath, { withFileTypes: true });
-            
+
             for (const entry of entries) {
                 if (entry.isFile() && entry.name.endsWith('.json')) {
                     try {
                         const metaPath = path.join(backupsPath, entry.name);
                         const content = await fs.readFile(metaPath, 'utf-8');
                         const metadata = JSON.parse(content);
-                        
+
                         // Get instance name
                         const instanceConfigPath = path.join(this.instancesPath, metadata.instanceId, 'instance.json');
                         if (existsSync(instanceConfigPath)) {
                             const instanceData = JSON.parse(await fs.readFile(instanceConfigPath, 'utf-8'));
                             metadata.instanceName = instanceData.name || metadata.instanceId;
                         }
-                        
+
                         backups.push(metadata);
                     } catch (e) {
                         console.warn('Failed to read backup metadata:', e);
@@ -1246,7 +1263,7 @@ export class InstanceManager {
 
             const metadata = JSON.parse(await fs.readFile(metaPath, 'utf-8'));
             const instancePath = this.resolveInstancePath(metadata.instanceId);
-            
+
             if (!instancePath) {
                 return { success: false, error: 'Instance not found' };
             }
@@ -1257,7 +1274,7 @@ export class InstanceManager {
             }
 
             const worldPath = path.join(savesPath, metadata.worldName);
-            
+
             // If world exists, rename it as backup
             if (existsSync(worldPath)) {
                 const backupName = `${metadata.worldName}_backup_${Date.now()}`;
@@ -1298,7 +1315,7 @@ export class InstanceManager {
     private async getFolderSize(folderPath: string): Promise<number> {
         let size = 0;
         const entries = await fs.readdir(folderPath, { withFileTypes: true });
-        
+
         for (const entry of entries) {
             const entryPath = path.join(folderPath, entry.name);
             if (entry.isDirectory()) {
@@ -1308,7 +1325,7 @@ export class InstanceManager {
                 size += stats.size;
             }
         }
-        
+
         return size;
     }
 
@@ -1342,7 +1359,7 @@ export class InstanceManager {
         // Parse the JSON
         const versionJson = JSON.parse(jsonEntry.getData().toString('utf8'));
         const versionId = versionJson.id || path.basename(zipPath, '.zip');
-        
+
         // Determine Java version requirement
         let javaVersion = '17'; // default
         if (versionJson.javaVersion?.majorVersion) {
@@ -1450,7 +1467,7 @@ export class InstanceManager {
                 const entries = await fs.readdir(root, { withFileTypes: true });
                 for (const entry of entries) {
                     const fullPath = path.join(root, entry.name);
-                    
+
                     // Check various possible Java binary locations
                     const possibleBins = [
                         path.join(fullPath, 'bin', 'java.exe'),

@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import styles from './TitleBar.module.css';
-import { Minus, Square, X, Copy } from 'lucide-react';
+import { Minus, Square, X, Copy, WifiOff } from 'lucide-react';
+import { SmartSyncIndicator } from './SmartSyncIndicator';
+import { useOfflineStatus } from '../hooks/useOfflineStatus';
 
 export const TitleBar: React.FC = () => {
     const [isMaximized, setIsMaximized] = useState(false);
+    const isOffline = useOfflineStatus();
     const version = import.meta.env.VITE_APP_VERSION || '3.0.0';
 
     const handleClose = () => window.ipcRenderer.send('window:close');
@@ -31,13 +34,24 @@ export const TitleBar: React.FC = () => {
             </div>
 
             <div className={styles.center}>
-                <div className={styles.statusIndicator}>
-                    <div className={styles.statusDot} />
-                    <span className={styles.statusText}>Online</span>
-                </div>
+                {isOffline ? (
+                    <div className={styles.offlineIndicator} title="You're working offline">
+                        <WifiOff size={12} />
+                        <span>Offline</span>
+                    </div>
+                ) : (
+                    <div className={styles.statusIndicator}>
+                        <div className={styles.statusDot} />
+                        <span className={styles.statusText}>Online</span>
+                    </div>
+                )}
             </div>
 
             <div className={`${styles.right} no-drag`}>
+                <SmartSyncIndicator minimal />
+                
+                <div className={styles.separator} />
+
                 <div className={styles.socialButtons}>
                     <button onClick={openDiscord} className={styles.socialBtn} title="Discord">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">

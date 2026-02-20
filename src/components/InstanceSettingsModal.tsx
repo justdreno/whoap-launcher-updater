@@ -18,6 +18,7 @@ import styles from './InstanceSettingsModal.module.css';
 import { Instance, InstanceApi } from '../api/instances';
 import { useConfirm } from '../context/ConfirmContext';
 import { useToast } from '../context/ToastContext';
+import { SyncQueue } from '../utils/SyncQueue';
 
 interface InstanceSettingsModalProps {
     instance: Instance;
@@ -25,10 +26,11 @@ interface InstanceSettingsModalProps {
     onUpdate: () => void;
     onProcessing?: (message: string, subMessage?: string) => void;
     onProcessingEnd?: () => void;
+    user?: any;
 }
 
 export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
-    instance, onClose, onUpdate, onProcessing, onProcessingEnd
+    instance, onClose, onUpdate, onProcessing, onProcessingEnd, user
 }) => {
     const confirm = useConfirm();
     const [deleting, setDeleting] = useState(false);
@@ -93,6 +95,15 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
                 onUpdate();
                 setIsRenaming(false);
                 showToast('Profile renamed!', 'success');
+                
+                // Queue cloud sync
+                if (user?.type === 'whoap' && user?.uuid) {
+                    SyncQueue.enqueue('instance:update', {
+                        instance: { ...instance, name: inputValue.trim() },
+                        userId: user.uuid,
+                        token: user.token
+                    });
+                }
             } else {
                 showToast(`Failed to rename: ${result.error}`, 'error');
             }
@@ -149,6 +160,15 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
             try {
                 await InstanceApi.delete(instance.id);
                 showToast('Profile deleted.', 'success');
+                
+                // Queue cloud sync for deletion
+                if (user?.type === 'whoap' && user?.uuid) {
+                    SyncQueue.enqueue('instance:delete', {
+                        instanceName: instance.name,
+                        userId: user.uuid
+                    });
+                }
+                
                 onUpdate();
                 onClose();
             } catch (e) {
@@ -364,7 +384,20 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
                             <div className={styles.sectionTitle}>Custom Icon</div>
                             <div className={styles.iconSection}>
                                 <div className={styles.iconPreview}>
-                                    {(instance.iconLocal || instance.icon) ? (
+                                    {iconUrl ? (
+                                        <img 
+                                            src={iconUrl} 
+                                            alt="Icon preview"
+                                            onError={(e) => {
+                                                // If preview fails, show placeholder
+                                                (e.target as HTMLImageElement).style.display = 'none';
+                                            }}
+                                            onLoad={(e) => {
+                                                // Show image when loaded successfully
+                                                (e.target as HTMLImageElement).style.display = 'block';
+                                            }}
+                                        />
+                                    ) : (instance.iconLocal || instance.icon) ? (
                                         <img src={instance.iconLocal || instance.icon} alt="Current icon" />
                                     ) : (
                                         <div className={styles.iconPlaceholder}>
@@ -385,7 +418,7 @@ export const InstanceSettingsModal: React.FC<InstanceSettingsModalProps> = ({
                                         Set Icon
                                     </button>
                                 </div>
-                                {instance.icon && (
+                                {(instance.icon || iconUrl) && (
                                     <button 
                                         className={styles.removeIconBtn}
                                         onClick={() => { setIconUrl(''); handleUpdateIcon(); }}

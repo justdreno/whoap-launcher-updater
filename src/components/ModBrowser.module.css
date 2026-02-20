@@ -451,8 +451,13 @@
 }
 
 @keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
 }
 
 /* Empty State */
@@ -553,7 +558,7 @@
 .versionStatus.incompatible {
     background: #1a0a0a;
     border-color: #3a1a1a;
-  color: #f87171;
+    color: #f87171;
 }
 
 .versionStatus.installed {
@@ -573,7 +578,9 @@
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Description */
@@ -736,4 +743,126 @@
     margin: 0;
     font-size: 13px;
     color: #333;
+}
+
+/* Confirmation Dialog */
+.confirmOverlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.confirmModal {
+    background: #0a0a0a;
+    width: 400px;
+    border-radius: 12px;
+    border: 1px solid #222;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.confirmModal h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.confirmModal p {
+    margin: 0;
+    color: #888;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.confirmModal strong {
+    color: #fff;
+}
+
+.missingDeps {
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 8px;
+}
+
+.missingDeps p {
+    color: #aaa;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.missingDeps ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.missingDeps li {
+    color: #fff;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.missingDeps li::before {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #fbbf24;
+}
+
+.confirmActions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+    justify-content: flex-end;
+}
+
+.confirmActions button {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.confirmActions button:first-child {
+    background: transparent;
+    border: 1px solid #333;
+    color: #888;
+}
+
+.confirmActions button:first-child:hover {
+    background: #111;
+    color: #fff;
+    border-color: #444;
+}
+
+.confirmActions button:last-child {
+    background: #fff;
+    border: none;
+    color: #000;
+    font-weight: 600;
+}
+
+.confirmActions button:last-child:hover {
+    background: #e5e5e5;
 }

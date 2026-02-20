@@ -26,6 +26,7 @@ import { SkinViewer3D } from '../components/SkinViewer3D';
 import { CreateInstanceModal } from '../components/CreateInstanceModal';
 import { ServerService, FeaturedServer } from '../services/ServerService';
 import { PageHeader } from '../components/PageHeader';
+import { SyncQueue } from '../utils/SyncQueue';
 
 interface HomeProps {
     user: {
@@ -215,13 +216,23 @@ export const Home: React.FC<HomeProps> = ({ user, setUser, onNavigate, onLockNav
         setInstances(list);
     };
 
-    const handleCreated = async () => {
+    const handleCreated = async (instance?: Instance) => {
         const list = await InstanceApi.list();
         setInstances(list);
         if (list.length > 0) {
             setSelectedInstance(list[0]);
         }
         setShowCreateModal(false);
+        
+        // Queue cloud sync if user is logged in
+        if (instance && (user as any)?.type === 'whoap' && (user as any)?.uuid) {
+            SyncQueue.enqueue('instance:create', {
+                instance,
+                userId: (user as any).uuid,
+                token: (user as any).token
+            });
+            console.log('[Home] Queued instance for cloud sync:', instance.name);
+        }
     };
 
     const handleSelectInstance = (inst: Instance) => {

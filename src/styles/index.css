@@ -1,14 +1,14 @@
 :root {
     /* Colors - Dark Theme (iOS/Glassmorphism) */
     --bg-app: #000000;
-    --bg-sidebar: rgba(28, 28, 30, 0.75);
-    --bg-card: rgba(44, 44, 46, 0.6);
+    --bg-sidebar: rgba(28, 28, 30, 0.85);
+    --bg-card: rgba(44, 44, 46, 0.85);
     --accent-color: #ffaa00;
-    --accent-glow: rgba(255, 170, 0, 0.3);
+    --accent-glow: rgba(255, 170, 0, 0.5);
     --text-primary: #ffffff;
     --text-secondary: #ebebf599;
-    --text-muted: rgba(255, 255, 255, 0.4);
-    --border-color: rgba(255, 255, 255, 0.1);
+    --text-muted: rgba(255, 255, 255, 0.6);
+    --border-color: rgba(255, 255, 255, 0.2);
     --success-color: #22c55e;
     --error-color: #ef4444;
 
@@ -16,9 +16,9 @@
     --titlebar-height: 38px;
     --sidebar-width: 260px;
     --sidebar-collapsed-width: 72px;
-    --radius-lg: 16px;
-    --radius-md: 12px;
-    --radius-sm: 8px;
+    --radius-lg: 24px;
+    --radius-md: 16px;
+    --radius-sm: 10px;
 
     /* Effects */
     --blur-md: blur(20px);

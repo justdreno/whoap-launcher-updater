@@ -1,25 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { PageHeader } from '../components/PageHeader';
-import { Settings, RefreshCw, FolderOpen, Clock, Star, Library, Plus } from 'lucide-react';
+import { Settings, RefreshCw, FolderOpen, Clock, Star, Library, Plus, ArrowLeftRight } from 'lucide-react';
 import { Instance, InstanceApi } from '../api/instances';
 import { CreateInstanceModal } from '../components/CreateInstanceModal';
 import { InstanceSettingsModal } from '../components/InstanceSettingsModal';
 import { ProcessingModal } from '../components/ProcessingModal';
+import { ConflictResolver } from '../components/ConflictResolver';
+import { OfflineStatusDot } from '../components/OfflineBadge';
 import styles from './Instances.module.css';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../context/ToastContext';
+import { SyncQueue } from '../utils/SyncQueue';
 
 interface InstancesProps {
     onSelectInstance?: (instance: Instance) => void;
     onNavigate?: (tab: string, instanceId?: string) => void;
+    user?: any;
 }
 
-export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNavigate }) => {
+export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNavigate, user }) => {
     const [instances, setInstances] = useState<Instance[]>([]);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [loading, setLoading] = useState(true);
     const [settingsInstance, setSettingsInstance] = useState<Instance | null>(null);
     const [processing, setProcessing] = useState<{ message: string; subMessage?: string; progress?: number } | null>(null);
+    const [showConflictResolver, setShowConflictResolver] = useState(false);
     const { showToast } = useToast();
 
     const handleToggleFavorite = async (e: React.MouseEvent, instance: Instance) => {
@@ -46,9 +51,18 @@ export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNaviga
         }
     };
 
-    const handleCreated = async () => {
+    const handleCreated = async (instance: Instance) => {
         await loadInstances();
-        // Cloud sync removed - instances are now local only
+        
+        // Queue cloud sync if user is logged in
+        if (user?.type === 'whoap' && user?.uuid) {
+            SyncQueue.enqueue('instance:create', {
+                instance,
+                userId: user.uuid,
+                token: user.token
+            });
+            console.log('[Instances] Queued instance for cloud sync:', instance.name);
+        }
     };
 
     useEffect(() => {
@@ -117,6 +131,15 @@ export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNaviga
 
             <div className={styles.header}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
+                    {user?.type === 'whoap' && (
+                        <button 
+                            className={styles.refreshBtn} 
+                            onClick={() => setShowConflictResolver(true)}
+                            title="Resolve Sync Conflicts"
+                        >
+                            <ArrowLeftRight size={18} />
+                        </button>
+                    )}
                     <button className={styles.refreshBtn} onClick={loadInstances} title="Refresh List">
                         <RefreshCw size={20} />
                     </button>
@@ -210,9 +233,15 @@ export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNaviga
                                             alt={instance.name}
                                             style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }}
                                             onError={(e) => {
-                                                // Fallback to letter if image fails to load
-                                                (e.target as HTMLImageElement).style.display = 'none';
-                                                (e.target as HTMLImageElement).parentElement!.innerText = instance.name.charAt(0).toUpperCase();
+                                                // Try falling back to the original icon URL if local fails
+                                                const target = e.target as HTMLImageElement;
+                                                if (instance.icon && target.src !== instance.icon) {
+                                                    target.src = instance.icon;
+                                                } else {
+                                                    // Fallback to letter if image fails to load
+                                                    target.style.display = 'none';
+                                                    target.parentElement!.innerText = instance.name.charAt(0).toUpperCase();
+                                                }
                                             }}
                                         />
                                     ) : (
@@ -228,6 +257,7 @@ export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNaviga
                                         <span>{instance.version}</span>
                                     </div>
                                     <div className={styles.timeInfo}>
+                                        <OfflineStatusDot instanceId={instance.id} />
                                         <Clock size={12} />
                                         <span>{formatRelativeTime(instance.lastPlayed)}</span>
                                     </div>
@@ -295,15 +325,18 @@ export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNaviga
                     instance={settingsInstance}
                     onClose={() => setSettingsInstance(null)}
                     onUpdate={async () => {
-                        await loadInstances();
-                        // Update settingsInstance with fresh data from the list
-                        const updatedInstance = instances.find(i => i.id === settingsInstance.id);
+                        // Reload instances and get fresh data
+                        const freshInstances = await InstanceApi.list();
+                        setInstances(freshInstances);
+                        // Update settingsInstance with fresh data
+                        const updatedInstance = freshInstances.find(i => i.id === settingsInstance.id);
                         if (updatedInstance) {
                             setSettingsInstance(updatedInstance);
                         }
                     }}
                     onProcessing={(msg, sub) => setProcessing({ message: msg, subMessage: sub })}
                     onProcessingEnd={() => setProcessing(null)}
+                    user={user}
                 />
             )}
 
@@ -312,6 +345,18 @@ export const Instances: React.FC<InstancesProps> = ({ onSelectInstance, onNaviga
                     message={processing.message}
                     subMessage={processing.subMessage}
                     progress={processing.progress}
+                />
+            )}
+
+            {showConflictResolver && user?.uuid && (
+                <ConflictResolver
+                    userId={user.uuid}
+                    onResolved={() => {
+                        setShowConflictResolver(false);
+                        loadInstances();
+                        showToast('Conflicts resolved successfully!', 'success');
+                    }}
+                    onClose={() => setShowConflictResolver(false)}
                 />
             )}
         </div>

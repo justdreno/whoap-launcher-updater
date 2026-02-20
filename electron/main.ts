@@ -48,6 +48,7 @@ import { LogWindowManager } from './managers/LogWindowManager';
 import { CloudManager } from './managers/CloudManager';
 import { ModpackManager } from './managers/ModpackManager';
 import { ModsManager } from './managers/ModsManager';
+import { SkinCacheManager } from './utils/SkinCacheManager';
 import { NetworkManager } from './managers/NetworkManager';
 import { DiscordManager } from './managers/DiscordManager';
 import { ScreenshotManager } from './managers/ScreenshotManager';
@@ -55,6 +56,7 @@ import { ModPlatformManager } from './managers/ModPlatformManager';
 import { ResourcePackManager } from './managers/ResourcePackManager';
 import { ShaderPackManager } from './managers/ShaderPackManager';
 import { ModMetadataManager } from './managers/ModMetadataManager';
+import { backgroundSync } from './background-sync';
 
 // Paths Configuration
 process.env.DIST = path.join(__dirname, '../dist-react');
@@ -63,7 +65,8 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST! : path.join(process.env.
 // --- 0.5 Register Protocols as Privileged ---
 protocol.registerSchemesAsPrivileged([
     { scheme: 'whoap-skin', privileges: { secure: true, standard: true, supportFetchAPI: true } },
-    { scheme: 'whoap-cape', privileges: { secure: true, standard: true, supportFetchAPI: true } }
+    { scheme: 'whoap-cape', privileges: { secure: true, standard: true, supportFetchAPI: true } },
+    { scheme: 'whoap-icon', privileges: { secure: true, standard: true, supportFetchAPI: true } }
 ]);
 
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL'];
@@ -164,7 +167,7 @@ function createMainWindow() {
     win.on('maximize', () => win?.webContents.send('window:maximized-changed', true));
     win.on('unmaximize', () => win?.webContents.send('window:maximized-changed', false));
     win.on('closed', () => { win = null; });
-    
+
     // Handle minimize - keep window stable and visible in taskbar
     win.on('minimize', () => {
         // Don't hide from taskbar, just minimize normally
@@ -174,7 +177,7 @@ function createMainWindow() {
             win?.setSkipTaskbar(false);
         }
     });
-    
+
     // Handle restore from minimize
     win.on('restore', () => {
         win?.focus();
@@ -205,16 +208,18 @@ function createTray() {
 
     const updateTrayMenu = () => {
         const template: any[] = [
-            { label: 'Show Launcher', click: () => {
-                if (win) {
-                    if (win.isMinimized()) win.restore();
-                    win.show();
-                    win.focus();
+            {
+                label: 'Show Launcher', click: () => {
+                    if (win) {
+                        if (win.isMinimized()) win.restore();
+                        win.show();
+                        win.focus();
+                    }
                 }
-            }},
+            },
             { type: 'separator' }
         ];
-        
+
         // Add game status if running
         if (LaunchProcess.gameIsRunning) {
             template.push({
@@ -222,7 +227,7 @@ function createTray() {
                 enabled: false
             });
         }
-        
+
         template.push(
             { type: 'separator' },
             { label: 'Quit', click: () => app.quit() }
@@ -234,10 +239,10 @@ function createTray() {
 
     tray.setToolTip('Whoap Launcher');
     updateTrayMenu();
-    
+
     // Update menu periodically to reflect game status
     setInterval(updateTrayMenu, 5000);
-    
+
     tray.on('click', () => {
         if (!win) return;
         if (win.isMinimized()) {
@@ -245,7 +250,7 @@ function createTray() {
         }
         win.isVisible() ? win.hide() : win.show();
     });
-    
+
     tray.on('right-click', () => {
         updateTrayMenu();
         tray?.popUpContextMenu();
@@ -286,16 +291,16 @@ function createExternalLinkWindow(url: string) {
     const filter = {
         urls: ['*://*/*']
     };
-    
+
     externalLinkWindow.webContents.session.webRequest.onHeadersReceived(filter, (details, callback) => {
         const responseHeaders = details.responseHeaders || {};
-        
+
         // Remove headers that prevent embedding
         delete responseHeaders['x-frame-options'];
         delete responseHeaders['X-Frame-Options'];
         delete responseHeaders['content-security-policy'];
         delete responseHeaders['Content-Security-Policy'];
-        
+
         callback({
             cancel: false,
             responseHeaders
@@ -306,7 +311,7 @@ function createExternalLinkWindow(url: string) {
     const wrapperUrl = app.isPackaged
         ? `file://${path.join(process.resourcesPath, 'external-browser.html')}?url=${encodeURIComponent(url)}`
         : `file://${path.join(__dirname, '../public/external-browser.html')}?url=${encodeURIComponent(url)}`;
-    
+
     externalLinkWindow.loadURL(wrapperUrl);
 
     externalLinkWindow.on('closed', () => {
@@ -357,6 +362,10 @@ if (!app.requestSingleInstanceLock()) {
         registerIpcHandlers();
         registerProtocolHandlers();
 
+        // Initialize background sync
+        backgroundSync.start();
+        console.log('[Main] Background sync service started');
+
         createMainWindow();
         createTray();
     });
@@ -370,9 +379,9 @@ function registerProtocolHandlers() {
         console.log('[Main] Protocol handlers already registered, skipping...');
         return;
     }
-    
+
     console.log('[Main] Registering protocol handlers...');
-    
+
     try {
         protocol.handle('whoap-skin', async (request: Request) => {
             console.log(`[Protocol] Request URL: ${request.url}`);
@@ -380,6 +389,30 @@ function registerProtocolHandlers() {
             fileName = fileName.split('?')[0];
             fileName = fileName.replace(/\/+$/, '');
             fileName = decodeURIComponent(fileName);
+
+            // Check if this is a cached skin request
+            if (fileName.startsWith('cached/')) {
+                const parts = fileName.replace('cached/', '').split('/');
+                if (parts.length >= 2) {
+                    const username = parts[0];
+                    const type = parts[1] as 'skin' | 'avatar';
+
+                    // Try to get cached skin
+                    const cachedPath = await SkinCacheManager.getCachedSkin(username, type);
+                    if (cachedPath) {
+                        console.log(`[Protocol] Serving cached ${type} for ${username}`);
+                        return await net.fetch('file://' + cachedPath);
+                    }
+
+                    // No cache available - serve default skin
+                    console.log(`[Protocol] No cache for ${username}, serving default`);
+                    const defaultSkinPath = path.join(__dirname, '../assets/skins/steve.png');
+                    if (fs.existsSync(defaultSkinPath)) {
+                        return await net.fetch('file://' + defaultSkinPath);
+                    }
+                    return new Response(null, { status: 404 });
+                }
+            }
 
             const filePath = path.join(ConfigManager.getSkinsPath(), fileName);
             console.log(`[Protocol] Resolved Skin: "${fileName}" -> "${filePath}"`);
@@ -414,7 +447,44 @@ function registerProtocolHandlers() {
                 return new Response(null, { status: 404 });
             }
         });
-        
+
+        // Handler for instance icons
+        protocol.handle('whoap-icon', async (request: Request) => {
+            let filePath = '';
+            try {
+                const url = new URL(request.url);
+                filePath = url.searchParams.get('path') || '';
+
+                if (!filePath) {
+                    filePath = request.url.replace(/^whoap-icon:\/\/*/, '');
+                    filePath = filePath.split('?')[0];
+                    filePath = decodeURIComponent(filePath);
+                    // Handle legacy paths where drive colon was stripped
+                    if (process.platform === 'win32' && /^[a-zA-Z]\//.test(filePath)) {
+                        filePath = filePath.charAt(0) + ':' + filePath.slice(1);
+                    }
+                }
+            } catch {
+                filePath = request.url.replace(/^whoap-icon:\/\/*/, '');
+                filePath = filePath.split('?')[0];
+                filePath = decodeURIComponent(filePath);
+            }
+
+            console.log(`[Protocol] Loading icon: "${filePath}"`);
+            try {
+                if (!fs.existsSync(filePath)) {
+                    console.warn(`[Protocol] Icon file not found: ${filePath}`);
+                    return new Response(null, { status: 404 });
+                }
+                // Use proper file URL format for Windows (convert backslashes to forward slashes)
+                const fileUrl = 'file://' + filePath.replace(/\\/g, '/');
+                return await net.fetch(fileUrl);
+            } catch (e) {
+                console.error('[Protocol] Failed to load icon', e);
+                return new Response(null, { status: 404 });
+            }
+        });
+
         protocolsRegistered = true;
         console.log('[Main] Protocol handlers registered successfully');
     } catch (error) {
@@ -423,6 +493,9 @@ function registerProtocolHandlers() {
 }
 
 app.on('window-all-closed', () => {
+    // Stop background sync before quitting
+    backgroundSync.stop();
+    console.log('[Main] Background sync service stopped');
     if (process.platform !== 'darwin') app.quit();
 });
 
@@ -514,6 +587,167 @@ function registerIpcHandlers() {
 
     ipcMain.handle('skin:get-path', async () => {
         return ConfigManager.getSkinsPath();
+    });
+
+    // Skin Caching
+    ipcMain.handle('skin:cache', async (_, username: string, type: 'skin' | 'avatar' = 'avatar') => {
+        try {
+            const result = await SkinCacheManager.cacheSkin(username, type);
+            return { success: !!result, path: result };
+        } catch (e) {
+            console.error('[Skin] Failed to cache skin:', e);
+            return { success: false, error: String(e) };
+        }
+    });
+
+    ipcMain.handle('skin:get-cached', async (_, username: string, type: 'skin' | 'avatar' = 'avatar') => {
+        try {
+            const cached = await SkinCacheManager.getCachedSkin(username, type);
+            return { success: !!cached, path: cached };
+        } catch (e) {
+            return { success: false, error: String(e) };
+        }
+    });
+
+    ipcMain.handle('skin:refresh', async (_, username: string, type: 'skin' | 'avatar' = 'avatar') => {
+        try {
+            const result = await SkinCacheManager.refreshSkin(username, type);
+            return { success: !!result, path: result };
+        } catch (e) {
+            console.error('[Skin] Failed to refresh skin:', e);
+            return { success: false, error: String(e) };
+        }
+    });
+
+    ipcMain.handle('skin:cache-status', async () => {
+        try {
+            const status = SkinCacheManager.getCacheStatus();
+            return { success: true, status };
+        } catch (e) {
+            return { success: false, error: String(e) };
+        }
+    });
+
+    ipcMain.handle('skin:clear-cache', async () => {
+        try {
+            await SkinCacheManager.clearCache();
+            return { success: true };
+        } catch (e) {
+            return { success: false, error: String(e) };
+        }
+    });
+
+    ipcMain.handle('skin:read-as-data-url', async (_, filePath: string) => {
+        try {
+            let fullPath = filePath;
+
+            if (filePath.startsWith('file:')) {
+                const skinsDir = ConfigManager.getSkinsPath();
+                fullPath = path.join(skinsDir, filePath.replace('file:', ''));
+            }
+
+            if (!fs.existsSync(fullPath)) {
+                return { success: false, error: 'File not found' };
+            }
+
+            const buffer = fs.readFileSync(fullPath);
+            const base64 = buffer.toString('base64');
+            const dataUrl = `data:image/png;base64,${base64}`;
+
+            return { success: true, dataUrl };
+        } catch (e) {
+            console.error('[Skin] Failed to read file:', e);
+            return { success: false, error: String(e) };
+        }
+    });
+
+    ipcMain.handle('cape:read-as-data-url', async (_, filePath: string) => {
+        try {
+            let fullPath = filePath;
+
+            if (filePath.startsWith('file:')) {
+                const capesDir = ConfigManager.getCapesPath();
+                fullPath = path.join(capesDir, filePath.replace('file:', ''));
+            }
+
+            if (!fs.existsSync(fullPath)) {
+                return { success: false, error: 'File not found' };
+            }
+
+            const buffer = fs.readFileSync(fullPath);
+            const base64 = buffer.toString('base64');
+            const dataUrl = `data:image/png;base64,${base64}`;
+
+            return { success: true, dataUrl };
+        } catch (e) {
+            console.error('[Cape] Failed to read file:', e);
+            return { success: false, error: String(e) };
+        }
+    });
+
+    // Background Sync Handlers
+    ipcMain.handle('sync:status', async () => {
+        return {
+            success: true,
+            status: backgroundSync.getStatus()
+        };
+    });
+
+    ipcMain.handle('sync:trigger', async () => {
+        try {
+            await backgroundSync.syncNow();
+            return { success: true };
+        } catch (e) {
+            return { success: false, error: String(e) };
+        }
+    });
+
+    // Sync Queue Handlers
+    ipcMain.handle('sync:execute-action', async (_, action) => {
+        const cloudManager = CloudManager.getInstance();
+
+        try {
+            console.log(`[Sync] Executing action: ${action.type}`, action.payload);
+
+            switch (action.type) {
+                case 'instance:create':
+                case 'instance:update': {
+                    const { instance, userId, token } = action.payload;
+                    const result = await cloudManager.syncInstance(instance, userId, token);
+                    return { success: result.success, error: result.error };
+                }
+
+                case 'instance:delete': {
+                    const { instanceName, userId } = action.payload;
+                    const result = await cloudManager.deleteInstance(instanceName, userId);
+                    return { success: result.success, error: result.error };
+                }
+
+                case 'friend:request': {
+                    const { senderId, receiverId } = action.payload;
+                    // Import CloudManager from renderer side
+                    // For now, we'll need to implement this differently
+                    return { success: true };
+                }
+
+                case 'friend:accept': {
+                    const { requestId } = action.payload;
+                    return { success: true };
+                }
+
+                case 'friend:remove': {
+                    const { userId, friendId } = action.payload;
+                    return { success: true };
+                }
+
+                default:
+                    console.warn(`[Sync] Unknown action type: ${action.type}`);
+                    return { success: false, error: 'Unknown action type' };
+            }
+        } catch (e) {
+            console.error(`[Sync] Failed to execute action ${action.type}:`, e);
+            return { success: false, error: String(e) };
+        }
     });
 
     // Cape Import
