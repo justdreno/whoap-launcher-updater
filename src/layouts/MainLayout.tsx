@@ -54,10 +54,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeTab, onT
             <TitleBar />
 
             <div className={styles.body}>
-                <Sidebar 
-                    activeTab={activeTab} 
-                    onTabChange={handleTabChange} 
-                    user={user} 
+                <Sidebar
+                    activeTab={activeTab}
+                    onTabChange={handleTabChange}
+                    user={user}
                     onLogout={onLogout}
                     isNavLocked={isNavLocked}
                 />

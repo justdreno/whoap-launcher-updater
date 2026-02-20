@@ -288,7 +288,8 @@ function App() {
                         <div style={{
                             height: !isOnline ? 'calc(100vh - 36px)' : '100vh',
                             marginTop: !isOnline ? '36px' : '0',
-                            overflow: 'hidden'
+                            overflow: 'hidden',
+                            position: 'relative'
                         }}>
                             <MainLayout
                                 activeTab={activeTab}
