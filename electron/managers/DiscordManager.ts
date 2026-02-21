@@ -263,15 +263,21 @@ export class DiscordManager {
         });
     }
 
-    public setLaunchingPresence(instanceId: string, versionId: string) {
+    public setLaunchingPresence(instanceId: string, versionId: string, loader?: string) {
+        // Use loader icon as small image if available, otherwise use logo
+        const smallImageKey = this.getLoaderImageKey(loader) || 'logo';
+        const smallImageText = loader 
+            ? `${loader.charAt(0).toUpperCase() + loader.slice(1)} Loader` 
+            : 'Yashin Launcher';
+
         this.updatePresence({
             presenceState: PresenceState.LAUNCHING,
             details: `Launching ${this.formatInstanceName(instanceId)}`,
             state: `Preparing ${versionId}...`,
             largeImageKey: this.getVersionImageKey(versionId),
             largeImageText: `Minecraft ${versionId}`,
-            smallImageKey: 'logo',
-            smallImageText: 'Yashin Launcher',
+            smallImageKey: smallImageKey,
+            smallImageText: smallImageText,
             startTimestamp: Date.now()
         });
     }
@@ -311,12 +317,18 @@ export class DiscordManager {
         const largeImageKey = customIconUrl || 'logo';
         const largeImageText = instanceName;
 
+        // Small icon: show loader icon (fabric/vanilla/forge etc.) if available
+        const smallImageKey = this.getLoaderImageKey(loader);
+        const smallImageText = loader ? `${loader.charAt(0).toUpperCase() + loader.slice(1)} Loader` : undefined;
+
         this.updatePresence({
             presenceState: PresenceState.PLAYING,
             details: detailsText,
             state: stateText,
             largeImageKey: largeImageKey,
             largeImageText: largeImageText,
+            smallImageKey: smallImageKey,
+            smallImageText: smallImageText,
             startTimestamp: Date.now(),
             isMultiplayer: isMultiplayer,
             playerCount: playerCount,

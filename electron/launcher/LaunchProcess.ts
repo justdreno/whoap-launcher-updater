@@ -27,7 +27,7 @@ export class LaunchProcess {
     }
 
     private registerListeners() {
-        ipcMain.handle('game:launch', async (event, instanceId: string, _unusedPath: string, versionId: string, authData: any) => {
+        ipcMain.handle('game:launch', async (event, instanceId: string, versionId: string, authData: any) => {
             // Trigger Cloud Sync
             try {
                 // Construct synthetic instance object for sync
@@ -49,15 +49,12 @@ export class LaunchProcess {
                 // We assume if authData.type === 'supabase', token is valid for RLS.
                 // If authData.type === 'mojang' or 'offline', we likely CANNOT sync to RLS tables.
 
-                if (authData.type === 'supabase') {
+                if (authData && authData.type === 'supabase') {
                     CloudManager.getInstance().syncInstance(instanceObj, authData.uuid, authData.token);
                 }
             } catch (e) {
                 console.error("[Launch] Failed to trigger cloud sync", e);
             }
-
-            // Update Discord Presence
-            DiscordManager.getInstance().setLaunchingPresence(instanceId, versionId);
 
             // Window Management
             const mainWindow = BrowserWindow.fromWebContents(event.sender);
@@ -216,6 +213,34 @@ export class LaunchProcess {
                 };
 
                 versionData = await resolveInheritance(versionData);
+
+                // Detect loader type from versionData
+                // Priority: 1. Instance config, 2. Version JSON, 3. Version ID pattern
+                let detectedLoader: string = 'vanilla';
+
+                if (instanceConfig?.loader) {
+                    detectedLoader = instanceConfig.loader;
+                } else {
+                    // Check if version has inheritsFrom (indicates modded)
+                    const versionIdLower = versionId.toLowerCase();
+                    const inheritsFromLower = versionData.inheritsFrom?.toLowerCase() || '';
+
+                    if (versionIdLower.includes('fabric') || inheritsFromLower.includes('fabric')) {
+                        detectedLoader = 'fabric';
+                    } else if (versionIdLower.includes('forge') || inheritsFromLower.includes('forge')) {
+                        detectedLoader = 'forge';
+                    } else if (versionIdLower.includes('neoforge') || inheritsFromLower.includes('neoforge')) {
+                        detectedLoader = 'neoforge';
+                    } else if (versionIdLower.includes('quilt') || inheritsFromLower.includes('quilt')) {
+                        detectedLoader = 'quilt';
+                    } else if (versionData.inheritsFrom) {
+                        // Has parent but not recognized - likely custom modded
+                        detectedLoader = 'custom';
+                    }
+                }
+
+                // Update Discord Presence with detected loader
+                DiscordManager.getInstance().setLaunchingPresence(instanceId, versionId, detectedLoader);
 
                 // Reuse shared folders
                 const librariesDir = path.join(gamePath, 'libraries');
@@ -782,14 +807,14 @@ export class LaunchProcess {
                     '-Dminecraft.client.jar=' + clientJarPath,
                     '-cp', classpath,
                     versionData.mainClass,
-                    '--username', authData.name,
+                    '--username', authData?.name || 'Player',
                     '--version', versionId,
                     '--gameDir', instancePath,
                     '--assetsDir', assetsDir,
                     '--assetIndex', versionData.assetIndex?.id || versionData.assets || 'legacy',
-                    '--uuid', authData.uuid,
+                    '--uuid', authData?.uuid || '00000000-0000-0000-0000-000000000000',
                     // Access token for server authentication
-                    '--accessToken', authData.token || '0',
+                    '--accessToken', authData?.token || '0',
                     '--userType', 'mojang',
                     '--versionType', versionData.type || 'release'
                 ];
@@ -826,8 +851,8 @@ export class LaunchProcess {
                 // Auto-configure Skin Loader if present
                 await this.ensureSkinConfig(instancePath, authData);
 
-                // Get instance config to check loader
-                let instanceLoader: string | undefined;
+                // Get detected loader from earlier detection (use instanceLoader as fallback)
+                let instanceLoader: string = detectedLoader || 'vanilla';
                 if (instanceConfig?.loader) {
                     instanceLoader = instanceConfig.loader;
                 }
@@ -888,18 +913,31 @@ export class LaunchProcess {
                         }
                     }
 
-                    // Detect player count in multiplayer
-                    // Patterns: "Player count: X/Y", "X/Y players online", etc.
-                    const playerCountMatch = str.match(/(?:Player count|Players|Online)[:\s]+(\d+)\s*[/:]?\s*(\d*)/i);
+                    // Improved player count detection with multiple patterns
+                    // Pattern 1: "There are X of a max of Y players online" (common in multiplayer)
+                    // Pattern 2: "X/Y players" or "X/Y" (tab list, server status)
+                    // Pattern 3: "Player count: X/Y"
+                    // Pattern 4: "Players online: X/Y" or "Online: X/Y"
+                    let playerCountMatch =
+                        str.match(/There are\s+(\d+)\s+of a max(?:imum)? of\s+(\d+)\s+players/i) ||
+                        str.match(/(\d+)\s*\/\s*(\d+)\s+players/i) ||
+                        str.match(/Players?\s*(?:online|count)?[:\s]+(\d+)\s*[\/]\s*(\d+)/i) ||
+                        str.match(/Online[:\s]+(\d+)\s*[\/]\s*(\d+)/i) ||
+                        str.match(/\[(\d+)\/(\d+)\]/); // Pattern like [5/500]
+
                     if (playerCountMatch && isMultiplayer) {
                         const count = parseInt(playerCountMatch[1]);
-                        const max = playerCountMatch[2] ? parseInt(playerCountMatch[2]) : undefined;
-                        DiscordManager.getInstance().updatePlayingPresence(
-                            instanceId,
-                            count,
-                            max,
-                            currentServer
-                        );
+                        const max = parseInt(playerCountMatch[2]);
+
+                        // Only update if we have valid numbers and max > 0
+                        if (!isNaN(count) && !isNaN(max) && max > 0) {
+                            DiscordManager.getInstance().updatePlayingPresence(
+                                instanceId,
+                                count,
+                                max,
+                                currentServer
+                            );
+                        }
                     }
 
                     // Detect leaving server
