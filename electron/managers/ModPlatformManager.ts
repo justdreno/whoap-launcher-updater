@@ -49,8 +49,10 @@ interface ModrinthVersion {
 }
 
 interface InstallStatus {
+    projectId: string;
     modName: string;
     status: 'pending' | 'downloading' | 'installed' | 'skipped' | 'failed';
+    progress?: number;
     error?: string;
 }
 
@@ -210,8 +212,10 @@ export class ModPlatformManager {
         const installQueue: ModrinthVersion[] = [];
 
         // 1. Resolve Phase
-        const resolve = async (vId: string) => {
-            progressCallback({ modName: 'Resolving dependencies...', status: 'pending' });
+        const resolve = async (vId: string, sourceProjectId?: string) => {
+            if (sourceProjectId) {
+                progressCallback({ projectId: sourceProjectId, modName: 'Resolving dependencies...', status: 'pending' });
+            }
 
             try {
                 const version = await this.getVersion(vId);
@@ -226,11 +230,11 @@ export class ModPlatformManager {
                     for (const dep of version.dependencies) {
                         if (dep.dependency_type === 'required') {
                             if (dep.version_id) {
-                                await resolve(dep.version_id);
+                                await resolve(dep.version_id, version.project_id);
                             } else if (dep.project_id) {
                                 const bestDepVersion = await this.findCompatibleVersion(dep.project_id, version.game_versions[0], version.loaders[0]);
                                 if (bestDepVersion) {
-                                    await resolve(bestDepVersion.id);
+                                    await resolve(bestDepVersion.id, version.project_id);
                                 }
                             }
                         }
@@ -241,7 +245,15 @@ export class ModPlatformManager {
             }
         };
 
-        await resolve(rootVersionId);
+        // Determine the root project ID to pass to initial resolve before we know it
+        // We'll fetch it first just to know what we are installing
+        let rootProjectId = '';
+        try {
+            const rootVer = await this.getVersion(rootVersionId);
+            rootProjectId = rootVer.project_id;
+        } catch (e) { /* ignore */ }
+
+        await resolve(rootVersionId, rootProjectId);
 
         // 2. Install Phase
         const results: InstallStatus[] = [];
@@ -252,12 +264,27 @@ export class ModPlatformManager {
 
             try {
                 await fs.access(destPath);
-                results.push({ modName: ver.name, status: 'skipped' });
-                progressCallback({ modName: ver.name, status: 'skipped' });
+                results.push({ projectId: ver.project_id, modName: ver.name, status: 'skipped' });
+                progressCallback({ projectId: ver.project_id, modName: ver.name, status: 'skipped' });
             } catch {
-                progressCallback({ modName: ver.name, status: 'downloading' });
+                progressCallback({ projectId: ver.project_id, modName: ver.name, status: 'downloading', progress: 0 });
                 try {
-                    const response = await axios.get(primaryFile.url, { responseType: 'stream' });
+                    const response = await axios.get(primaryFile.url, {
+                        responseType: 'stream',
+                        onDownloadProgress: (progressEvent) => {
+                            if (progressEvent.total) {
+                                const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100);
+                                progressCallback({ projectId: ver.project_id, modName: ver.name, status: 'downloading', progress: percent });
+                            } else {
+                                // If total is unknown, estimate based on what we know from file metadata
+                                const fileSize = primaryFile.size || 0;
+                                if (fileSize > 0) {
+                                    const percent = Math.min(Math.round((progressEvent.loaded / fileSize) * 100), 99);
+                                    progressCallback({ projectId: ver.project_id, modName: ver.name, status: 'downloading', progress: percent });
+                                }
+                            }
+                        }
+                    });
                     await pipeline(response.data, createWriteStream(destPath));
 
                     // Save metadata for tracking
@@ -271,11 +298,11 @@ export class ModPlatformManager {
                         loaders: ver.loaders
                     });
 
-                    results.push({ modName: ver.name, status: 'installed' });
-                    progressCallback({ modName: ver.name, status: 'installed' });
+                    results.push({ projectId: ver.project_id, modName: ver.name, status: 'installed', progress: 100 });
+                    progressCallback({ projectId: ver.project_id, modName: ver.name, status: 'installed', progress: 100 });
                 } catch (e: any) {
-                    results.push({ modName: ver.name, status: 'failed', error: e.message });
-                    progressCallback({ modName: ver.name, status: 'failed', error: e.message });
+                    results.push({ projectId: ver.project_id, modName: ver.name, status: 'failed', error: e.message });
+                    progressCallback({ projectId: ver.project_id, modName: ver.name, status: 'failed', error: e.message });
                 }
             }
         }

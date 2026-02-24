@@ -16,6 +16,11 @@ export const TitleBar: React.FC = () => {
     useEffect(() => {
         const handleMaximizeChange = (_event: any, maximized: boolean) => {
             setIsMaximized(maximized);
+            if (maximized) {
+                document.getElementById('root')?.classList.add('maximized');
+            } else {
+                document.getElementById('root')?.classList.remove('maximized');
+            }
         };
 
         window.ipcRenderer.on('window:maximized-changed', handleMaximizeChange);

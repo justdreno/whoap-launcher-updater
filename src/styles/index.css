@@ -59,6 +59,12 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.08);
     /* Ensure position: fixed elements are clipped by this container */
     transform: translateZ(0);
+    transition: border-radius 0.15s ease;
+}
+
+#root.maximized {
+    border-radius: 0;
+    border: none;
 }
 
 /* Scrollbar */

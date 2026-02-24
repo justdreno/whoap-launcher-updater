@@ -173,39 +173,43 @@ export const InstanceResourcePacks: React.FC<InstanceResourcePacksProps> = ({ in
                         <Skeleton width="100%" height={60} />
                     </div>
                 ) : (
-                    <div className={styles.modList}>
+                    <div className={styles.modGrid}>
                         {installedItems.length === 0 && <div style={{ color: '#888', padding: 20 }}>No packs installed.</div>}
                         {installedItems.filter(m => m.name.toLowerCase().includes(installedSearchQuery.toLowerCase())).map(item => (
                             <div key={item.name} className={`${styles.modCard} ${!item.isEnabled ? styles.disabled : ''}`}>
-                                <div className={styles.modIconWrapper}>
-                                    <Package size={24} />
-                                </div>
-                                <div className={styles.modDetails}>
-                                    <div className={styles.modName}>
-                                        {item.name.replace('.zip', '').replace('.disabled', '')}
+                                <div className={styles.modCardTop}>
+                                    <div className={styles.modIconWrapper}>
+                                        <Package size={24} />
                                     </div>
-                                    <div className={styles.modMeta}>
-                                        <span className={`${styles.statusPill} ${item.isEnabled ? styles.enabled : ''}`}>
-                                            {item.isEnabled ? 'Enabled' : 'Disabled'}
-                                        </span>
-                                        <span className={styles.modSize}>{(item.size / 1024).toFixed(1)} KB</span>
+                                    <div className={styles.modDetails}>
+                                        <div className={styles.modName} title={item.name.replace('.zip', '').replace('.disabled', '')}>
+                                            {item.name.replace('.zip', '').replace('.disabled', '')}
+                                        </div>
+                                        <div className={styles.modMeta}>
+                                            <span className={`${styles.statusPill} ${item.isEnabled ? styles.enabled : ''}`}>
+                                                {item.isEnabled ? 'Enabled' : 'Disabled'}
+                                            </span>
+                                            <span className={styles.modSize}>{(item.size / 1024).toFixed(1)} KB</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className={styles.modActions}>
-                                    <button
-                                        className={`${styles.actionBtn} ${item.isEnabled ? styles.enabledAction : ''}`}
-                                        onClick={() => handleToggle(item)}
-                                        title={item.isEnabled ? "Disable" : "Enable"}
-                                    >
-                                        <Power size={16} />
-                                    </button>
-                                    <button
-                                        className={`${styles.actionBtn} ${styles.dangerBtn}`}
-                                        onClick={() => handleDelete(item)}
-                                        title="Delete"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                                <div className={styles.modCardBottom}>
+                                    <div className={styles.modActions}>
+                                        <button
+                                            className={`${styles.actionBtn} ${item.isEnabled ? styles.enabledAction : ''}`}
+                                            onClick={() => handleToggle(item)}
+                                            title={item.isEnabled ? "Disable" : "Enable"}
+                                        >
+                                            <Power size={16} />
+                                        </button>
+                                        <button
+                                            className={`${styles.actionBtn} ${styles.dangerBtn}`}
+                                            onClick={() => handleDelete(item)}
+                                            title="Delete"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         ))}

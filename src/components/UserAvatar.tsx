@@ -63,9 +63,10 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
             return;
         }
 
-        // If it's a local skin file OR a direct URL (cloud) and we want the face, we need to crop it
-        const isDirectUrl = url.startsWith('http://') || url.startsWith('https://');
-        if ((SkinUtils.isCustom(url) || isDirectUrl) && variant === 'face') {
+        // If it's a local custom skin file and we want the face, we need to crop it from the skin texture
+        // Note: mc-heads.net /avatar/ URLs already return pre-cropped faces, so don't crop those
+        const isCustomSkin = SkinUtils.isCustom(url) || url.startsWith('yashin-skin://');
+        if (isCustomSkin && variant === 'face') {
             const img = new Image();
             // Don't set crossOrigin for our own custom protocols as it can sometimes block them
             if (!url.startsWith('yashin-')) {

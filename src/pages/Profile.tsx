@@ -5,7 +5,7 @@ import { UserAvatar } from '../components/UserAvatar';
 import { ProfileService, Badge } from '../services/ProfileService';
 import { useToast } from '../context/ToastContext';
 import { SkinUtils } from '../utils/SkinUtils';
-import { Edit3, Upload, Trash2, Shield, Type, Clock, Gamepad2, Trophy, Calendar, Globe, Award, Star, Heart, Code, Bug, Gift, Crown, LucideIcon, WifiOff, Cloud } from 'lucide-react';
+import { Edit3, Upload, Trash2, Shield, Type, Clock, Gamepad2, Trophy, Calendar, Globe, Award, Star, Heart, Code, Bug, Gift, Crown, LucideIcon } from 'lucide-react';
 
 // Icon mapping for badges
 const iconMap: Record<string, LucideIcon> = {
@@ -39,14 +39,12 @@ interface ProfileProps {
         type?: string;
         role?: string;
         preferredSkin?: string;
-        skin_url?: string;
-        cape_url?: string;
     };
     setUser?: (updater: any) => void;
 }
 
-const PRESETS_KEY = 'yashin_skin_presets';
-const ACTIVE_PRESET_KEY = 'yashin_active_preset';
+const PRESETS_KEY = 'whoap_skin_presets';
+const ACTIVE_PRESET_KEY = 'whoap_active_preset';
 
 function loadPresets(defaultName: string): string[] {
     try {
@@ -88,7 +86,6 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
     const [badges, setBadges] = React.useState<Badge[]>([]);
     const [copied, setCopied] = React.useState(false);
     const [profile, setProfile] = React.useState<any>(null);
-    const [isLoadingProfile, setIsLoadingProfile] = React.useState(false);
 
     // --- STATISTICS STATE ---
     const [statistics, setStatistics] = React.useState({
@@ -99,19 +96,16 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
         favoriteInstance: ''
     });
 
-    // --- FAVORITES STATE ---
-    const [favoriteInstances, setFavoriteInstances] = React.useState<any[]>([]);
-
     const [presetNames, setPresetNames] = React.useState<string[]>(() => {
         try {
-            const stored = localStorage.getItem('yashin_skin_preset_names');
+            const stored = localStorage.getItem('whoap_skin_preset_names');
             return stored ? JSON.parse(stored) : ['', '', ''];
         } catch { return ['', '', '']; }
     });
 
     // --- CAPES STATE ---
-    const CAPE_PRESETS_KEY = 'yashin_cape_presets';
-    const ACTIVE_CAPE_PRESET_KEY = 'yashin_active_cape_preset';
+    const CAPE_PRESETS_KEY = 'whoap_cape_presets';
+    const ACTIVE_CAPE_PRESET_KEY = 'whoap_active_cape_preset';
 
     const [capePresets, setCapePresets] = React.useState<string[]>(() => {
         try {
@@ -123,7 +117,7 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
     const [editingCape, setEditingCape] = React.useState<number | null>(null);
     const [capePresetNames, setCapePresetNames] = React.useState<string[]>(() => {
         try {
-            const stored = localStorage.getItem('yashin_cape_preset_names');
+            const stored = localStorage.getItem('whoap_cape_preset_names');
             return stored ? JSON.parse(stored) : ['', '', ''];
         } catch { return ['', '', '']; }
     });
@@ -132,39 +126,13 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
 
 
     // --- DERIVED STATE ---
-    // Show selected preset skin, or fall back to user's preferred skin
     const activeSkinName = activePreset >= 0 && presets[activePreset]
         ? presets[activePreset]
-        : user.preferredSkin || undefined;
+        : user.preferredSkin || user.name;
 
     const activeCapeName = activeCapePreset >= 0 && capePresets[activeCapePreset]
         ? capePresets[activeCapePreset]
-        : (user as any).preferredCape || undefined;
-
-    // --- DISPLAY HELPERS ---
-    const getViewerSkinDisplayName = (): string => {
-        // If we have a preset name saved, use that
-        if (activePreset >= 0 && presetNames[activePreset]) {
-            return presetNames[activePreset];
-        }
-
-        // If no active skin, show "Steve" (default)
-        if (!activeSkinName) {
-            return 'Steve';
-        }
-
-        // If it's the user's preferred skin (not from a preset), show username
-        if (activeSkinName === user.preferredSkin) {
-            return user.name || 'My Skin';
-        }
-
-        // If it's a URL (uploaded skin), show something nicer
-        if (activeSkinName?.startsWith('http')) {
-            return user.name || 'My Skin';
-        }
-
-        return SkinUtils.getDisplayName(activeSkinName, user.name);
-    };
+        : (user as any).preferredCape;
 
     // --- EFFECTS ---
 
@@ -189,6 +157,13 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
         if (matchIdx >= 0) {
             setActivePreset(matchIdx);
             saveActivePreset(matchIdx);
+        } else if (user.preferredSkin) {
+            // No preset matches but user has a preferred skin — inject it into slot 0
+            const newPresets = [...presets];
+            newPresets[0] = user.preferredSkin;
+            setPresets(newPresets);
+            setActivePreset(0);
+            saveActivePreset(0);
         } else {
             setActivePreset(-1);
         }
@@ -208,77 +183,73 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
         window.ipcRenderer.invoke('cape:get-path').then(() => { }).catch(() => { });
     }, []);
 
-    // Load badges/profile
+    // Load badges/profile — only when online and whoap account
     React.useEffect(() => {
         const load = async () => {
-            if (user.type === 'yashin') {
-                if (navigator.onLine) {
-                    setIsLoadingProfile(true);
-                    try {
-                        const [fetchedBadges, fetchedProfile] = await Promise.all([
-                            ProfileService.getUserBadges(user.uuid),
-                            ProfileService.getProfile(user.uuid)
-                        ]);
-                        setBadges(fetchedBadges);
-                        setProfile(fetchedProfile);
-                    } catch (e) {
-                        console.warn('[Profile] Failed to load data', e);
-                    } finally {
-                        // Add a small delay for better UX (prevents flickering)
-                        setTimeout(() => {
-                            setIsLoadingProfile(false);
-                        }, 500);
-                    }
-                } else {
-                    // Offline - try to load cached data or show offline message
-                    setIsLoadingProfile(false);
-                }
+            if (user.type === 'yashin' && navigator.onLine) {
+                try {
+                    const [fetchedBadges, fetchedProfile] = await Promise.all([
+                        ProfileService.getUserBadges(user.uuid),
+                        ProfileService.getProfile(user.uuid)
+                    ]);
+                    setBadges(fetchedBadges);
+                    setProfile(fetchedProfile);
+                } catch (e) { console.warn('[Profile] Failed to load data', e); }
             }
         };
         load();
     }, [user.uuid, user.type]);
 
-    // Load statistics
+    // Load statistics — fully offline from IPC, graceful fallback on error
     React.useEffect(() => {
         const loadStats = async () => {
             try {
-                const instances = await window.ipcRenderer.invoke('instance:list');
-                const worlds = await window.ipcRenderer.invoke('worlds:list-all');
+                // Fetch instances (primary data source — available offline)
+                let instances: any[] = [];
+                try {
+                    instances = await window.ipcRenderer.invoke('instance:list') ?? [];
+                } catch { /* no instances IPC */ }
 
-                // Calculate total play time from instances
+                // Fetch worlds — may not exist on all builds, fail silently
+                let worldCount = 0;
+                try {
+                    const worlds = await window.ipcRenderer.invoke('worlds:list-all');
+                    worldCount = Array.isArray(worlds) ? worlds.length : 0;
+                } catch { /* worlds IPC unavailable */ }
+
                 let totalPlayTime = 0;
                 let lastPlayedDate: string | null = null;
                 let favoriteInstance = '';
                 let maxPlayTime = 0;
 
                 instances.forEach((inst: any) => {
-                    const playTime = inst.playTime || 0;
+                    const playTime = typeof inst.playTime === 'number' ? inst.playTime : 0;
                     totalPlayTime += playTime;
 
                     if (playTime > maxPlayTime) {
                         maxPlayTime = playTime;
-                        favoriteInstance = inst.name;
+                        favoriteInstance = inst.name ?? '';
                     }
 
                     if (inst.lastPlayed) {
-                        const lastDate = new Date(inst.lastPlayed);
-                        if (!lastPlayedDate || lastDate > new Date(lastPlayedDate)) {
-                            lastPlayedDate = inst.lastPlayed;
-                        }
+                        try {
+                            const lastDate = new Date(inst.lastPlayed);
+                            if (!isNaN(lastDate.getTime())) {
+                                if (!lastPlayedDate || lastDate > new Date(lastPlayedDate)) {
+                                    lastPlayedDate = inst.lastPlayed;
+                                }
+                            }
+                        } catch { /* bad date */ }
                     }
                 });
 
                 setStatistics({
                     totalPlayTime,
                     instancesCreated: instances.length,
-                    worldsExplored: worlds?.length || 0,
+                    worldsExplored: worldCount,
                     lastPlayed: lastPlayedDate,
                     favoriteInstance
                 });
-
-                // Load favorite instances
-                const favorites = instances.filter((inst: any) => inst.isFavorite);
-                setFavoriteInstances(favorites);
             } catch (e) {
                 console.warn('[Profile] Failed to load statistics', e);
             }
@@ -289,8 +260,8 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
     // Persist presets
     React.useEffect(() => { savePresets(presets); }, [presets]);
     React.useEffect(() => { localStorage.setItem(CAPE_PRESETS_KEY, JSON.stringify(capePresets)); }, [capePresets]);
-    React.useEffect(() => { localStorage.setItem('yashin_skin_preset_names', JSON.stringify(presetNames)); }, [presetNames]);
-    React.useEffect(() => { localStorage.setItem('yashin_cape_preset_names', JSON.stringify(capePresetNames)); }, [capePresetNames]);
+    React.useEffect(() => { localStorage.setItem('whoap_skin_preset_names', JSON.stringify(presetNames)); }, [presetNames]);
+    React.useEffect(() => { localStorage.setItem('whoap_cape_preset_names', JSON.stringify(capePresetNames)); }, [capePresetNames]);
 
     // --- HANDLERS (SKINS) ---
 
@@ -309,9 +280,6 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
 
             // Revert to default
             try {
-                if (user.type === 'yashin' && navigator.onLine) {
-                    await ProfileService.updateProfile(user.uuid, { preferred_skin: undefined });
-                }
                 const { AccountManager } = await import('../utils/AccountManager');
                 AccountManager.updateAccount(user.uuid, { preferredSkin: undefined });
                 if (setUser) setUser((prev: any) => ({ ...prev, preferredSkin: undefined }));
@@ -324,13 +292,10 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
         saveActivePreset(index);
 
         try {
-            const finalSkinUrl = skinName;
-
             const { AccountManager } = await import('../utils/AccountManager');
-            AccountManager.updateAccount(user.uuid, { preferredSkin: finalSkinUrl });
-            if (setUser) setUser((prev: any) => ({ ...prev, preferredSkin: finalSkinUrl }));
-
-            showToast('Skin switched', 'success');
+            AccountManager.updateAccount(user.uuid, { preferredSkin: skinName });
+            if (setUser) setUser((prev: any) => ({ ...prev, preferredSkin: skinName }));
+            showToast(`Skin switched to ${SkinUtils.getDisplayName(skinName, user.name)}`, 'success');
         } catch (e) {
             console.error('[Profile] Failed to update skin', e);
         }
@@ -350,9 +315,12 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
         newPresets[editingPreset] = trimmed;
         setPresets(newPresets);
         setEditingPreset(null);
-        // If we just edited the active preset, re-select it to trigger update
         if (activePreset === editingPreset) {
-            handleSelectPreset(editingPreset);
+            (async () => {
+                const { AccountManager } = await import('../utils/AccountManager');
+                AccountManager.updateAccount(user.uuid, { preferredSkin: trimmed });
+                if (setUser) setUser((prev: any) => ({ ...prev, preferredSkin: trimmed }));
+            })();
         }
     };
 
@@ -385,12 +353,6 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
         const newPresets = [...presets];
         newPresets[index] = '';
         setPresets(newPresets);
-
-        // Clear the preset name too
-        const newNames = [...presetNames];
-        newNames[index] = '';
-        setPresetNames(newNames);
-        localStorage.setItem('yashin_skin_preset_names', JSON.stringify(newNames));
 
         // If we cleared the active preset, reset to default (undefined)
         if (activePreset === index) {
@@ -432,12 +394,10 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
         localStorage.setItem(ACTIVE_CAPE_PRESET_KEY, String(index));
 
         try {
-            const finalCapeUrl = capeName;
-
             const { AccountManager } = await import('../utils/AccountManager');
-            AccountManager.updateAccount(user.uuid, { preferredCape: finalCapeUrl });
-            if (setUser) setUser((prev: any) => ({ ...prev, preferredCape: finalCapeUrl }));
-            showToast('Cape switched', 'success');
+            AccountManager.updateAccount(user.uuid, { preferredCape: capeName });
+            if (setUser) setUser((prev: any) => ({ ...prev, preferredCape: capeName }));
+            showToast(`Cape switched to ${SkinUtils.getDisplayName(capeName, user.name)}`, 'success');
         } catch (e) {
             console.error('[Profile] Failed to update cape', e);
         }
@@ -471,13 +431,6 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
         const newPresets = [...capePresets];
         newPresets[index] = '';
         setCapePresets(newPresets);
-
-        // Clear the preset name too
-        const newNames = [...capePresetNames];
-        newNames[index] = '';
-        setCapePresetNames(newNames);
-        localStorage.setItem('yashin_cape_preset_names', JSON.stringify(newNames));
-
         if (activeCapePreset === index) {
             setActiveCapePreset(-1);
             localStorage.setItem(ACTIVE_CAPE_PRESET_KEY, '-1');
@@ -506,55 +459,34 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
         admin: 'Admin',
         user: 'Member'
     };
-    // Use profile.role from database if available, fallback to user.role
-    const role = profile?.role || user.role || 'user';
+    const role = user.role || 'user';
 
     return (
         <div className={styles.profilePage}>
-            {/* Offline Notice Banner */}
-            {!navigator.onLine && user.type === 'yashin' && (
-                <div className={styles.offlineBanner}>
-                    <WifiOff size={16} />
-                    <span>You're offline. Some profile features like badges and account info require an internet connection.</span>
-                </div>
-            )}
-            
             {/* Left Panel */}
             <div className={styles.leftPanel}>
                 {/* Header */}
                 <div className={styles.profileHeader}>
-                    {isLoadingProfile ? (
-                        <div className={styles.avatarLoading}>
-                            <div className={styles.spinner} />
-                        </div>
-                    ) : (
-                        <UserAvatar
-                            username={SkinUtils.getDisplayName(activeSkinName)}
-                            preferredSkin={activeSkinName}
-                            uuid={user.uuid}
-                            accountType={user.type as any}
-                            className={styles.avatarLarge}
-                            lastUpdated={lastUpdated}
-                        />
-                    )}
+                    <UserAvatar
+                        username={SkinUtils.getDisplayName(activeSkinName)}
+                        preferredSkin={activeSkinName}
+                        uuid={user.uuid}
+                        accountType={user.type as any}
+                        className={styles.avatarLarge}
+                        lastUpdated={lastUpdated}
+                    />
                     <div className={styles.headerInfo}>
                         <div className={styles.displayName}>{user.name}</div>
-                        {isLoadingProfile ? (
-                            <div className={styles.roleBadgeLoading}>
-                                <div className={styles.roleLoadingSpinner} />
-                            </div>
-                        ) : (
-                            <div
-                                className={styles.roleBadge}
-                                style={{
-                                    background: `${roleColors[role]}15`,
-                                    color: roleColors[role],
-                                    border: `1px solid ${roleColors[role]}30`
-                                }}
-                            >
-                                {roleLabel[role] || 'Member'}
-                            </div>
-                        )}
+                        <div
+                            className={styles.roleBadge}
+                            style={{
+                                background: `${roleColors[role]}15`,
+                                color: roleColors[role],
+                                border: `1px solid ${roleColors[role]}30`
+                            }}
+                        >
+                            {roleLabel[role] || 'Member'}
+                        </div>
                         <div className={styles.uuidText} onClick={handleCopyUuid} title="Click to copy">
                             {copied ? '✓ Copied!' : user.uuid.slice(0, 8) + '...'}
                         </div>
@@ -564,59 +496,49 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
                 {/* Account Info */}
                 <div className={styles.section}>
                     <div className={styles.sectionTitle}>Account Info</div>
-                    {!navigator.onLine && user.type === 'yashin' ? (
-                        <div className={styles.offlineNotice}>
-                            <Cloud size={16} />
-                            <span>Connect to the internet to view account details</span>
+                    <div className={styles.infoGrid}>
+                        <div className={styles.infoCard}>
+                            <span className={styles.infoLabel}>Account Type</span>
+                            <span className={styles.infoValue}>
+                                {user.type === 'yashin' ? 'Yashin' : user.type === 'microsoft' ? 'Microsoft' : 'Offline'}
+                            </span>
                         </div>
-                    ) : (
-                        <div className={styles.infoGrid}>
-                            <div className={styles.infoCard}>
-                                <span className={styles.infoLabel}>Account Type</span>
-                                <span className={styles.infoValue}>
-                                    {user.type === 'yashin' ? 'Yashin' : user.type === 'microsoft' ? 'Microsoft' : 'Offline'}
-                                </span>
-                            </div>
-                            <div className={styles.infoCard}>
-                                <span className={styles.infoLabel}>Joined</span>
-                                <span className={styles.infoValue}>
-                                    {profile?.joined_at
-                                        ? new Date(profile.joined_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                                        : '—'}
-                                </span>
-                            </div>
+                        <div className={styles.infoCard}>
+                            <span className={styles.infoLabel}>Joined</span>
+                            <span className={styles.infoValue}>
+                                {profile?.joined_at
+                                    ? new Date(profile.joined_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                    : '—'}
+                            </span>
                         </div>
-                    )}
+                    </div>
                 </div>
 
-                {/* Badges */}
-                <div className={styles.section}>
-                    <div className={styles.sectionTitle}>Badges</div>
-                    {!navigator.onLine && user.type === 'yashin' ? (
-                        <div className={styles.offlineNotice}>
-                            <Cloud size={16} />
-                            <span>Connect to the internet to view your badges</span>
-                        </div>
-                    ) : badges.length > 0 ? (
-                        <div className={styles.badgeGrid}>
-                            {badges.map(badge => (
-                                <div
-                                    key={badge.id}
-                                    className={styles.badge}
-                                    style={{ borderColor: `${badge.color}30` }}
-                                    title={badge.description}
-                                >
-                                    <span className={styles.badgeIcon}>
-                                        <BadgeIcon iconName={badge.icon} size={14} color={badge.color} />
-                                    </span>
-                                    <span style={{ color: badge.color }}>{badge.name}</span>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <span className={styles.noBadges}>No badges yet</span>
-                    )}
-                </div>
+                {/* Badges — only shown for whoap accounts */}
+                {user.type === 'yashin' && (
+                    <div className={styles.section}>
+                        <div className={styles.sectionTitle}>Badges</div>
+                        {badges.length > 0 ? (
+                            <div className={styles.badgeGrid}>
+                                {badges.map(badge => (
+                                    <div
+                                        key={badge.id}
+                                        className={styles.badge}
+                                        style={{ borderColor: `${badge.color}30` }}
+                                        title={badge.description}
+                                    >
+                                        <span className={styles.badgeIcon}>
+                                            <BadgeIcon iconName={badge.icon} size={14} color={badge.color} />
+                                        </span>
+                                        <span style={{ color: badge.color }}>{badge.name}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <span className={styles.noBadges}>No badges yet</span>
+                        )}
+                    </div>
+                )}
 
                 {/* Statistics */}
                 <div className={styles.section}>
@@ -667,24 +589,6 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
                         </div>
                     )}
                 </div>
-
-                {/* Favorite Instances */}
-                {favoriteInstances.length > 0 && (
-                    <div className={styles.section}>
-                        <div className={styles.sectionTitle}>
-                            <Heart size={16} style={{ marginRight: 8 }} />
-                            Favorite Clients
-                        </div>
-                        <div className={styles.favoritesList}>
-                            {favoriteInstances.map((inst) => (
-                                <div key={inst.id} className={styles.favoriteItem}>
-                                    <span className={styles.favoriteName}>{inst.name}</span>
-                                    <span className={styles.favoriteVersion}>{inst.version}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
 
                 {/* Skin Presets */}
                 <div className={styles.section}>
@@ -862,7 +766,7 @@ export const Profile: React.FC<ProfileProps> = ({ user, setUser }) => {
                         className={styles.viewerCanvas}
                         lastUpdated={lastUpdated}
                     />
-                    <span className={styles.viewerSkinName}>{getViewerSkinDisplayName()}</span>
+                    <span className={styles.viewerSkinName}>{SkinUtils.getDisplayName(activeSkinName, user.name)}</span>
                     <span className={styles.viewerLabel}>Drag to rotate · Scroll to zoom</span>
                 </div>
             </div>

@@ -233,13 +233,13 @@ function App() {
         setAppState({ stage: 'main' });
     };
 
-    // Show loading state
-    if (appState.stage === 'loading') {
+    // Show loading state or auth check — keep user on splash, never flash login
+    if (appState.stage === 'loading' || appState.stage === 'auth-check') {
         return <PageLoader />;
     }
 
-    // Show login if no user
-    if (appState.stage === 'login' || (!user && appState.stage !== 'auth-check')) {
+    // Show login only once we're sure there's no session
+    if (appState.stage === 'login' || !user) {
         return (
             <ErrorBoundary>
                 <ToastProvider>
@@ -247,11 +247,6 @@ function App() {
                 </ToastProvider>
             </ErrorBoundary>
         );
-    }
-
-    // Show loader while checking auth
-    if (appState.stage === 'auth-check') {
-        return <PageLoader />;
     }
 
     // Main app
